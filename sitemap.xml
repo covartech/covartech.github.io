@@ -1,6 +1,10 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <urlset xmlns='http://www.sitemaps.org/schemas/sitemap/0.9'>
     <url>
+        <loc>http://newfolder.github.io/about/about/</loc>
+        <lastmod>2013-06-23T12:40:53-04:00</lastmod>
+    </url>
+    <url>
         <loc>http://newfolder.github.io/blog/archives/blog/archives/</loc>
         <lastmod>2013-06-23T12:31:06-04:00</lastmod>
     </url>
