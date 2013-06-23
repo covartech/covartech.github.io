@@ -1,24 +1,140 @@
-<?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom">
 
-  <title><![CDATA[PRT Blog]]></title>
-  <link href="http://newfolder.github.io/atom.xml" rel="self"/>
-  <link href="http://newfolder.github.io/"/>
-  <updated>2013-06-23T13:20:26-04:00</updated>
-  <id>http://newfolder.github.io/</id>
-  <author>
-    <name><![CDATA[Kenneth Morton and Peter Torrione]]></name>
-    
-  </author>
-  <generator uri="http://octopress.org/">Octopress</generator>
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>An Introduction to the PRT with MNIST - PRT Blog</title>
+  <meta name="author" content="Kenneth Morton and Peter Torrione">
 
   
-  <entry>
-    <title type="html"><![CDATA[An Introduction to the PRT with MNIST]]></title>
-    <link href="http://newfolder.github.io/blog/2013/06/23/introduction-to-the-prt/"/>
-    <updated>2013-06-23T13:15:00-04:00</updated>
-    <id>http://newfolder.github.io/blog/2013/06/23/introduction-to-the-prt</id>
-    <content type="html"><![CDATA[<p>The MNIST Database (<a href="http://yann.lecun.com/exdb/mnist/">http://yann.lecun.com/exdb/mnist/</a>) is a very well-known machine learning dataset consisting of a few thousand instances of handwritten digits from 0-9.  MNIST is actually a subset of a larger NIST database, but the authors (see the linked page above) were kind enough to do some basic pre-processing of MNIST for us.  MNIST was for a long time very widely used in the ML literature as an example of an easy to use real data set to evaluate new ideas.</p>
+  <meta name="description" content="">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://newfolder.github.io/blog/2013/06/23/introduction-to-the-prt">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/bootstrap/bootstrap.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/stylesheets/bootstrap/responsive.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/stylesheets/syntax/syntax.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <style type="text/css">
+    body {
+      padding-bottom: 40px;
+    }
+    h1 {
+      margin-bottom: 15px;
+    }
+    img {
+      max-width: 100%;
+    }
+    .sharing, .meta, .pager {
+      margin: 20px 0px 20px 0px;
+    }
+    .page-footer p {
+      text-align: center;
+    }
+  </style>
+  <script src="/javascripts/libs/jquery.js"></script>
+  <script src="/javascripts/libs/modernizr-2.0.js"></script>
+  <script src="/javascripts/libs/bootstrap.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/atom.xml" rel="alternate" title="PRT Blog" type="application/atom+xml">
+  
+<style type="text/css">
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+</style>
+  
+
+</head>
+
+<body   >
+  <nav role="navigation"><div class="navbar navbar-inverse">
+  <div class="navbar-inner">
+    <div class="container">
+      <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </a>
+
+      <a class="brand" href="/">PRT Blog</a>
+
+      <div class="nav-collapse">
+        <ul class="nav">
+	<li><a href="https://github.com/newfolder/PRT">The PRT</a></li>
+  	<li><a href="/blog/archives">Archives</a></li>
+  	<li><a href="/about">About</a></li>
+</ul>
+
+
+        <ul class="nav pull-right" data-subscription="rss">
+          <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+          
+        </ul>
+
+        
+          <form class="pull-right navbar-search" action="http://google.com/search" method="get">
+            <fieldset role="search">
+              <input type="hidden" name="q" value="site:newfolder.github.io" />
+              <input class="search-query" type="text" name="q" results="0" placeholder="Search"/>
+            </fieldset>
+          </form>
+        
+      </div>
+    </div>
+  </div>
+</div>
+</nav>
+  <div class="container">
+    <div class="row-fluid">
+      
+<article class="hentry span9" role="article">
+
+  
+  <header class="page-header">
+    
+      <h1 class="entry-title">An Introduction to the PRT With MNIST</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-06-23T13:15:00-04:00" pubdate data-updated="true">Jun 23<span>rd</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>The MNIST Database (<a href="http://yann.lecun.com/exdb/mnist/">http://yann.lecun.com/exdb/mnist/</a>) is a very well-known machine learning dataset consisting of a few thousand instances of handwritten digits from 0-9.  MNIST is actually a subset of a larger NIST database, but the authors (see the linked page above) were kind enough to do some basic pre-processing of MNIST for us.  MNIST was for a long time very widely used in the ML literature as an example of an easy to use real data set to evaluate new ideas.</p>
 
 
 
@@ -142,41 +258,122 @@ title(sprintf(&lt;span class="string"&gt;'Actual: %d; SVM Label: %d'&lt;/span&gt
 
 <p><span class="keyword">end</span>
 </pre><img vspace="5" hspace="5" src="http://www.newfolderconsulting.com/sites/default/files/testBlog_06.png" alt=""> <p>Visual inspection of these mistakes illustrate some of the causes of confusions in the SVM.  For example, highly slanted digits are often mis-labeled.  Mitigating some of these mistakes may require significantly more than simply optimizing SVM parameters!</p><p>Interested readers can refer to a large body of literature that has previously investigated this data set (<a href="http://yann.lecun.com/exdb/mnist/"><a href="http://yann.lecun.com/exdb/mnist/">http://yann.lecun.com/exdb/mnist/</a></a>) for tips, tricks, and ideas for further improving performance on this data set.  One particularly exciting recent advance is based on Hinton&#8217;s deep learning networks, which enables very efficient learning on the MNIST database (www.cs.toronto.edu/~hinton/science.pdf ).</p><p>We hope this example shows how quickly you can get from data to results with the PRT.  Please let us know if you have comments or questions!</p><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2012b</a><br></p></p>
-]]></content>
-  </entry>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
   
-  <entry>
-    <title type="html"><![CDATA[Hi]]></title>
-    <link href="http://newfolder.github.io/blog/2013/06/23/hi/"/>
-    <updated>2013-06-23T13:13:00-04:00</updated>
-    <id>http://newfolder.github.io/blog/2013/06/23/hi</id>
-    <content type="html"><![CDATA[<p>Hi,</p>
 
-<p>Thanks for checking out the PRT. The PRT is intended to help people who do machine learning handle the most common classification tasks within MATLAB.  This includes things like cross-validation, data visualization, classifier development and feature selection. The PRT includes object types for data set storage, pre-processing, classification, clustering, distance calculations, outlier removal, kernel learning, data generation, scoring and classifier evaluation, feature selection, random variable definitions, and visualization. We think it serves as a great platform for both machine learning research and applied algorithm development (that&rsquo;s why we built it!).</p>
+<span class="byline author vcard">Posted by <span class="fn">Kenneth Morton and Peter Torrione</span></span>
 
-<p>The PRT is free and released under the MIT license which means that it is free for academic and commercial use. The PRT is hosted on <a href="https://github.com/newfolder/PRT">GitHub</a> so feel free to fork or clone the repository or just download the latest <a href="https://github.com/newfolder/PRT/zipball/master">zip</a>.</p>
+      
 
-<p>Check out the <a href="../prtdoc/prtDocInstallation.html">installation instructions</a> to get you up and running. Once installed, open up MATLAB&reg;, and follow through with our <a href="../prtdoc/prtDocGettingStarted.html">Getting Started</a> guide, which will walk you through some examples of using the PRT in practice and show you what the PRT can do.</p>
 
-<p>Even though there are a lot of M-files in the PRT, we’ve built the PRT to be easy to use and to make it easy to find what you need from within MATLAB.  For example, to find a list of all classifiers in the PRT, simply type “prtClass” and then <tab> at the MATLAB command prompt.  Other object types behave the same way, e.g., prtPreProc <tab>. If you have any feed back or questions don&rsquo;t hesitate to ask in our <a href="../forum">forums</a>, on <a href="https://github.com/newfolder/PRT">GitHub</a> or through email at <a href="mailto:prt@newfolderconsulting.com"><a href="&#x6d;&#x61;&#105;&#108;&#x74;&#111;&#x3a;&#112;&#114;&#116;&#64;&#110;&#101;&#x77;&#x66;&#111;&#108;&#100;&#x65;&#114;&#99;&#111;&#110;&#x73;&#117;&#108;&#x74;&#x69;&#x6e;&#103;&#46;&#99;&#x6f;&#109;">&#112;&#114;&#116;&#64;&#110;&#x65;&#119;&#102;&#x6f;&#108;&#x64;&#101;&#114;&#x63;&#111;&#x6e;&#115;&#117;&#x6c;&#116;&#x69;&#110;&#103;&#46;&#x63;&#111;&#109;</a></a>.</p>
 
-<p>We are going to start blogging every once in a while about the PRT and things it can do. We hope that it starts a conversation about the types of things people are doing with the PRT and what things people might want the PRT to do in the future.</p>
 
-<p>Talk to you soon.  Happy coding!</p>
 
-<p>-Kenny and Pete</p>
-]]></content>
-  </entry>
+
+
+
   
-  <entry>
-    <title type="html"><![CDATA[Hello World]]></title>
-    <link href="http://newfolder.github.io/blog/2013/06/23/hello-world/"/>
-    <updated>2013-06-23T12:34:00-04:00</updated>
-    <id>http://newfolder.github.io/blog/2013/06/23/hello-world</id>
-    <content type="html"><![CDATA[<p>This is new home of the PRT blog. In time all of the previous posts will be imported. Bare with us.</p>
 
-<p>~Kenny</p>
-]]></content>
-  </entry>
+
+<time datetime="2013-06-23T13:15:00-04:00" pubdate data-updated="true">Jun 23<span>rd</span>, 2013</time>
+      
+
+
+    </p>
+    
+      <div class="sharing">
   
-</feed>
+  
+  
+</div>
+
+    
+    
+    <section>
+      <h1>Comments</h1>
+      <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+    </section>
+    
+    <ul class="pager">
+      
+      <li class="previous"><a class="basic-alignment left"
+        href="/blog/2013/06/23/hi/" title="Previous Post:
+        Hi">&laquo; Hi</a></li>
+      
+      <li><a href="/blog/archives">Blog Archives</a></li>
+      
+    </ul>
+  </footer>
+</article>
+
+<aside class="sidebar-nav span3">
+  
+    <section class="well">
+  <ul id="recent_posts" class="nav nav-list">
+    <li class="nav-header">Recent Posts</li>
+    
+      <li class="post">
+        <a href="/blog/2013/06/23/introduction-to-the-prt/">An Introduction to the PRT with MNIST</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/06/23/hi/">Hi</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/06/23/hello-world/">Hello World</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo" class="page-footer"><hr>
+<p>
+  Copyright &copy; 2013 - Kenneth Morton and Peter Torrione -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'newfolderconsulting';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://newfolder.github.io/blog/2013/06/23/introduction-to-the-prt/';
+        var disqus_url = 'http://newfolder.github.io/blog/2013/06/23/introduction-to-the-prt/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>
