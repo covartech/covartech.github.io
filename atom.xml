@@ -4,7 +4,7 @@
   <title><![CDATA[PRT Blog]]></title>
   <link href="http://newfolder.github.io/atom.xml" rel="self"/>
   <link href="http://newfolder.github.io/"/>
-  <updated>2013-06-24T13:01:46-04:00</updated>
+  <updated>2013-06-24T13:20:18-04:00</updated>
   <id>http://newfolder.github.io/</id>
   <author>
     <name><![CDATA[Kenneth Morton and Peter Torrione]]></name>
@@ -12,6 +12,514 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Max-Pooling Feature Representations in MSRCORID]]></title>
+    <link href="http://newfolder.github.io/blog/2013/03/10/max-pooling/"/>
+    <updated>2013-03-10T18:13:00-04:00</updated>
+    <id>http://newfolder.github.io/blog/2013/03/10/max-pooling</id>
+    <content type="html"><![CDATA[<p>A few weeks ago we took a look at a paper by Coates and Ng that dealt with learning feature representations for image processing and classification.  (See: <a href="http://newfolder.github.io/blog/2013/02/27/learning-feature-representations/">this</a>). Today I want to take a second look at that paper, and especially what they mean by max-pooling over regions of the image.</p>
+
+
+<!--/introduction-->
+
+
+
+
+<h2>Contents</h2>
+
+
+<div><ul><li><a href="#1">The MSRCORID Database</a></li><li><a href="#2">Max-Pooling</a></li><li><a href="#5">Multiple Classes</a></li><li><a href="#7">Conclusions</a></li><li><a href="#8">Bibliography</a></li></ul></div>
+
+
+<h2>The MSRCORID Database<a name="1"></a></h2>
+
+
+<p>If you have already read through <a href="http://newfolder.github.io/blog/2013/02/27/learning-feature-representations/">our previous post</a>, you know how to get the Microsoft Research Cambridge Object Recognition Image Database (MSRCORID), which is really a fantastic resource for image processing and classification.</p>
+
+
+<p>Once you&#8217;ve downloaded, we can run the following code which was for the most-prt ripped right out of the previous blog post:</p>
+
+
+<pre class="codeinput">ds = prtDataGenMsrcorid;
+
+patchSize = [8 8];
+col = [];
+<span class="keyword">for</span> imgInd = 1:ds.nObservations;
+    img = ds.X{imgInd};
+    img = rgb2gray(img);
+    img = imresize(img,.5);
+    col = cat(1,col,im2col(img,patchSize,<span class="string">'distinct'</span>)');
+<span class="keyword">end</span>
+dsCol = prtDataSetClass(double(col));
+
+preProc = prtPreProcZeroMeanRows + prtPreProcStdNormalizeRows(<span class="string">'varianceOffset'</span>,10) + prtPreProcZca;
+preProc = preProc.train(dsCol);
+dsNorm = preProc.run(dsCol);
+
+skm = prtClusterSphericalKmeans(<span class="string">'nClusters'</span>,50);
+skm = skm.train(dsNorm);
+</pre>
+
+
+<h2>Max-Pooling<a name="2"></a></h2>
+
+
+<p>Last time, we used a simple bag-of-words model to do classification based on the feature vectors in each image.  That&#8217;s definitely an interesting way to proceed, but most image-processing techniques make use of something called &#8220;max-pooling&#8221; to aggregate feature vectors over small regions of an image.</p>
+
+
+<p>The process can be accomplished in MATLAB using blockproc.m, which is in the Image-processing toolbox.  (If you don&#8217;t have image processing, it&#8217;s not too hard to write a replacement for blockproc.)</p>
+
+
+<p>The goal of max-pooling is to aggregate feature vectors over local regions of an image.  For example, we can take the MAX of the cluster memberships over each 8x8 region in an image using something like:</p>
+
+
+<p>featsBp = blockproc(feats,[8 8],@(x)max(max(x.data,[],1),[],2));</p>
+
+
+<p>Where we&#8217;ve assumed that feats is size nx x ny x nFeats.</p>
+
+
+<p>Max pooling is nice because it reduces the dependency of the feature vectors on their exact placement in an image (each element of each 8x8 block gets treated about the same), and it also maintains a lot of the information that was in each of the feature vectors, especially when the feature vectors are expected to be sparse (e.g., have a lot of zeros; see http//www.ece.duke.edu/~lcarin/Bo12.3.2010.ppt).</p>
+
+
+<p>There&#8217;s a lot more to max-pooling than we have time to get into here, for example, you can max-pool, and then re-cluster, and then re-max-pool! This is actually a super clever technique to reduce the amount of spatial variation in your image, and also capture information about the relative placements of various objects.</p>
+
+
+<pre class="codeinput">featVec = nan(ds.nObservations,skm.nClusters*20);
+clusters = skm.run(dsNorm);
+
+<span class="keyword">for</span> imgInd = 1:ds.nObservations;
+    img = ds.X{imgInd};
+    img = rgb2gray(img);
+    imgSize = size(img);
+
+    <span class="comment">% Extract the sub-patches</span>
+    col = im2col(img,patchSize,<span class="string">'distinct'</span>);
+    col = double(col);
+    dsCol = prtDataSetClass(col');
+    dsCol = run(preProc,dsCol);
+    dsFeat = skm.run(dsCol);
+    dsFeat.X = max(dsFeat.X,.05);
+
+    <span class="comment">% Max Pool!</span>
+    <span class="comment">%   Feats will be size 30 x 40 x nClusters</span>
+    <span class="comment">%   featsBp will be size [4 x 5] x nClusters (because of the way</span>
+    <span class="comment">%   blockproc handles edsges)</span>
+    feats = reshape(dsFeat.X,imgSize(1)/8,imgSize(2)/8,[]);
+    featsBp = blockproc(feats,[8 8],@(x)max(max(x.data,[],1),[],2));
+
+    <span class="comment">% We'll cheat a little here, and use the whole max-pooled feature set</span>
+    <span class="comment">% as our feature vector.  Instead, we might want to re-cluster, and</span>
+    <span class="comment">% re-max-pool, and repeat this process a few times.  For now, we'll</span>
+    <span class="comment">% keep it simple:</span>
+    featVec(imgInd,:) = featsBp(:);
+<span class="keyword">end</span>
+</pre>
+
+
+<p>Now that we&#8217;ve max-pooled, we can use our extracted features for classification - we&#8217;ll use a simple PLSDA + MAP classifier and decision algorithm here:</p>
+
+
+<pre class="codeinput">dsFeat = prtDataSetClass(featVec,ds.targets);
+dsFeat.classNames = ds.classNames;
+
+yOut = kfolds(prtClassPlsda + prtDecisionMap,dsFeat,3);
+
+close <span class="string">all</span>;
+prtScoreConfusionMatrix(yOut)
+</pre>
+
+
+<p><img vspace="5" hspace="5" src="http://newfolder.github.io/images/torrione_ExampleCoatesNg_Kmeans_Mscorid_2_01.png" alt=""> <p>Almost 99% correct!  We&rsquo;ve improved performance over our previous work with bag-of-words models, and an SVM, by just (1) max-pooling, and (2) replacing the SVM with a PLSDA classifier.</p><h2>Multiple Classes<a name="5"></a></h2><p>Until now we&rsquo;ve focused on just two classes in MSRCORID.  But there are a lot of types of objects in the MSRCORID database.  In the following, we just repeat a bunch of the code from above, and run it on a data set containing images of benches, buildings, cars, chimneys, clouds and doors:</p><pre class="codeinput">ds = prtDataGenMsrcorid({<span class="string">&lsquo;benches_and_chairs&rsquo;</span>,<span class="string">&lsquo;buildings&rsquo;</span>,<span class="string">&lsquo;cars\front view&rsquo;</span>,<span class="string">&lsquo;cars\rear view&rsquo;</span>,<span class="string">&lsquo;cars\side view&rsquo;</span>,<span class="string">&lsquo;chimneys&rsquo;</span>,<span class="string">&lsquo;clouds&rsquo;</span>,<span class="string">&lsquo;doors&rsquo;</span>});</p>
+
+<p>patchSize = [8 8];
+col = [];
+<span class="keyword">for</span> imgInd = 1:ds.nObservations;</p>
+
+<pre><code>img = ds.X{imgInd};
+img = rgb2gray(img);
+img = imresize(img,.5);
+col = cat(1,col,im2col(img,patchSize,&lt;span class="string"&gt;'distinct'&lt;/span&gt;)');
+</code></pre>
+
+<p><span class="keyword">end</span>
+dsCol = prtDataSetClass(double(col));</p>
+
+<p>preProc = prtPreProcZeroMeanRows + prtPreProcStdNormalizeRows(<span class="string">&lsquo;varianceOffset&rsquo;</span>,10) + prtPreProcZca;
+preProc = preProc.train(dsCol);
+dsNorm = preProc.run(dsCol);</p>
+
+<p>skm = prtClusterSphericalKmeans(<span class="string">&lsquo;nClusters&rsquo;</span>,50);
+skm = skm.train(dsNorm);</p>
+
+<p>featVec = nan(ds.nObservations,skm.nClusters*20);
+clusters = skm.run(dsNorm);</p>
+
+<p><span class="keyword">for</span> imgInd = 1:ds.nObservations;</p>
+
+<pre><code>img = ds.X{imgInd};
+img = rgb2gray(img);
+imgSize = size(img);
+
+&lt;span class="comment"&gt;% Extract the sub-patches&lt;/span&gt;
+col = im2col(img,patchSize,&lt;span class="string"&gt;'distinct'&lt;/span&gt;);
+col = double(col);
+dsCol = prtDataSetClass(col');
+dsCol = run(preProc,dsCol);
+dsFeat = skm.run(dsCol);
+dsFeat.X = max(dsFeat.X,.05);
+
+&lt;span class="comment"&gt;% Max Pool!&lt;/span&gt;
+&lt;span class="comment"&gt;%   Feats will be size 30 x 40 x nClusters&lt;/span&gt;
+&lt;span class="comment"&gt;%   featsBp will be size [4 x 5] x nClusters (because of the way&lt;/span&gt;
+&lt;span class="comment"&gt;%   blockproc handles edsges)&lt;/span&gt;
+feats = reshape(dsFeat.X,imgSize(1)/8,imgSize(2)/8,[]);
+featsBp = blockproc(feats,[8 8],@(x)max(max(x.data,[],1),[],2));
+
+&lt;span class="comment"&gt;% We'll cheat a little here, and use the whole max-pooled feature set&lt;/span&gt;
+&lt;span class="comment"&gt;% as our feature vector.  Instead, we might want to re-cluster, and&lt;/span&gt;
+&lt;span class="comment"&gt;% re-max-pool, and repeat this process a few times.  For now, we'll&lt;/span&gt;
+&lt;span class="comment"&gt;% keep it simple:&lt;/span&gt;
+featVec(imgInd,:) = featsBp(:);
+</code></pre>
+
+<p><span class="keyword">end</span></p>
+
+<p>dsFeat = prtDataSetClass(featVec,ds.targets);
+dsFeat.classNames = ds.classNames;</p>
+
+<p>yOut = kfolds(prtClassPlsda(<span class="string">&lsquo;nComponents&rsquo;</span>,10) + prtDecisionMap,dsFeat,3);
+yOut.classNames = cellfun(@(s)s(1:min([length(s),10])),yOut.classNames,<span class="string">&lsquo;uniformoutput&rsquo;</span>,false);
+close <span class="string">all</span>;
+prtScoreConfusionMatrix(yOut);
+set(gcf,<span class="string">&lsquo;position&rsquo;</span>,[426   125   777   558]);
+</pre><img vspace="5" hspace="5" src="http://newfolder.github.io/images/torrione_ExampleCoatesNg_Kmeans_Mscorid_2_02.png" alt=""> <p>Now we&rsquo;re doing some image processing!  Overall we got about 90% correct, and that includes a lot of confusions between cars\front and cars\rear. That makes sense since the front and backs of cars look pretty similar, and there are only 23 car front examples in the whole data set.</p><h2>Conclusions<a name="7"></a></h2><p>The code in a lot of this blog entry is pretty gross &ndash; for example we have to constantly be taking data out of, and putting it back into the appropriate image sizes.</p><p>At some point in the future, we&rsquo;d like to introduce a good prtDataSet that will handle cell-arrays containing images properly.  We&rsquo;re not there yet, but when we are, we&rsquo;ll let you know on this blog!</p><p>Happy coding!</p><h2>Bibliography<a name="8"></a></h2><p>Adam Coates and Andrew Y. Ng, Learning Feature Representations with K-means, G. Montavon, G. B. Orr, K.-R. Muller (Eds.), Neural Networks: Tricks of the Trade, 2nd edn, Springer LNCS 7700, 2012</p></p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Using prtPath]]></title>
+    <link href="http://newfolder.github.io/blog/2013/03/06/using-prtpath/"/>
+    <updated>2013-03-06T13:24:00-05:00</updated>
+    <id>http://newfolder.github.io/blog/2013/03/06/using-prtpath</id>
+    <content type="html"><![CDATA[<p>We recommend as part of installation that you edit (or create) your startup.m file to include a call to prtPath. This is adds the PRT to your MATLAB search path automatically each time you start MATLAB. There are alternatives to path management (such as the pathtool() or addpath() and savepath()) but we recommend using a startup.m file. Hopefully this post will explain one reason we recommend that.</p>
+
+
+
+
+<p>One of the reasons that we like to use prtPath in a startup file is that prtPath does more than just add the PRT and all of it&#8217;s subfolders to your path.</p>
+
+
+<!--/introduction-->
+
+
+<h2>Contents</h2>
+
+
+<div><ul><li><a href="#1">prtPath and ] directories</a></li><li><a href="#3">Why &#8220;]&#8221;?</a></li><li><a href="#4">Conclusions</a></li></ul></div>
+
+
+<h2>prtPath and ] directories<a name="1"></a></h2>
+
+
+<p>prtPath is actually very basic. It calls the function prtRoot and uses the MATLAB function genpath() to get a list of all of the subdirectories in the prtFolder. It then eventually calls addpath() to add that list of directories to the MATLAB path (it does not save the path for future sessions of MATLAB).</p>
+
+
+<p>Before prtPath() calls addpath() though, it selectively removes some directories from the subdirectory list.</p>
+
+
+<p>First it removes any directory that starts with a &#8220;.&#8221;. This was added to prevent any hidden folders (like those from source control systems) from showing up in the MATLAB path.</p>
+
+
+<p>More importantly though, it removes any folders from the list that start with a &#8220;]&#8221;. This is something special that we put in to add some extra functionality to the PRT.</p>
+
+
+<p>Most of our users want to stick to code that is well tested and is known to behave nicely. But as we go about our jobs and use the PRT we need to add some new functionality. We typically add things like: new classifiers, new datatypes or new pre processing techniques.</p>
+
+
+<p>Some of our users want access to this newest code so it gets added to the PRT in the &#8220;]alpha&#8221; and eventually the &#8220;]beta&#8221; folder. By default prtPath will not include these folders in the path. Instead you have to tell prtPath that you are willing to accept the responsibilities of the bleeding edge. You do this by giving prtPath a list of &#8220;]&#8221; folders that you want to include. (Or rather not exclude).</p>
+
+
+<p>For example:</p>
+
+
+<pre class="codeinput">prtPath(<span class="string">'alpha'</span>, <span class="string">'beta'</span>);
+</pre>
+
+
+<p>will add both the &#8220;]alpha&#8221; and &#8220;]beta&#8221; folders (and their subfolders) to the path.</p>
+
+
+<p>Currently in the PRT we have one other &#8220;]&#8221; folder, &#8220;]internal&#8221;. In the internal folder you will find some code on unit testing and documentation building. You probably wont be interested in much that&#8217;s in there so I probably wouldn&#8217;t clutter my path with it.</p>
+
+
+<h2>Why &#8220;]&#8221;?<a name="3"></a></h2>
+
+
+<p>We were searching for a character that is a valid path (folder) name character on all major operating systems and is at the same time a character that most people wouldn&#8217;t start a directory name with. MATLAB already uses &#8220;@&#8221; for (old style) class definitions and &#8220;+&#8221; for packages. We thought &#8220;]&#8221; fit all of these criteria.</p>
+
+
+<h2>Conclusions<a name="4"></a></h2>
+
+
+<p>We hope that cleared up a little of why we recommend prtPath over pathtool(), at least for the PRT. In general just call prtPath() by itself but if you want to see what might lie ahead for the PRT checkout the ]alpha and ]beta folders. In some future posts we will talk about some things in these folders that might be of interest to you. Maybe that will entice you to explore the ].</p>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Learning Feature Representations]]></title>
+    <link href="http://newfolder.github.io/blog/2013/02/27/learning-feature-representations/"/>
+    <updated>2013-02-27T14:59:00-05:00</updated>
+    <id>http://newfolder.github.io/blog/2013/02/27/learning-feature-representations</id>
+    <content type="html"><![CDATA[<p>Today I wanted to go through an interesting paper I recently read and show how to implement parts of that paper in the PRT.  The paper is <i>Learning Feature Representations with K-means</i> , by Adam Coates and Andrew Y. Ng (see below for full citation).</p>
+
+
+<p>The meat of the Coates and Ng paper deals with how to use K-means to extract meaningful dictionaries from image data.  The latter part of the paper talks about how to do real machine learning with max-pooling for classification, but for today, I just wanted to introduce the MSRCORID (Microsoft Research Cambridge Object Recognition Image Database) data in the PRT and also show how to use the PRT to do some K-means dictionary learning.</p>
+
+
+
+
+<!--/introduction-->
+
+
+<h2>Contents</h2>
+
+
+<div><ul><li><a href="#1">The MSRCORID Database</a></li><li><a href="#3">Extracting Patches</a></li><li><a href="#4">Normalization</a></li><li><a href="#5">K-Means</a></li><li><a href="#7">Simple Bag-Of-Words Classification</a></li><li><a href="#10">Bibliography</a></li></ul></div>
+
+
+<h2>The MSRCORID Database<a name="1"></a></h2>
+
+
+<p>For fun, I downloaded a new image database to play with for this data. The data is available for download from here: <a href="http://research.microsoft.com/en-us/downloads/b94de342-60dc-45d0-830b-9f6eff91b301/default.aspx">http://research.microsoft.com/en-us/downloads/b94de342-60dc-45d0-830b-9f6eff91b301/default.aspx</a></p>
+
+
+<p>You can load the data automatically in the PRT, if you update to the newest version and run:</p>
+
+
+<pre class="codeinput">ds = prtDataGenMsrcorid;
+</pre>
+
+
+<p>By default, that command will give a dataset with only images of chimneys and single flowers.  Look at the help for prtDataGenMsrcorid to see how to load data from these, and a lot more interesting classes.</p>
+
+
+<p>You should note that prtDataGenMsrcorid does not output a prtDataSetClass, it produces a prtDataSetCellArray.  prtDataSetCellArray data objects are relatively new, and not fully documented, but they&#8217;re useful when you want to deal with datasets where each observation can have different sizes - e.g., images.</p>
+
+
+<p>You can access elements using cell-array notation to access the .X field of the prtDataSet, for example:</p>
+
+
+<pre class="codeinput">subplot(2,1,1);
+imshow(ds.X{1});
+title(<span class="string">'Flower'</span>);
+
+subplot(2,1,2);
+imshow(ds.X{end});
+title(<span class="string">'Chimney'</span>);
+</pre>
+
+
+<p><img vspace="5" hspace="5" src="http://newfolder.github.io/images/torrione_ExampleCoatesNg_Kmeans_Mscorid_01.png" alt=""> <h2>Extracting Patches<a name="3"></a></h2><p>To generate a dictionary requires segmenting the initial images provided to us into sub-regions.  We can acheive this by using the MATLAB function im2col which with will convert every 8x8 sub-image to a 64x1 element vector.</p><pre class="codeinput">patchSize = [8 8];
+col = [];
+<span class="keyword">for</span> imgInd = 1:ds.nObservations;</p>
+
+<pre><code>img = ds.X{imgInd};
+img = rgb2gray(img);
+img = imresize(img,.5);
+col = cat(1,col,im2col(img,patchSize,&lt;span class="string"&gt;'distinct'&lt;/span&gt;)');
+</code></pre>
+
+<p><span class="keyword">end</span>
+dsCol = prtDataSetClass(double(col));
+</pre><h2>Normalization<a name="4"></a></h2><p>[Coates, 2012], makes it very clear that proper data normalization on a per-patch basis is fundamental to getting meaningful K-means centroids. The three main steps in the normalization are mean-normalization, energy normalization, and ZCA centering.  These are all implemented in the PRT as prtPreProcZeroMeanRows, prtPreProcStdNormalizeRows, and prtPreProcZca.</p><p>As always, we can buld an algorithm out of these independent components, then train and run the algorithm on the dsCol data we created earlier:</p><pre class="codeinput">preProc = prtPreProcZeroMeanRows + prtPreProcStdNormalizeRows(<span class="string">&lsquo;varianceOffset&rsquo;</span>,10) + prtPreProcZca;
+preProc = preProc.train(dsCol);
+dsNorm = preProc.run(dsCol);
+</pre><h2>K-Means<a name="5"></a></h2><p>[Coates, 2012], makes a compelling case that K-means clustering is capable of learning dictionaries that can be easily used for classification.  The K-means algorithm in Coates paper is particularly intruiging, and its very fast compared to standard K-means using euclidean distances.  We&rsquo;ve implemented the K-means algorithm as described in [Coates, 2012] as prtClusterSphericalKmeans, which is much faster than using the regular K-means.</p><pre class="codeinput">skm = prtClusterSphericalKmeans(<span class="string">&lsquo;nClusters&rsquo;</span>,50);
+skm = skm.train(dsNorm);
+</pre><p>We can visualize the resulting cluster centers from the K-means processing by looking a the skm.clusterCenters, and plotting the first 50.  We&rsquo;ll sort these by how often data vectors were assigned to each cluster, so the top-left has the most elements, and the bottom-right has the least.</p><pre class="codeinput"></p>
+
+<p>yOutK = skm.run(dsNorm);
+[val,ind] = max(yOutK.X,[],2);
+boolMat = zeros(size(yOutK.X));
+indices = sub2ind(size(boolMat),(1:size(boolMat,1))&lsquo;,ind(:));
+boolMat(indices) = 1;</p>
+
+<p>clusterCounts = sum(boolMat);
+[v,sortInds] = sort(clusterCounts,<span class="string">&lsquo;descend&rsquo;</span>);</p>
+
+<p>c = skm.clusterCenters';
+<span class="keyword">for</span> i = 1:50</p>
+
+<pre><code>subplot(5,10,i);
+imagesc(reshape(c(sortInds(i),:),patchSize));
+title(v(i));
+tickOff;
+</code></pre>
+
+<p><span class="keyword">end</span>
+colormap <span class="string">gray</span>
+</pre><img vspace="5" hspace="5" src="http://newfolder.github.io/images/torrione_ExampleCoatesNg_Kmeans_Mscorid_02.png" alt=""> <h2>Simple Bag-Of-Words Classification<a name="7"></a></h2><p>We can use some of the approaches from [Coates, 2012] to do some simple classification, also.  For example, we can use our new K-means clustering algorithm to generate features for each observation.  We can do this for every patch we extract from each image, but we&rsquo;d like to make decisions on an image-by-image basis, so we need to aggregate over the resulting feature vectors somehow.</p><p>A clever way to do this is to use max-pooling and deep-learning as specified in [Coates, 2012], but for now we&rsquo;ll just take the mean of the resulting feature vectors (in a manner similar to bag-of-words classification <a href="http://en.wikipedia.org/wiki/Bag-of-words_model"><a href="http://en.wikipedia.org/wiki/Bag-of-words_model">http://en.wikipedia.org/wiki/Bag-of-words_model</a></a> )</p><pre class="codeinput">featVec = nan(ds.nObservations,skm.nClusters);</p>
+
+<p><span class="keyword">for</span> imgInd = 1:ds.nObservations;</p>
+
+<pre><code>img = ds.X{imgInd};
+img = rgb2gray(img);
+col = im2col(img,patchSize,&lt;span class="string"&gt;'distinct'&lt;/span&gt;);
+col = double(col);
+dsCol = prtDataSetClass(col');
+dsCol = run(preProc,dsCol);
+dsFeat = skm.run(dsCol);
+feats = max(dsFeat.X,.05);
+featVec(imgInd,:) = mean(feats);
+</code></pre>
+
+<p><span class="keyword">end</span>
+</pre><p>Now we can classify our feature vectors using another classification algorithm &ndash; e.g., here we use a SVM, with ZMUV pre-processing, and max-a-posteriori classification.</p><pre class="codeinput">dsFeat = prtDataSetClass(featVec,ds.targets);
+dsFeat.classNames = ds.classNames;</p>
+
+<p>yOut = kfolds(prtPreProcZmuv + prtClassLibSvm + prtDecisionMap,dsFeat,3);</p>
+
+<p>close <span class="string">all</span>;
+prtScoreConfusionMatrix(yOut)
+</pre><img vspace="5" hspace="5" src="http://newfolder.github.io/images/torrione_ExampleCoatesNg_Kmeans_Mscorid_03.png" alt=""> <p>Hey!  That&rsquo;s not too bad for a few lines of code.  At some point in the future we&rsquo;ll take on the rest of the [Coates, 2012] paper, but in the meantime, let us know if you implement the max-pooling or other processes outlined therein.</p><p>Happy coding!</p><p>Note: we created prtPreProcZca, prtClusterSphericalKmeans, and prtDataGenMsrcorid for this blog entry; they&rsquo;re all in the PRT, but are recent (as of 2/27/2013) so download a new version to get access to all these.</p><h2>Bibliography<a name="10"></a></h2><p>Adam Coates and Andrew Y. Ng, Learning Feature Representations with K-means, G. Montavon, G. B. Orr, K.-R. Muller (Eds.), Neural Networks: Tricks of the Trade, 2nd edn, Springer LNCS 7700, 2012</p></p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[IEEE GRSS Hyperspectral Data]]></title>
+    <link href="http://newfolder.github.io/blog/2013/02/16/ieee-grss-hyperspectral-data/"/>
+    <updated>2013-02-16T20:06:00-05:00</updated>
+    <id>http://newfolder.github.io/blog/2013/02/16/ieee-grss-hyperspectral-data</id>
+    <content type="html"><![CDATA[<p>
+Hi everyone.  Outside of software development, we also do some work in geoscience and remote sensing.  As a result, we were very excited to see an announcement from the IEEE GRSS that they were making some new data sets available - in particular, a hyperspectral data set, and a LIDAR data set (if you&#8217;re not familiar with these technologies, see here: <a href="http://en.wikipedia.org/wiki/Hyperspectral_imaging">http://en.wikipedia.org/wiki/Hyperspectral_imaging</a> and <a href="http://en.wikipedia.org/wiki/LIDAR">http://en.wikipedia.org/wiki/LIDAR</a>).</p>
+
+
+<!--/introduction-->
+
+
+<h2>Contents</h2>
+
+
+<div><ul><li><a href="#1">Getting Started</a></li><li><a href="#3">A Note About UnLabeled Points</a></li><li><a href="#5">Visualization of the Hyperspectral and LIDAR data</a></li><li><a href="#6">Hyperspectral Data</a></li><li><a href="#7">PC Projections</a></li><li><a href="#9">15-Class Classification</a></li><li><a href="#11">Evaluation</a></li><li><a href="#12">Conclusions</a></li></ul></div>
+
+
+<h2>Getting Started<a name="1"></a></h2>
+
+
+<p>We&#8217;ve made some M-files that will load in the data for you (see the .ZIP file at the end of this post), but you&#8217;ll need to go to the GRSS website to download the data from here first: <a href="http://hyperspectral.ee.uh.edu/?page_id=459">http://hyperspectral.ee.uh.edu/?page_id=459</a>).</p>
+
+
+<p>To load the data, first download the .ZIP file at the end of this post, then run the following.  But change the line below to point to the right directory, so for example, I have a file C:\Users\pete\Documents\data\2013IEEE_GRSS_DF_Contest\2013_IEEE_GRSS_DF_Contest_CASI.tif</p>
+
+
+<pre class="codeinput">imgSize = [349 1905];
+grssDir = <span class="string">'C:\Users\pete\Documents\data\2013IEEE_GRSS_DF_Contest\'</span>;
+[dsCasi,dsLidar] = prtExampleReadGrss2013(grssDir);
+</pre>
+
+
+<p>Note, if you don&#8217;t want to use the PRT for anything, but would like to automatically read in the ROI file provided by GRSS, download the .ZIP at the end of this file, and just use:</p>
+
+
+<pre class="codeinput">
+regions = grssRoiRead(roiFile);
+</pre>
+
+
+<p>Each of these data sets has 664845 observations (from the 349x1905 dimensional image) the hyperspectral data has 144 dimensions, and the LIDAR data only has one dimension. The fine folks at GRSS were kind enough to provide labels for about 2832 pixels from the data sets.  These are from 15 different classes: grass_healthy, grass_stressed, grass_synthetic, tree, soil, water, residential, commercial, road, highway, railway, parking_lot1, parking_lot2, tennis_court, running_track.</p>
+
+
+<h2>A Note About UnLabeled Points<a name="3"></a></h2>
+
+
+<p>This data set contains a lot of unlabeled data.  Previously, to use the PRT with unlabeled data required ad-hoc fiddling with targets and classes.  But as of Jan 7, 2013, the PRT now handles unlabeled data inherently.  The PRT uses NaNs to represent unlabeled data points - e.g.,</p>
+
+
+<pre class="codeinput">numNan = length(find(isnan(dsCasi.targets))); <span class="comment">%there are 662013 unlabeled points</span>
+disp(numNan)
+</pre>
+
+
+<pre class="codeoutput">      662013
+
+</pre>
+
+
+<p>You can get a data set using only the labeled data using new mthods included specifically for unlabeled data:</p>
+
+
+<pre class="codeinput">dsUnLabeled = dsCasi.removeLabeled;
+dsLabeled = dsCasi.retainLabeled;
+</pre>
+
+
+<h2>Visualization of the Hyperspectral and LIDAR data<a name="5"></a></h2>
+
+
+<p>We can visualize the data in the form of the spatial image by re-sizing it to be the correct dimensionality.  For example, the next lines reshape the total intensity (SUM) of the hyperspectral data, and reshape the LIDAR data into the right size:</p>
+
+
+<pre class="codeinput">x = dsCasi.X;
+x = reshape(x',[144 imgSize]);
+imgCasi = sqrt(squeeze(sum(x.^2)));
+
+subplot(2,1,1);
+imagesc(imgCasi)
+title(<span class="string">'CASI Data'</span>);
+
+xLidar = dsLidar.X;
+imgLidar = reshape(xLidar,imgSize);
+subplot(2,1,2);
+imagesc(imgLidar)
+title(<span class="string">'LIDAR Data'</span>);
+</pre>
+
+
+<p><img vspace="5" hspace="5" src="http://newfolder.github.io/images/torrione_blog_Grss_01.png" alt=""> <h2>Hyperspectral Data<a name="6"></a></h2><p>The remainder of this blog entry will just show a few examples of how to use the PRT in combination with the CASI hyperspectral data; I want to be clear that we&rsquo;re not doing anything that&rsquo;s particularly well-motivated from a hyperspectral data perspective.  If you&rsquo;re interested, there&rsquo;s a great deal of research in the hyperspectral field &ndash; we can&rsquo;t summarize all the interesting stuff that&rsquo;s going on there, but if you&rsquo;re interested, check out some recent issues of WHISPERS: <a href="http://www.ieee-whispers.com/"><a href="http://www.ieee-whispers.com/">http://www.ieee-whispers.com/</a></a></p><p>In reality, the purpose of the data set from GRSS is to do data fusion, but for today we&rsquo;ll just be concerned with the hyperspectral data &ndash; dsCasi.</p><h2>PC Projections<a name="7"></a></h2><p>As an example, we can explore the data in principal component space. It&rsquo;s easy enought to do &ndash; we can treat the CASI part of the data just like any other prtDataSet.  Let&rsquo;s build an algorithm to do some standard pre-processing.  Each 144 dimensional hyperspectral vector is a row of the data matrix, so we can zero-mean, and normalize the standard deviation of each row with prtPreProcZeroMeanRows and prtPreProcStdNormalizeRows (which is new).</p><pre class="codeinput">preProc = prtPreProcZeroMeanRows + prtPreProcStdNormalizeRows(<span class="string">&lsquo;varianceOffset&rsquo;</span>,10) + prtPreProcPca(<span class="string">&lsquo;nComponents&rsquo;</span>,3);</p>
+
+<p>dsLabeled = dsCasi.retainLabeled;
+preProc = preProc.train(dsLabeled);
+dsPreProc = preProc.run(dsLabeled);
+subplot(1,1,1);
+plot(dsPreProc);
+legend(<span class="string">&lsquo;location&rsquo;</span>,<span class="string">&lsquo;EastOutside&rsquo;</span>)
+title(<span class="string">&lsquo;CASI Hyperspectral PC&rsquo;</span>);
+</pre><img vspace="5" hspace="5" src="http://newfolder.github.io/images/torrione_blog_Grss_02.png" alt=""> <p>Visualizing the data in PC space, we can see a few things.  First, all of the grass and tree samples are quite similar in PC space.  Also, synthetic grass looks nothing like the real grass classes &ndash; from a hyperspectral perspective, synthetic grass is clearly a man-made material, despite the color similarity between it and real grass.</p><h2>15-Class Classification<a name="9"></a></h2><p>Let&rsquo;s take a look at doing some classification.  Recall that GRSS labeled 15 unique classes for us; we can do standard machine learning with that data.  We will use similar pre-processing as above, and then a 15 component PLSDA classifier.  PLSDA is nice in this case, since it natively handles multi-class problems, and its quite fast.  We can probably get better results with a non-linear classifier, but for now we&rsquo;ll stick with PLSDA.</p><pre class="codeinput">dsLabeled = dsCasi.retainLabeled;</p>
+
+<p>algo = prtPreProcZeroMeanRows + prtPreProcStdNormalizeRows(<span class="string">&lsquo;varianceOffset&rsquo;</span>,10) + prtClassPlsda(<span class="string">&lsquo;nComponents&rsquo;</span>,15) + prtDecisionMap;
+yOut = algo.kfolds(dsLabeled,3);</p>
+
+<p>close <span class="string">all</span>;
+prtScoreConfusionMatrix(yOut);
+pc = prtScorePercentCorrect(yOut);
+title(sprintf(<span class="string">&lsquo;15 Class Classification; %.2f%% Correct&rsquo;</span>,pc*100));
+xlabel(<span class="string">&lsquo;&rsquo;</span>);
+rotateticklabel(gca,45);
+</pre><img vspace="5" hspace="5" src="http://newfolder.github.io/images/torrione_blog_Grss_03.png" alt=""> <p>Over 70% correct, with just this simple processing!  That&rsquo;s not too shabby.  Note, however, that the cross-validation approach we&rsquo;ve used here is a little suspect &ndash; a lot of the truth proivded to us was from neighboring pixels.  These pixels might be only about a meter apart, and two hyperspectral vectors from that close proximity, on, say, grass, will be expected to be much more correlated than two pixels from hundreds of meters apart.</p><p>One way to overcome this would be to build cross-validation folds using the spatial locations of the pixels; it would be interesting to see how cross-validation would work under that case.</p><h2>Evaluation<a name="11"></a></h2><p>To evaluate our algorithm we can visualize the performance on the entire larger hyperspectral image.  First, we run the algorithm, then get the estimated labels, and reshape to the right size for visualization.</p><pre class="codeinput">algo = algo.train(dsLabeled);
+yOutFull = algo.run(dsCasi);</p>
+
+<p>close <span class="string">all</span>;
+img = reshape(yOutFull.X,imgSize);
+imagesc(img);
+colorbar
+<span class="comment">% It&rsquo;s a little hard to judge, but this doesn&rsquo;t look completely</span>
+<span class="comment">% unreasonable&hellip;.</span>
+<span class="comment">%</span>
+<span class="comment">% The following shows only the points labeled as one of the two types of</span>
+<span class="comment">% grasses or trees</span>
+imagesc(img == 1 | img == 2 | img == 4);
+title(<span class="string">&lsquo;Points Classified as Grass (Healthy, and Stressed) or Tree&rsquo;</span>);
+</pre><img vspace="5" hspace="5" src="http://newfolder.github.io/images/torrione_blog_Grss_04.png" alt=""> <h2>Conclusions<a name="12"></a></h2><p>If you&rsquo;re interested in hyperspectral data, LIDAR, or data fusion, you should definitely check out the GRSS data set.  We hope the PRT files we&rsquo;re providing will help you get started.</p><p>There&rsquo;s a lot more to do with this data &ndash; we haven&rsquo;t even explored the LIDAR data yet, or how to fuse information from the two.  This data is also a prime candidate for semi-supervised learning (<a href="http://en.wikipedia.org/wiki/Semi-supervised_learning"><a href="http://en.wikipedia.org/wiki/Semi-supervised_learning">http://en.wikipedia.org/wiki/Semi-supervised_learning</a></a>), active learning (<a href="http://en.wikipedia.org/wiki/Active_learning"><a href="http://en.wikipedia.org/wiki/Active_learning">http://en.wikipedia.org/wiki/Active_learning</a></a>), or multi-task learning (<a href="http://en.wikipedia.org/wiki/Multi-task_learning"><a href="http://en.wikipedia.org/wiki/Multi-task_learning">http://en.wikipedia.org/wiki/Multi-task_learning</a></a>).</p><p>Hopefully we&rsquo;ll get a chance to delve more into this data set in the near future.  Let us know if you have any luck with this data!</p></p>
+
+<p><a href="http://newfolder.github.io/images/prtGrssBlog_2013_02_16.zip">Here&rsquo;s a link</a> to the .ZIP file with all the code you&rsquo;ll need.</p>
+
+<p><p>
+You may also need rotateticklabel.m, which is available from <a href="http://www.mathworks.com/matlabcentral/fileexchange/8722-rotate-tick-label">MATLAB Central</a></p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Combining Actions]]></title>
@@ -519,7 +1027,7 @@ title(sprintf(<span class="string">'Actual: %d; SVM Label: %d'</span>,yOutTestMi
 
 <p>Check out the <a href="http://newfolder.github.io/prtdoc/prtDocInstallation.html">installation instructions</a> to get you up and running. Once installed, open up MATLAB&reg;, and follow through with our <a href="http://newfolder.github.io/prtdoc/prtDocGettingStarted.html">Getting Started</a> guide, which will walk you through some examples of using the PRT in practice and show you what the PRT can do.</p>
 
-<p>Even though there are a lot of M-files in the PRT, we’ve built the PRT to be easy to use and to make it easy to find what you need from within MATLAB.  For example, to find a list of all classifiers in the PRT, simply type “prtClass” and then <tab> at the MATLAB command prompt.  Other object types behave the same way, e.g., prtPreProc <tab>. If you have any feed back or questions don&rsquo;t hesitate to ask on on <a href="https://github.com/newfolder/PRT">GitHub</a> or through email at <a href="mailto:prt@newfolderconsulting.com"><a href="&#109;&#x61;&#x69;&#108;&#x74;&#111;&#58;&#x70;&#114;&#x74;&#x40;&#110;&#x65;&#x77;&#x66;&#x6f;&#108;&#x64;&#x65;&#114;&#99;&#x6f;&#x6e;&#x73;&#117;&#108;&#116;&#x69;&#x6e;&#103;&#46;&#x63;&#111;&#x6d;">&#x70;&#x72;&#x74;&#x40;&#110;&#x65;&#x77;&#x66;&#x6f;&#108;&#100;&#x65;&#114;&#x63;&#111;&#x6e;&#x73;&#117;&#108;&#x74;&#x69;&#110;&#x67;&#46;&#99;&#111;&#109;</a></a>.</p>
+<p>Even though there are a lot of M-files in the PRT, we’ve built the PRT to be easy to use and to make it easy to find what you need from within MATLAB.  For example, to find a list of all classifiers in the PRT, simply type “prtClass” and then <tab> at the MATLAB command prompt.  Other object types behave the same way, e.g., prtPreProc <tab>. If you have any feed back or questions don&rsquo;t hesitate to ask on on <a href="https://github.com/newfolder/PRT">GitHub</a> or through email at <a href="mailto:prt@newfolderconsulting.com"><a href="&#x6d;&#97;&#105;&#x6c;&#x74;&#111;&#58;&#112;&#x72;&#116;&#64;&#110;&#x65;&#x77;&#x66;&#111;&#108;&#x64;&#x65;&#x72;&#x63;&#x6f;&#x6e;&#115;&#117;&#x6c;&#116;&#105;&#x6e;&#x67;&#46;&#99;&#x6f;&#x6d;">&#112;&#114;&#x74;&#64;&#110;&#101;&#119;&#x66;&#111;&#x6c;&#100;&#x65;&#x72;&#99;&#x6f;&#110;&#x73;&#117;&#x6c;&#x74;&#105;&#110;&#103;&#x2e;&#99;&#111;&#109;</a></a>.</p>
 
 <p>We are going to start blogging every once in a while about the PRT and things it can do. We hope that it starts a conversation about the types of things people are doing with the PRT and what things people might want the PRT to do in the future.</p>
 

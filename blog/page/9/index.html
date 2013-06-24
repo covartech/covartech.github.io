@@ -18,7 +18,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://newfolder.github.io/blog/page/2">
+  <link rel="canonical" href="http://newfolder.github.io/blog/page/9">
   <link href="/favicon.ico" rel="icon">
   
   <link href="/assets/bootstrap/css/spacelab.min.css" rel="stylesheet" type="text/css">
@@ -172,7 +172,7 @@ span.syscmd { color:#B28C00 }
 
   <header>
     
-      <h1 class="entry-title"><a href="/blog/2013/03/06/using-prtpath/">Using prtPath</a></h1>
+      <h1 class="entry-title"><a href="/blog/2013/01/21/hi/">Hi</a></h1>
     
     
       <p class="meta">
@@ -188,75 +188,28 @@ span.syscmd { color:#B28C00 }
   
 
 
-<time datetime="2013-03-06T13:24:00-05:00" pubdate data-updated="true">Mar 6<span>th</span>, 2013</time>
+<time datetime="2013-01-21T16:02:00-05:00" pubdate data-updated="true">Jan 21<span>st</span>, 2013</time>
         
       </p>
     
   </header>
 
 
-  <div class="entry-content"><p>We recommend as part of installation that you edit (or create) your startup.m file to include a call to prtPath. This is adds the PRT to your MATLAB search path automatically each time you start MATLAB. There are alternatives to path management (such as the pathtool() or addpath() and savepath()) but we recommend using a startup.m file. Hopefully this post will explain one reason we recommend that.</p>
+  <div class="entry-content"><p>Hi,</p>
 
+<p>Thanks for checking out the PRT. The PRT is intended to help people who do machine learning handle the most common classification tasks within MATLAB.  This includes things like cross-validation, data visualization, classifier development and feature selection. The PRT includes object types for data set storage, pre-processing, classification, clustering, distance calculations, outlier removal, kernel learning, data generation, scoring and classifier evaluation, feature selection, random variable definitions, and visualization. We think it serves as a great platform for both machine learning research and applied algorithm development (that&rsquo;s why we built it!).</p>
 
+<p>The PRT is free and released under the MIT license which means that it is free for academic and commercial use. The PRT is hosted on <a href="https://github.com/newfolder/PRT">GitHub</a> so feel free to fork or clone the repository or just download the latest <a href="https://github.com/newfolder/PRT/zipball/master">zip</a>.</p>
 
+<p>Check out the <a href="/prtdoc/prtDocInstallation.html">installation instructions</a> to get you up and running. Once installed, open up MATLAB&reg;, and follow through with our <a href="/prtdoc/prtDocGettingStarted.html">Getting Started</a> guide, which will walk you through some examples of using the PRT in practice and show you what the PRT can do.</p>
 
-<p>One of the reasons that we like to use prtPath in a startup file is that prtPath does more than just add the PRT and all of it&#8217;s subfolders to your path.</p>
+<p>Even though there are a lot of M-files in the PRT, we’ve built the PRT to be easy to use and to make it easy to find what you need from within MATLAB.  For example, to find a list of all classifiers in the PRT, simply type “prtClass” and then <tab> at the MATLAB command prompt.  Other object types behave the same way, e.g., prtPreProc <tab>. If you have any feed back or questions don&rsquo;t hesitate to ask on on <a href="https://github.com/newfolder/PRT">GitHub</a> or through email at <a href="mailto:prt@newfolderconsulting.com"><a href="&#x6d;&#97;&#105;&#x6c;&#x74;&#111;&#58;&#112;&#x72;&#116;&#64;&#110;&#x65;&#x77;&#x66;&#111;&#108;&#x64;&#x65;&#x72;&#x63;&#x6f;&#x6e;&#115;&#117;&#x6c;&#116;&#105;&#x6e;&#x67;&#46;&#99;&#x6f;&#x6d;">&#112;&#114;&#x74;&#64;&#110;&#101;&#119;&#x66;&#111;&#x6c;&#100;&#x65;&#x72;&#99;&#x6f;&#110;&#x73;&#117;&#x6c;&#x74;&#105;&#110;&#103;&#x2e;&#99;&#111;&#109;</a></a>.</p>
 
+<p>We are going to start blogging every once in a while about the PRT and things it can do. We hope that it starts a conversation about the types of things people are doing with the PRT and what things people might want the PRT to do in the future.</p>
 
-<!--/introduction-->
+<p>Talk to you soon.  Happy coding!</p>
 
-
-<h2>Contents</h2>
-
-
-<div><ul><li><a href="#1">prtPath and ] directories</a></li><li><a href="#3">Why &#8220;]&#8221;?</a></li><li><a href="#4">Conclusions</a></li></ul></div>
-
-
-<h2>prtPath and ] directories<a name="1"></a></h2>
-
-
-<p>prtPath is actually very basic. It calls the function prtRoot and uses the MATLAB function genpath() to get a list of all of the subdirectories in the prtFolder. It then eventually calls addpath() to add that list of directories to the MATLAB path (it does not save the path for future sessions of MATLAB).</p>
-
-
-<p>Before prtPath() calls addpath() though, it selectively removes some directories from the subdirectory list.</p>
-
-
-<p>First it removes any directory that starts with a &#8220;.&#8221;. This was added to prevent any hidden folders (like those from source control systems) from showing up in the MATLAB path.</p>
-
-
-<p>More importantly though, it removes any folders from the list that start with a &#8220;]&#8221;. This is something special that we put in to add some extra functionality to the PRT.</p>
-
-
-<p>Most of our users want to stick to code that is well tested and is known to behave nicely. But as we go about our jobs and use the PRT we need to add some new functionality. We typically add things like: new classifiers, new datatypes or new pre processing techniques.</p>
-
-
-<p>Some of our users want access to this newest code so it gets added to the PRT in the &#8220;]alpha&#8221; and eventually the &#8220;]beta&#8221; folder. By default prtPath will not include these folders in the path. Instead you have to tell prtPath that you are willing to accept the responsibilities of the bleeding edge. You do this by giving prtPath a list of &#8220;]&#8221; folders that you want to include. (Or rather not exclude).</p>
-
-
-<p>For example:</p>
-
-
-<pre class="codeinput">prtPath(<span class="string">'alpha'</span>, <span class="string">'beta'</span>);
-</pre>
-
-
-<p>will add both the &#8220;]alpha&#8221; and &#8220;]beta&#8221; folders (and their subfolders) to the path.</p>
-
-
-<p>Currently in the PRT we have one other &#8220;]&#8221; folder, &#8220;]internal&#8221;. In the internal folder you will find some code on unit testing and documentation building. You probably wont be interested in much that&#8217;s in there so I probably wouldn&#8217;t clutter my path with it.</p>
-
-
-<h2>Why &#8220;]&#8221;?<a name="3"></a></h2>
-
-
-<p>We were searching for a character that is a valid path (folder) name character on all major operating systems and is at the same time a character that most people wouldn&#8217;t start a directory name with. MATLAB already uses &#8220;@&#8221; for (old style) class definitions and &#8220;+&#8221; for packages. We thought &#8220;]&#8221; fit all of these criteria.</p>
-
-
-<h2>Conclusions<a name="4"></a></h2>
-
-
-<p>We hope that cleared up a little of why we recommend prtPath over pathtool(), at least for the PRT. In general just call prtPath() by itself but if you want to see what might lie ahead for the PRT checkout the ]alpha and ]beta folders. In some future posts we will talk about some things in these folders that might be of interest to you. Maybe that will entice you to explore the ].</p>
-
+<p>-Kenny and Pete</p>
 </div>
   
   
@@ -269,11 +222,9 @@ span.syscmd { color:#B28C00 }
   
   <div class="pagination">
     
-      <a class="prev" href="/blog/page/3/">&larr; Older</a>
-    
     <a href="/blog/archives">Blog Archives</a>
     
-    <a class="next" href="/">Newer &rarr;</a>
+    <a class="next" href="/blog/page/8/">Newer &rarr;</a>
     
   </div>
 </div>

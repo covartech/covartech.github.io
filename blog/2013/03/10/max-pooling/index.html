@@ -5,11 +5,11 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>PRT Blog</title>
+  <title>Max-Pooling Feature Representations in MSRCORID - PRT Blog</title>
   <meta name="author" content="Kenneth Morton and Peter Torrione">
 
   
-  <meta name="description" content="Pattern Recognition in MATLAB The Pattern Recognition Toolbox for MATLAB® provides an easy to use and robust interface to dozens of pattern &hellip;">
+  <meta name="description" content="Max-Pooling Feature Representations in MSRCORID Mar 10th, 2013 A few weeks ago we took a look at a paper by Coates and Ng that dealt with learning &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -18,7 +18,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://newfolder.github.io">
+  <link rel="canonical" href="http://newfolder.github.io/blog/2013/03/10/max-pooling">
   <link href="/favicon.ico" rel="icon">
   
   <link href="/assets/bootstrap/css/spacelab.min.css" rel="stylesheet" type="text/css">
@@ -103,76 +103,14 @@ span.syscmd { color:#B28C00 }
     </header>
     <div id="main">
       <div id="content">
-        <div class="row-fluid">
-<div class="span8">
-<div class="thumbnail pull-right" style="margin-left: 20px; width: 250px; height: 200px;"><img src="/images/prtIcon.png" alt="PRT Logo" width='250' height='200'></div>
-<H1> Pattern Recognition in MATLAB </H1>
-<p>The Pattern Recognition Toolbox for MATLAB® provides an easy to use and robust interface to dozens of pattern classification tools making cross-validation, data exploration, and classifier development rapid and simple. The PRT gives you the power to apply sophisticated data analysis techniques to your problem. If you have data and need to make predictions based on your data, the PRT can help you do more in less time.</p>
-
-<H2>Visualize Your Data</H2>
-<p>The PRT’s prtDataSet objects make using and visualizing your data a breeze. The multiple built in techniques for data visualization will help you interactively understand your data and develop the insights to help you make breakthroughs.</p>
-
-<H2>Streamline Your Processing</H2>
-<p>The PRT provides a wide array of inter-connectable pattern recognition approaches. Every PRT action can be connected to any other PRT actions to enable you to build the powerful processing pipelines to solve the problems you need to solve with a single tool.</p>
-
-<H2>Get Answers</H2>
-<p>Built in cross-validation techniques ensure that your performance estimates are robust, and are indicative of expected operating performance, and built in support for decision making takes the guesswork out of setting optimal thresholds to make binary or M-ary decisions based on your data.</p>
-</div>
-
-
-  <div class="span4 sidebar">
-    <div class="well">
-      
-        <section>
-  <h2>Recent Posts</h2>
-  <ul id="recent_posts">
-    
-      <li class="post">
-        <a href="/blog/2013/03/10/max-pooling/">Max-Pooling Feature Representations in MSRCORID</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/03/06/using-prtpath/">Using prtPath</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/02/27/learning-feature-representations/">Learning Feature Representations</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/02/16/ieee-grss-hyperspectral-data/">IEEE GRSS Hyperspectral Data</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/02/11/combining-actions/">Combining Actions</a>
-      </li>
-    
-  </ul>
-</section>
-
-
-      
-    </div>
-  </div>
-
-
-
-</div>
-
-<br>
-<hr>
-<br>
-
-<div class="blog-index">
+        <div class="row">
   
-  
-  
-    <article>
-      <br>
+  <div class="span8">
+    <br>
 
   <header>
     
-      <h1 class="entry-title"><a href="/blog/2013/03/10/max-pooling/">Max-Pooling Feature Representations in MSRCORID</a></h1>
+      <h1 class="entry-title">Max-Pooling Feature Representations in MSRCORID</h1>
     
     
       <p class="meta">
@@ -373,22 +311,100 @@ prtScoreConfusionMatrix(yOut);
 set(gcf,<span class="string">&lsquo;position&rsquo;</span>,[426   125   777   558]);
 </pre><img vspace="5" hspace="5" src="/images/torrione_ExampleCoatesNg_Kmeans_Mscorid_2_02.png" alt=""> <p>Now we&rsquo;re doing some image processing!  Overall we got about 90% correct, and that includes a lot of confusions between cars\front and cars\rear. That makes sense since the front and backs of cars look pretty similar, and there are only 23 car front examples in the whole data set.</p><h2>Conclusions<a name="7"></a></h2><p>The code in a lot of this blog entry is pretty gross &ndash; for example we have to constantly be taking data out of, and putting it back into the appropriate image sizes.</p><p>At some point in the future, we&rsquo;d like to introduce a good prtDataSet that will handle cell-arrays containing images properly.  We&rsquo;re not there yet, but when we are, we&rsquo;ll let you know on this blog!</p><p>Happy coding!</p><h2>Bibliography<a name="8"></a></h2><p>Adam Coates and Andrew Y. Ng, Learning Feature Representations with K-means, G. Montavon, G. B. Orr, K.-R. Muller (Eds.), Neural Networks: Tricks of the Trade, 2nd edn, Springer LNCS 7700, 2012</p></p>
 </div>
-  
-  
 
 
 <br>
 <hr>
 <br>
-    </article>
+    <footer>
+      <p class="meta">
+        
   
-  <div class="pagination">
+
+<span class="byline author vcard">Posted by <span class="fn">Pete</span></span>
+
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-03-10T18:13:00-04:00" pubdate data-updated="true">Mar 10<span>th</span>, 2013</time>
+        
+
+
+      </p>
+      
+        <div class="sharing">
+  <br/>
+  
+  
+  
+</div>
+
+      
+      <p class="meta">
+        
+          <a class="basic-alignment pull-left" href="/blog/2013/03/06/using-prtpath/" title="Previous Post: Using prtPath">&laquo; Using prtPath</a>
+        
+        
+      </p>
+    </footer>
     
-      <a class="prev" href="/blog/page/2/">&larr; Older</a>
     
-    <a href="/blog/archives">Blog Archives</a>
+      <section>
+        <h1>Comments</h1>
+        <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+      </section>
     
   </div>
+
+  
+    
+  <div class="span4 sidebar">
+    <div class="well">
+      
+        <section>
+  <h2>Recent Posts</h2>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2013/03/10/max-pooling/">Max-Pooling Feature Representations in MSRCORID</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/03/06/using-prtpath/">Using prtPath</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/02/27/learning-feature-representations/">Learning Feature Representations</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/02/16/ieee-grss-hyperspectral-data/">IEEE GRSS Hyperspectral Data</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/02/11/combining-actions/">Combining Actions</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+      
+    </div>
+  </div>
+
+
+  
 </div>
 
 
@@ -408,7 +424,10 @@ set(gcf,<span class="string">&lsquo;position&rsquo;</span>,[426   125   777   55
       var disqus_shortname = 'newfolderconsulting';
       
         
-        var disqus_script = 'count.js';
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://newfolder.github.io/blog/2013/03/10/max-pooling/';
+        var disqus_url = 'http://newfolder.github.io/blog/2013/03/10/max-pooling/';
+        var disqus_script = 'embed.js';
       
     (function () {
       var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
