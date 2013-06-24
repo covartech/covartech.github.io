@@ -4,7 +4,7 @@
   <title><![CDATA[PRT Blog]]></title>
   <link href="http://newfolder.github.io/atom.xml" rel="self"/>
   <link href="http://newfolder.github.io/"/>
-  <updated>2013-06-24T09:10:52-04:00</updated>
+  <updated>2013-06-24T12:57:37-04:00</updated>
   <id>http://newfolder.github.io/</id>
   <author>
     <name><![CDATA[Kenneth Morton and Peter Torrione]]></name>
@@ -63,13 +63,11 @@ Warning: Covariance matrix is not positive definite. This may cause errors.
 Consider modifying "covarianceStructure". 
 Error encountered:
   MException
-
   Properties:
     identifier: 'prtRvUtilMvnLogPdf:BadCovariance'
        message: 'SIGMA must be symmetric and positive definite.'
          cause: {0x1 cell}
          stack: [9x1 struct]
-
 
 </pre>
 
@@ -129,12 +127,6 @@ h = plot(pf,pd);
 set(h,<span class="string">&lsquo;linewidth&rsquo;</span>,3);
 title(<span class="string">&lsquo;ROC Curve for a prtAlgorithm (PCA + GLRT)&rsquo;</span>);
 </pre><img vspace="5" hspace="5" src="http://newfolder.github.io/images/torrione_blog_combiningActions_07.png" alt=""> <p>The results in the ROC curve above were generated using 10-folds cross-validation on the combination of PCA and GLRT.  At each fold, 9/10ths of the data were used to train the PCA and GLRT, and 1/10th was used for evaluation.</p><p>prtAlgorithms are a very powerful tool for pattern recognition, and we hope this blog post helps clear up how to make and use them!</p><p>Let us know if you have any questions or comments.</p></p>
-
-<br>
-
-
-<br>
-
 ]]></content>
   </entry>
   
@@ -251,33 +243,43 @@ availableRvs = dirContents.m
 &nbsp;&nbsp;&nbsp;&nbsp;&lsquo;prtRvUniformImproper.m&rsquo;
 &nbsp;&nbsp;&nbsp;&nbsp;&lsquo;prtRvVq.m&rsquo;
 </pre><p>As you can, most of the standard probability densities have been implemented. In addition to standard things like prtRvMvn, prtRvDiscrete and prtRvMultinomial, there are also a few RVs that operate on other RVs like prtRvIndependent, prtRvMixture, prtRvGmm and prtRvHmm and there are a few RVs that can be used for more flexible density modeling like prtRvKde and prtRvVq. We will talk about some of these more advanced RVs in a later post.</p><h2>Using RV Objects in Classifiers<a name="9"></a></h2><p>There are two primary classifiers that make use of RV objects prtClassMap and prtClassGlrt. These classifiers have very similar performance but prtClassMap is able to handle M-ary classification problems so we will use that as our example.</p><pre class="codeinput">class = prtClassMap
-</pre><pre class="codeoutput">class =
-  prtClassMap</p>
+</pre></p>
 
-<p>  Properties:</p>
+<pre class="codeoutput">class = 
+  prtClassMap
 
-<pre><code>                name: 'Maximum a Posteriori'
-    nameAbbreviation: 'MAP'
-        isNativeMary: 1
-                 rvs: [1x1 prtRvMvn]
-    twoClassParadigm: 'binary'
-     internalDecider: []
-        isSupervised: 1
-isCrossValidateValid: 1
-      verboseStorage: 1
-     showProgressBar: 1
-           isTrained: 0
-      dataSetSummary: []
-             dataSet: []
-            userData: [1x1 struct]
-</code></pre>
+  Properties:
+                    name: 'Maximum a Posteriori'
+        nameAbbreviation: 'MAP'
+            isNativeMary: 1
+                     rvs: [1x1 prtRvMvn]
+        twoClassParadigm: 'binary'
+         internalDecider: []
+            isSupervised: 1
+    isCrossValidateValid: 1
+          verboseStorage: 1
+         showProgressBar: 1
+               isTrained: 0
+          dataSetSummary: []
+                 dataSet: []
+                userData: [1x1 struct]
+</pre>
 
-<p></pre><p>prtClassMap has a property rvs that lists the rvs used for each class in the incoming data set. If there is only one RV specified it is used to model all of the classes. Let&rsquo;s classify prtDataGenUnimodal using a quadratic classifier that arises by using a MAP classifier with MVN assumption for each class.</p><pre class="codeinput">class = prtClassMap(<span class="string">&lsquo;rvs&rsquo;</span>,prtRvMvn);
-ds = prtDataGenUnimodal;</p>
 
-<p>trainedClassifier = class.train(ds);
+
+
+<p>prtClassMap has a property rvs that lists the rvs used for each class in the incoming data set. If there is only one RV specified it is used to model all of the classes. Let&#8217;s classify prtDataGenUnimodal using a quadratic classifier that arises by using a MAP classifier with MVN assumption for each class.</p>
+
+
+<pre class="codeinput">class = prtClassMap(<span class="string">'rvs'</span>,prtRvMvn);
+ds = prtDataGenUnimodal;
+
+trainedClassifier = class.train(ds);
 plot(trainedClassifier);
-</pre><img vspace="5" hspace="5" src="http://newfolder.github.io/images/morton_blog_20130127_02.png" alt=""> <p>If our data is more complex, we can modify the assumptions of the distributions in both of our classes by setting the &ldquo;rvs&rdquo; parameter to something more flexible. Let&rsquo;s classify prtDataGenBimodal using prtRvKde which uses kernel density estimation.</p><pre class="codeinput">class = prtClassMap(<span class="string">&lsquo;rvs&rsquo;</span>,prtRvKde);
+</pre>
+
+
+<p><img vspace="5" hspace="5" src="http://newfolder.github.io/images/morton_blog_20130127_02.png" alt=""> <p>If our data is more complex, we can modify the assumptions of the distributions in both of our classes by setting the &ldquo;rvs&rdquo; parameter to something more flexible. Let&rsquo;s classify prtDataGenBimodal using prtRvKde which uses kernel density estimation.</p><pre class="codeinput">class = prtClassMap(<span class="string">&lsquo;rvs&rsquo;</span>,prtRvKde);
 ds = prtDataGenBimodal;</p>
 
 <p>trainedClassifier = class.train(ds);
@@ -337,7 +339,7 @@ title(sprintf(<span class="string">&lsquo;Percent Correct: %.0f%%&rsquo;</span>,
 </pre><img vspace="5" hspace="5" src="http://newfolder.github.io/images/torrione_blog_Decisions_04.png" alt=""> <p>98% Correct!  That&rsquo;s not bad.  But look at what happens if we try and do the same scoring on the original output from the FLD:</p><pre class="codeinput">prtScoreConfusionMatrix(yOutFld);
 pc = prtScorePercentCorrect(yOutFld);
 title(sprintf(<span class="string">&lsquo;Percent Correct: %.0f%% (This is clearly wrong!)&rsquo;</span>,pc</em>100));
-</pre><img vspace="5" hspace="5" src="http://newfolder.github.io/images/torrione_blog_Decisions_05.png" alt=""> <p>What happened?  This is a little subtle, but whenever the PRT has to score discrete classes, like with prtScorePercentCorrect and prtScoreConfusionMatrix, it requires that the X values in the dataset to be equal to your best guess as to the real underlying class.</p><p>That worked out great for yOutManual, since we set yOutManual.X to zero for class 0, and 1 for class 1.  But yOutFld has continuous values stored in it (as the earlier figure shows); you need to make discrete decisions for prtScorePercentCorrect or prtScoreConfusionMatrix to make any sense.</p><h2>Decision Objects<a name="8"></a></h2><p>Fortunately, the PRT provides a special kind of prtAction &ndash; prtDecisions to make those decisions for you automaticaly, so you can score algorithms very easily.</p><p>For example, prtDecisionBinaryMinPe tries to find a threshold based on the training data to minimize the probability of error (Pe). You can use the decision actions like you would use any other actions in a prtAlgorithm:</p><pre class="codeinput">algo = prtClassFld + prtDecisionBinaryMinPe;
+</pre><img vspace="5" hspace="5" src="http://newfolder.github.io/images/torrione_blog_Decisions_05.png" alt=""> <p>What happened?  This is a little subtle, but whenever the PRT has to score discrete classes, like with prtScorePercentCorrect and prtScoreConfusionMatrix, it requires that the X values in the dataset to be equal to your best guess as to the real underlying class.</p><p>That worked out great for yOutManual, since we set yOutManual.X to zero for class 0, and 1 for class 1.  But yOutFld has continuous values stored in it (as the earlier figure shows); you need to make discrete decisions for prtScorePercentCorrect or prtScoreConfusionMatrix to make any sense.</p><h2>Decision Objects<a name="8"></a></h2><p>Fortunately, the PRT provides a special kind of prtAction &ndash; prtDecisions to make those decisions for you automatically, so you can score algorithms very easily.</p><p>For example, prtDecisionBinaryMinPe tries to find a threshold based on the training data to minimize the probability of error (Pe). You can use the decision actions like you would use any other actions in a prtAlgorithm:</p><pre class="codeinput">algo = prtClassFld + prtDecisionBinaryMinPe;
 yOutDecision = kfolds(algo,ds,3);
 prtScoreConfusionMatrix(yOutDecision);
 pc = prtScorePercentCorrect(yOutDecision);
@@ -348,19 +350,13 @@ yOutDecision = kfolds(algo,ds,3);
 prtScoreConfusionMatrix(yOutDecision);
 pc = prtScorePercentCorrect(yOutDecision);
 title(sprintf(<span class="string">&lsquo;Percent Correct: %.0f%%&rsquo;</span>,pc</em>100));
-</pre><img vspace="5" hspace="5" src="http://newfolder.github.io/images/torrione_blog_Decisions_07.png" alt=""> <p>Note that the overall probability of error is significantly worse, but almost all of the data from Class 1 was identified as Class 1.  (This may not acheive 99% Pd in some cases since the thresholds are learned differently in each fold, so there is some statistical varition in the actual Pd acheived).</p><p>We can also use prtDecisionMap to perform multi-class decision making. The &ldquo;Map&rdquo; in prtDecisionMap stands for maximum a-posteriori.  This basically means &ldquo;decide the class corresponding to the maximum classifier output&rdquo;.</p><pre class="codeinput">ds = prtDataGenMary;
+</pre><img vspace="5" hspace="5" src="http://newfolder.github.io/images/torrione_blog_Decisions_07.png" alt=""> <p>Note that the overall probability of error is significantly worse, but almost all of the data from Class 1 was identified as Class 1.  (This may not achieve 99% Pd in some cases since the thresholds are learned differently in each fold, so there is some statistical variation in the actual Pd achieved).</p><p>We can also use prtDecisionMap to perform multi-class decision making. The &ldquo;Map&rdquo; in prtDecisionMap stands for maximum a-posteriori.  This basically means &ldquo;decide the class corresponding to the maximum classifier output&rdquo;.</p><pre class="codeinput">ds = prtDataGenMary;
 algo = prtClassKnn + prtDecisionMap;
 yOutDecision = kfolds(algo,ds,3);
 prtScoreConfusionMatrix(yOutDecision);
 pc = prtScorePercentCorrect(yOutDecision);
 title(sprintf(<span class="string">&lsquo;Percent Correct: %.0f%%&rsquo;</span>,pc*100));
 </pre><img vspace="5" hspace="5" src="http://newfolder.github.io/images/torrione_blog_Decisions_08.png" alt=""> <h2>Concluding<a name="11"></a></h2><p>So, there you go!  prtDecision objects handle a lot of book-keeping internally, so that you don&rsquo;t generally have to worry about making sure to keep class names and indices straight.  We recommend using them instead of manually making your own decision functions to operate on output classes.</p><p>As always, please feel free to comment or e-mail us with questions or ideas.</p></p>
-
-<br>
-
-
-<br>
-
 ]]></content>
   </entry>
   
@@ -507,12 +503,6 @@ title(sprintf(<span class="string">'Actual: %d; SVM Label: %d'</span>,yOutTestMi
 
 
 <p><img vspace="5" hspace="5" src="http://newfolder.github.io/images/testBlog_06.png" alt=""> <p>Visual inspection of these mistakes illustrate some of the causes of confusions in the SVM.  For example, highly slanted digits are often mis-labeled.  Mitigating some of these mistakes may require significantly more than simply optimizing SVM parameters!</p><p>Interested readers can refer to a large body of literature that has previously investigated this data set (<a href="http://yann.lecun.com/exdb/mnist/"><a href="http://yann.lecun.com/exdb/mnist/">http://yann.lecun.com/exdb/mnist/</a></a>) for tips, tricks, and ideas for further improving performance on this data set.  One particularly exciting recent advance is based on Hinton&#8217;s deep learning networks, which enables very efficient learning on the MNIST database <a href="www.cs.toronto.edu/~hinton/science.pdf">www.cs.toronto.edu/~hinton/science.pdf</a>).</p><p>We hope this example shows how quickly you can get from data to results with the PRT.  Please let us know if you have comments or questions!</p></p>
-
-<br>
-
-
-<br>
-
 ]]></content>
   </entry>
   
@@ -529,7 +519,7 @@ title(sprintf(<span class="string">'Actual: %d; SVM Label: %d'</span>,yOutTestMi
 
 <p>Check out the <a href="http://newfolder.github.io/prtdoc/prtDocInstallation.html">installation instructions</a> to get you up and running. Once installed, open up MATLAB&reg;, and follow through with our <a href="http://newfolder.github.io/prtdoc/prtDocGettingStarted.html">Getting Started</a> guide, which will walk you through some examples of using the PRT in practice and show you what the PRT can do.</p>
 
-<p>Even though there are a lot of M-files in the PRT, we’ve built the PRT to be easy to use and to make it easy to find what you need from within MATLAB.  For example, to find a list of all classifiers in the PRT, simply type “prtClass” and then <tab> at the MATLAB command prompt.  Other object types behave the same way, e.g., prtPreProc <tab>. If you have any feed back or questions don&rsquo;t hesitate to ask on on <a href="https://github.com/newfolder/PRT">GitHub</a> or through email at <a href="mailto:prt@newfolderconsulting.com"><a href="&#x6d;&#x61;&#x69;&#108;&#116;&#111;&#x3a;&#112;&#x72;&#x74;&#64;&#x6e;&#101;&#x77;&#x66;&#111;&#108;&#x64;&#101;&#x72;&#99;&#111;&#x6e;&#115;&#x75;&#108;&#x74;&#x69;&#x6e;&#103;&#x2e;&#x63;&#x6f;&#109;">&#x70;&#114;&#116;&#64;&#110;&#101;&#x77;&#102;&#x6f;&#108;&#100;&#101;&#114;&#99;&#x6f;&#110;&#x73;&#x75;&#108;&#116;&#105;&#110;&#103;&#x2e;&#x63;&#x6f;&#x6d;</a></a>.</p>
+<p>Even though there are a lot of M-files in the PRT, we’ve built the PRT to be easy to use and to make it easy to find what you need from within MATLAB.  For example, to find a list of all classifiers in the PRT, simply type “prtClass” and then <tab> at the MATLAB command prompt.  Other object types behave the same way, e.g., prtPreProc <tab>. If you have any feed back or questions don&rsquo;t hesitate to ask on on <a href="https://github.com/newfolder/PRT">GitHub</a> or through email at <a href="mailto:prt@newfolderconsulting.com"><a href="&#109;&#97;&#105;&#108;&#x74;&#x6f;&#x3a;&#x70;&#114;&#116;&#64;&#110;&#x65;&#x77;&#x66;&#111;&#108;&#x64;&#101;&#114;&#99;&#111;&#x6e;&#x73;&#x75;&#108;&#116;&#x69;&#x6e;&#103;&#46;&#x63;&#111;&#109;">&#x70;&#x72;&#x74;&#64;&#x6e;&#x65;&#x77;&#x66;&#x6f;&#108;&#x64;&#101;&#114;&#x63;&#x6f;&#x6e;&#x73;&#117;&#x6c;&#116;&#x69;&#110;&#x67;&#x2e;&#99;&#111;&#109;</a></a>.</p>
 
 <p>We are going to start blogging every once in a while about the PRT and things it can do. We hope that it starts a conversation about the types of things people are doing with the PRT and what things people might want the PRT to do in the future.</p>
 

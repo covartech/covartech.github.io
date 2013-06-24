@@ -9,7 +9,7 @@
   <meta name="author" content="Kenneth Morton and Peter Torrione">
 
   
-  <meta name="description" content="Hi! Today I&#8217;d like to talk about how you can use the PRT to combine actions together to form algorithms. This is an important and powerful tool &hellip;">
+  <meta name="description" content="Combining Actions Feb 11th, 2013 Hi! Today I&#8217;d like to talk about how you can use the PRT to combine actions together to form algorithms. This &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -106,7 +106,8 @@ span.syscmd { color:#B28C00 }
         <div class="row">
   
   <div class="span8">
-    
+    <br>
+
   <header>
     
       <h1 class="entry-title">Combining Actions</h1>
@@ -177,13 +178,11 @@ Warning: Covariance matrix is not positive definite. This may cause errors.
 Consider modifying "covarianceStructure". 
 Error encountered:
   MException
-
   Properties:
     identifier: 'prtRvUtilMvnLogPdf:BadCovariance'
        message: 'SIGMA must be symmetric and positive definite.'
          cause: {0x1 cell}
          stack: [9x1 struct]
-
 
 </pre>
 
@@ -243,15 +242,12 @@ h = plot(pf,pd);
 set(h,<span class="string">&lsquo;linewidth&rsquo;</span>,3);
 title(<span class="string">&lsquo;ROC Curve for a prtAlgorithm (PCA + GLRT)&rsquo;</span>);
 </pre><img vspace="5" hspace="5" src="/images/torrione_blog_combiningActions_07.png" alt=""> <p>The results in the ROC curve above were generated using 10-folds cross-validation on the combination of PCA and GLRT.  At each fold, 9/10ths of the data were used to train the PCA and GLRT, and 1/10th was used for evaluation.</p><p>prtAlgorithms are a very powerful tool for pattern recognition, and we hope this blog post helps clear up how to make and use them!</p><p>Let us know if you have any questions or comments.</p></p>
-
-<br>
-
-
-<br>
-
 </div>
 
 
+<br>
+<hr>
+<br>
     <footer>
       <p class="meta">
         
@@ -273,12 +269,6 @@ title(<span class="string">&lsquo;ROC Curve for a prtAlgorithm (PCA + GLRT)&rsqu
 
 <time datetime="2013-02-11T13:46:00-05:00" pubdate data-updated="true">Feb 11<span>th</span>, 2013</time>
         
-
-<span class="categories">
-  
-    <a class='category' href='/blog/categories/basics/'>Basics</a>, <a class='category' href='/blog/categories/prt/'>PRT</a>
-  
-</span>
 
 
       </p>
