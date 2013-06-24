@@ -4,7 +4,7 @@
   <title><![CDATA[PRT Blog]]></title>
   <link href="http://newfolder.github.io/atom.xml" rel="self"/>
   <link href="http://newfolder.github.io/"/>
-  <updated>2013-06-23T20:39:24-04:00</updated>
+  <updated>2013-06-23T21:06:51-04:00</updated>
   <id>http://newfolder.github.io/</id>
   <author>
     <name><![CDATA[Kenneth Morton and Peter Torrione]]></name>
@@ -141,7 +141,13 @@ title(sprintf(&lt;span class="string"&gt;'Actual: %d; SVM Label: %d'&lt;/span&gt
 </code></pre>
 
 <p><span class="keyword">end</span>
-</pre><img vspace="5" hspace="5" src="http://newfolder.github.io/images/testBlog_06.png" alt=""> <p>Visual inspection of these mistakes illustrate some of the causes of confusions in the SVM.  For example, highly slanted digits are often mis-labeled.  Mitigating some of these mistakes may require significantly more than simply optimizing SVM parameters!</p><p>Interested readers can refer to a large body of literature that has previously investigated this data set (<a href="http://yann.lecun.com/exdb/mnist/"><a href="http://yann.lecun.com/exdb/mnist/">http://yann.lecun.com/exdb/mnist/</a></a>) for tips, tricks, and ideas for further improving performance on this data set.  One particularly exciting recent advance is based on Hinton&#8217;s deep learning networks, which enables very efficient learning on the MNIST database (www.cs.toronto.edu/~hinton/science.pdf ).</p><p>We hope this example shows how quickly you can get from data to results with the PRT.  Please let us know if you have comments or questions!</p><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2012b</a><br></p></p>
+</pre><img vspace="5" hspace="5" src="http://newfolder.github.io/images/testBlog_06.png" alt=""> <p>Visual inspection of these mistakes illustrate some of the causes of confusions in the SVM.  For example, highly slanted digits are often mis-labeled.  Mitigating some of these mistakes may require significantly more than simply optimizing SVM parameters!</p><p>Interested readers can refer to a large body of literature that has previously investigated this data set (<a href="http://yann.lecun.com/exdb/mnist/"><a href="http://yann.lecun.com/exdb/mnist/">http://yann.lecun.com/exdb/mnist/</a></a>) for tips, tricks, and ideas for further improving performance on this data set.  One particularly exciting recent advance is based on Hinton&#8217;s deep learning networks, which enables very efficient learning on the MNIST database <a href="www.cs.toronto.edu/~hinton/science.pdf">www.cs.toronto.edu/~hinton/science.pdf</a>).</p><p>We hope this example shows how quickly you can get from data to results with the PRT.  Please let us know if you have comments or questions!</p></p>
+
+<br>
+
+
+<br>
+
 ]]></content>
   </entry>
   
@@ -158,13 +164,19 @@ title(sprintf(&lt;span class="string"&gt;'Actual: %d; SVM Label: %d'&lt;/span&gt
 
 <p>Check out the <a href="http://newfolder.github.io/prtdoc/prtDocInstallation.html">installation instructions</a> to get you up and running. Once installed, open up MATLAB&reg;, and follow through with our <a href="http://newfolder.github.io/prtdoc/prtDocGettingStarted.html">Getting Started</a> guide, which will walk you through some examples of using the PRT in practice and show you what the PRT can do.</p>
 
-<p>Even though there are a lot of M-files in the PRT, we’ve built the PRT to be easy to use and to make it easy to find what you need from within MATLAB.  For example, to find a list of all classifiers in the PRT, simply type “prtClass” and then <tab> at the MATLAB command prompt.  Other object types behave the same way, e.g., prtPreProc <tab>. If you have any feed back or questions don&rsquo;t hesitate to ask on on <a href="https://github.com/newfolder/PRT">GitHub</a> or through email at <a href="mailto:prt@newfolderconsulting.com"><a href="&#x6d;&#x61;&#105;&#108;&#116;&#111;&#x3a;&#112;&#x72;&#x74;&#x40;&#110;&#101;&#119;&#102;&#111;&#108;&#x64;&#101;&#x72;&#99;&#x6f;&#x6e;&#x73;&#117;&#108;&#116;&#x69;&#x6e;&#103;&#x2e;&#99;&#x6f;&#x6d;">&#x70;&#x72;&#x74;&#64;&#x6e;&#101;&#119;&#x66;&#111;&#108;&#x64;&#101;&#x72;&#x63;&#111;&#x6e;&#115;&#117;&#108;&#x74;&#x69;&#x6e;&#103;&#x2e;&#99;&#x6f;&#x6d;</a></a>.</p>
+<p>Even though there are a lot of M-files in the PRT, we’ve built the PRT to be easy to use and to make it easy to find what you need from within MATLAB.  For example, to find a list of all classifiers in the PRT, simply type “prtClass” and then <tab> at the MATLAB command prompt.  Other object types behave the same way, e.g., prtPreProc <tab>. If you have any feed back or questions don&rsquo;t hesitate to ask on on <a href="https://github.com/newfolder/PRT">GitHub</a> or through email at <a href="mailto:prt@newfolderconsulting.com"><a href="&#x6d;&#x61;&#105;&#x6c;&#x74;&#111;&#58;&#112;&#x72;&#116;&#64;&#110;&#x65;&#119;&#x66;&#111;&#108;&#x64;&#x65;&#x72;&#x63;&#111;&#x6e;&#115;&#117;&#108;&#116;&#x69;&#110;&#103;&#46;&#x63;&#x6f;&#x6d;">&#112;&#114;&#x74;&#64;&#x6e;&#101;&#119;&#x66;&#111;&#108;&#x64;&#x65;&#114;&#x63;&#111;&#x6e;&#115;&#117;&#108;&#x74;&#105;&#110;&#x67;&#x2e;&#x63;&#x6f;&#x6d;</a></a>.</p>
 
 <p>We are going to start blogging every once in a while about the PRT and things it can do. We hope that it starts a conversation about the types of things people are doing with the PRT and what things people might want the PRT to do in the future.</p>
 
 <p>Talk to you soon.  Happy coding!</p>
 
 <p>-Kenny and Pete</p>
+
+<br>
+
+
+<br>
+
 ]]></content>
   </entry>
   
@@ -175,7 +187,13 @@ title(sprintf(&lt;span class="string"&gt;'Actual: %d; SVM Label: %d'&lt;/span&gt
     <id>http://newfolder.github.io/blog/2013/06/23/hello-world</id>
     <content type="html"><![CDATA[<p>This is new home of the PRT blog. In time all of the previous posts will be imported. Bare with us.</p>
 
-<p>~Kenny</p>
+<p>-Kenny</p>
+
+<br>
+
+
+<br>
+
 ]]></content>
   </entry>
   

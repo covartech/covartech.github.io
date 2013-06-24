@@ -2,30 +2,30 @@
 <urlset xmlns='http://www.sitemaps.org/schemas/sitemap/0.9'>
     <url>
         <loc>http://newfolder.github.io/blog/2013/06/23/hello-world/</loc>
-        <lastmod>2013-06-23T13:00:26-04:00</lastmod>
+        <lastmod>2013-06-23T21:00:53-04:00</lastmod>
     </url>
     <url>
         <loc>http://newfolder.github.io/blog/2013/06/23/hi/</loc>
-        <lastmod>2013-06-23T20:39:15-04:00</lastmod>
+        <lastmod>2013-06-23T21:00:45-04:00</lastmod>
     </url>
     <url>
         <loc>http://newfolder.github.io/blog/2013/06/23/introduction-to-the-prt/</loc>
-        <lastmod>2013-06-23T20:37:24-04:00</lastmod>
+        <lastmod>2013-06-23T21:05:22-04:00</lastmod>
+    </url>
+    <url>
+        <loc>http://newfolder.github.io/404.html</loc>
+        <lastmod>2013-06-23T20:51:47-04:00</lastmod>
     </url>
     <url>
         <loc>http://newfolder.github.io/about/</loc>
-        <lastmod>2013-06-23T13:10:35-04:00</lastmod>
+        <lastmod>2013-06-23T20:51:47-04:00</lastmod>
     </url>
     <url>
         <loc>http://newfolder.github.io/blog/archives/</loc>
-        <lastmod>2013-06-23T20:39:15-04:00</lastmod>
+        <lastmod>2013-06-23T21:05:22-04:00</lastmod>
     </url>
     <url>
         <loc>http://newfolder.github.io/</loc>
-        <lastmod>2013-06-23T20:39:15-04:00</lastmod>
-    </url>
-    <url>
-        <loc>http://newfolder.github.io/robots.txt</loc>
-        <lastmod>2013-06-23T11:38:06-04:00</lastmod>
+        <lastmod>2013-06-23T21:05:22-04:00</lastmod>
     </url>
 </urlset>
