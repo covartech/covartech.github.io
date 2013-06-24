@@ -27,7 +27,21 @@
   <link href="/assets/font-awesome/css/font-awesome.css" rel="stylesheet" type="text/css">
   
   <link href="/atom.xml" rel="alternate" title="PRT Blog" type="application/atom+xml">
-  
+  <style type="text/css">
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+</style>
   
 
 </head>
@@ -118,8 +132,6 @@
   </header>
 
 
-  
-  
   <div class="entry-content"><p>The MNIST Database (<a href="http://yann.lecun.com/exdb/mnist/">http://yann.lecun.com/exdb/mnist/</a>) is a very well-known machine learning dataset consisting of a few thousand instances of handwritten digits from 0-9.  MNIST is actually a subset of a larger NIST database, but the authors (see the linked page above) were kind enough to do some basic pre-processing of MNIST for us.  MNIST was for a long time very widely used in the ML literature as an example of an easy to use real data set to evaluate new ideas.</p>
 
 
@@ -225,24 +237,21 @@ yOut = marySvm.run(dsTest);</p>
 <p>pc = prtScorePercentCorrect(yOut);
 subplot(1,1,1);
 prtScoreConfusionMatrix(yOut);
-title(sprintf(<span class="string">&lsquo;PLSDA on 10,000 MNIST Database Test Samples; %.0f%% Correct&rsquo;</span>,pc*100));
+title(sprintf(<span class="string">&lsquo;PLSDA on 10,000 MNIST Database Test Samples; %.0f%% Correct&rsquo;</span>,pc<em>100));
 </pre><pre class="codeoutput">Warning: Non-finite or zero standard deviation encountered.  Replacing invalid
 standard deviations with 1
 </pre><img vspace="5" hspace="5" src="/images/testBlog_05.png" alt=""> <p>And we see that performance is comparable to the cross-validated results. (Note that more advanced applications of SVM classifiers can do even better than the results reported here &#8211; Le Cun et al., 1998 reported 1.4% error rates with an SVM and some additional processing).</p><h2>Exploring the Results<a name="12"></a></h2><p>If we wanted to improve classification, we could optimize over the SVM parameters, kernel, pre-processing etc.  But before we did that, it might be instructive to investigate what digits the SVM classifier is mislabeling, and see if some of them seem like reasonable mistakes to make.  The following code will pick 9 instances where the SVM output label was different from the actual data label, and plot them in a subplot.</p><pre class="codeinput">incorrect = find(yOut.getX ~= yOut.getY);
 yOutTestMisLabeled = yOut.retainObservations(incorrect);
 dsTestMisLabeled = dsTest.retainObservations(incorrect);
-<span class="keyword">for</span> i = 1:9; <span class="comment">%dsTestMisLabeled.nObservations;</span></p>
-
-<pre><code>randWrong = ceil(rand*dsTestMisLabeled.nObservations); &lt;span class="comment"&gt;%pick a random wrong element&lt;/span&gt;
-subplot(3,3,i);
-x = dsTestMisLabeled.getX(randWrong);
-img = reshape(x,imageSize);
-imagesc(img);
-colormap &lt;span class="string"&gt;gray&lt;/span&gt;;
-title(sprintf(&lt;span class="string"&gt;'Actual: %d; SVM Label: %d'&lt;/span&gt;,yOutTestMisLabeled.getY(randWrong),yOutTestMisLabeled.getX(randWrong)));
-</code></pre>
-
-<p><span class="keyword">end</span>
+<span class="keyword">for</span> i = 1:9; <span class="comment">%dsTestMisLabeled.nObservations;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;randWrong = ceil(rand</em>dsTestMisLabeled.nObservations); <span class="comment">%pick a random wrong element</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;subplot(3,3,i);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;x = dsTestMisLabeled.getX(randWrong);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;img = reshape(x,imageSize);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;imagesc(img);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;colormap <span class="string">gray</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;title(sprintf(<span class="string">&lsquo;Actual: %d; SVM Label: %d&rsquo;</span>,yOutTestMisLabeled.getY(randWrong),yOutTestMisLabeled.getX(randWrong)));
+<span class="keyword">end</span>
 </pre><img vspace="5" hspace="5" src="/images/testBlog_06.png" alt=""> <p>Visual inspection of these mistakes illustrate some of the causes of confusions in the SVM.  For example, highly slanted digits are often mis-labeled.  Mitigating some of these mistakes may require significantly more than simply optimizing SVM parameters!</p><p>Interested readers can refer to a large body of literature that has previously investigated this data set (<a href="http://yann.lecun.com/exdb/mnist/"><a href="http://yann.lecun.com/exdb/mnist/">http://yann.lecun.com/exdb/mnist/</a></a>) for tips, tricks, and ideas for further improving performance on this data set.  One particularly exciting recent advance is based on Hinton&#8217;s deep learning networks, which enables very efficient learning on the MNIST database <a href="www.cs.toronto.edu/~hinton/science.pdf">www.cs.toronto.edu/~hinton/science.pdf</a>).</p><p>We hope this example shows how quickly you can get from data to results with the PRT.  Please let us know if you have comments or questions!</p></p>
 
 <br>
@@ -251,8 +260,6 @@ title(sprintf(&lt;span class="string"&gt;'Actual: %d; SVM Label: %d'&lt;/span&gt
 <br>
 
 </div>
-
-  
 
 
     <footer>
@@ -307,7 +314,7 @@ title(sprintf(&lt;span class="string"&gt;'Actual: %d; SVM Label: %d'&lt;/span&gt
 
   
     
-  <div class="span sidebar">
+  <div class="span4 sidebar">
     <div class="well">
       
         <section>

@@ -27,7 +27,21 @@
   <link href="/assets/font-awesome/css/font-awesome.css" rel="stylesheet" type="text/css">
   
   <link href="/atom.xml" rel="alternate" title="PRT Blog" type="application/atom+xml">
-  
+  <style type="text/css">
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+</style>
   
 
 </head>
@@ -118,8 +132,6 @@
   </header>
 
 
-  
-  
   <div class="entry-content"><p>Hi,</p>
 
 <p>Thanks for checking out the PRT. The PRT is intended to help people who do machine learning handle the most common classification tasks within MATLAB.  This includes things like cross-validation, data visualization, classifier development and feature selection. The PRT includes object types for data set storage, pre-processing, classification, clustering, distance calculations, outlier removal, kernel learning, data generation, scoring and classifier evaluation, feature selection, random variable definitions, and visualization. We think it serves as a great platform for both machine learning research and applied algorithm development (that&rsquo;s why we built it!).</p>
@@ -128,7 +140,7 @@
 
 <p>Check out the <a href="/prtdoc/prtDocInstallation.html">installation instructions</a> to get you up and running. Once installed, open up MATLAB&reg;, and follow through with our <a href="/prtdoc/prtDocGettingStarted.html">Getting Started</a> guide, which will walk you through some examples of using the PRT in practice and show you what the PRT can do.</p>
 
-<p>Even though there are a lot of M-files in the PRT, we’ve built the PRT to be easy to use and to make it easy to find what you need from within MATLAB.  For example, to find a list of all classifiers in the PRT, simply type “prtClass” and then <tab> at the MATLAB command prompt.  Other object types behave the same way, e.g., prtPreProc <tab>. If you have any feed back or questions don&rsquo;t hesitate to ask on on <a href="https://github.com/newfolder/PRT">GitHub</a> or through email at <a href="mailto:prt@newfolderconsulting.com"><a href="&#x6d;&#x61;&#105;&#x6c;&#x74;&#111;&#58;&#112;&#x72;&#116;&#64;&#110;&#x65;&#119;&#x66;&#111;&#108;&#x64;&#x65;&#x72;&#x63;&#111;&#x6e;&#115;&#117;&#108;&#116;&#x69;&#110;&#103;&#46;&#x63;&#x6f;&#x6d;">&#112;&#114;&#x74;&#64;&#x6e;&#101;&#119;&#x66;&#111;&#108;&#x64;&#x65;&#114;&#x63;&#111;&#x6e;&#115;&#117;&#108;&#x74;&#105;&#110;&#x67;&#x2e;&#x63;&#x6f;&#x6d;</a></a>.</p>
+<p>Even though there are a lot of M-files in the PRT, we’ve built the PRT to be easy to use and to make it easy to find what you need from within MATLAB.  For example, to find a list of all classifiers in the PRT, simply type “prtClass” and then <tab> at the MATLAB command prompt.  Other object types behave the same way, e.g., prtPreProc <tab>. If you have any feed back or questions don&rsquo;t hesitate to ask on on <a href="https://github.com/newfolder/PRT">GitHub</a> or through email at <a href="mailto:prt@newfolderconsulting.com"><a href="&#x6d;&#x61;&#x69;&#x6c;&#x74;&#x6f;&#58;&#112;&#x72;&#116;&#64;&#110;&#x65;&#x77;&#102;&#x6f;&#108;&#100;&#101;&#x72;&#99;&#x6f;&#x6e;&#115;&#x75;&#108;&#x74;&#105;&#110;&#103;&#46;&#x63;&#x6f;&#x6d;">&#x70;&#x72;&#x74;&#x40;&#x6e;&#101;&#119;&#102;&#111;&#x6c;&#x64;&#101;&#114;&#99;&#x6f;&#x6e;&#x73;&#x75;&#108;&#x74;&#x69;&#110;&#x67;&#x2e;&#99;&#x6f;&#x6d;</a></a>.</p>
 
 <p>We are going to start blogging every once in a while about the PRT and things it can do. We hope that it starts a conversation about the types of things people are doing with the PRT and what things people might want the PRT to do in the future.</p>
 
@@ -142,8 +154,6 @@
 <br>
 
 </div>
-
-  
 
 
     <footer>
@@ -200,7 +210,7 @@
 
   
     
-  <div class="span sidebar">
+  <div class="span4 sidebar">
     <div class="well">
       
         <section>
