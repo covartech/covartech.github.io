@@ -4,7 +4,7 @@
   <title><![CDATA[PRT Blog]]></title>
   <link href="http://newfolder.github.io/atom.xml" rel="self"/>
   <link href="http://newfolder.github.io/"/>
-  <updated>2013-06-23T21:29:00-04:00</updated>
+  <updated>2013-06-23T21:39:22-04:00</updated>
   <id>http://newfolder.github.io/</id>
   <author>
     <name><![CDATA[Kenneth Morton and Peter Torrione]]></name>
@@ -15,9 +15,9 @@
   
   <entry>
     <title type="html"><![CDATA[An Introduction to the PRT with MNIST]]></title>
-    <link href="http://newfolder.github.io/blog/2013/06/23/introduction-to-the-prt/"/>
-    <updated>2013-06-23T13:15:00-04:00</updated>
-    <id>http://newfolder.github.io/blog/2013/06/23/introduction-to-the-prt</id>
+    <link href="http://newfolder.github.io/blog/2013/01/21/introduction-to-the-prt/"/>
+    <updated>2013-01-21T18:58:00-05:00</updated>
+    <id>http://newfolder.github.io/blog/2013/01/21/introduction-to-the-prt</id>
     <content type="html"><![CDATA[<p>The MNIST Database (<a href="http://yann.lecun.com/exdb/mnist/">http://yann.lecun.com/exdb/mnist/</a>) is a very well-known machine learning dataset consisting of a few thousand instances of handwritten digits from 0-9.  MNIST is actually a subset of a larger NIST database, but the authors (see the linked page above) were kind enough to do some basic pre-processing of MNIST for us.  MNIST was for a long time very widely used in the ML literature as an example of an easy to use real data set to evaluate new ideas.</p>
 
 
@@ -136,7 +136,8 @@ dsTestMisLabeled = dsTest.retainObservations(incorrect);
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;img = reshape(x,imageSize);
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;imagesc(img);
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;colormap <span class="string">gray</span>;
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;title(sprintf(<span class="string">&lsquo;Actual: %d; SVM Label: %d&rsquo;</span>,yOutTestMisLabeled.getY(randWrong),yOutTestMisLabeled.getX(randWrong)));
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+title(sprintf(<span class="string">&lsquo;Actual: %d; SVM Label: %d&rsquo;</span>,yOutTestMisLabeled.getY(randWrong),yOutTestMisLabeled.getX(randWrong)));
 <span class="keyword">end</span>
 </pre><img vspace="5" hspace="5" src="http://newfolder.github.io/images/testBlog_06.png" alt=""> <p>Visual inspection of these mistakes illustrate some of the causes of confusions in the SVM.  For example, highly slanted digits are often mis-labeled.  Mitigating some of these mistakes may require significantly more than simply optimizing SVM parameters!</p><p>Interested readers can refer to a large body of literature that has previously investigated this data set (<a href="http://yann.lecun.com/exdb/mnist/"><a href="http://yann.lecun.com/exdb/mnist/">http://yann.lecun.com/exdb/mnist/</a></a>) for tips, tricks, and ideas for further improving performance on this data set.  One particularly exciting recent advance is based on Hinton&#8217;s deep learning networks, which enables very efficient learning on the MNIST database <a href="www.cs.toronto.edu/~hinton/science.pdf">www.cs.toronto.edu/~hinton/science.pdf</a>).</p><p>We hope this example shows how quickly you can get from data to results with the PRT.  Please let us know if you have comments or questions!</p></p>
 
@@ -150,9 +151,9 @@ dsTestMisLabeled = dsTest.retainObservations(incorrect);
   
   <entry>
     <title type="html"><![CDATA[Hi]]></title>
-    <link href="http://newfolder.github.io/blog/2013/06/23/hi/"/>
-    <updated>2013-06-23T13:13:00-04:00</updated>
-    <id>http://newfolder.github.io/blog/2013/06/23/hi</id>
+    <link href="http://newfolder.github.io/blog/2013/01/21/hi/"/>
+    <updated>2013-01-21T16:02:00-05:00</updated>
+    <id>http://newfolder.github.io/blog/2013/01/21/hi</id>
     <content type="html"><![CDATA[<p>Hi,</p>
 
 <p>Thanks for checking out the PRT. The PRT is intended to help people who do machine learning handle the most common classification tasks within MATLAB.  This includes things like cross-validation, data visualization, classifier development and feature selection. The PRT includes object types for data set storage, pre-processing, classification, clustering, distance calculations, outlier removal, kernel learning, data generation, scoring and classifier evaluation, feature selection, random variable definitions, and visualization. We think it serves as a great platform for both machine learning research and applied algorithm development (that&rsquo;s why we built it!).</p>
@@ -161,30 +162,13 @@ dsTestMisLabeled = dsTest.retainObservations(incorrect);
 
 <p>Check out the <a href="http://newfolder.github.io/prtdoc/prtDocInstallation.html">installation instructions</a> to get you up and running. Once installed, open up MATLAB&reg;, and follow through with our <a href="http://newfolder.github.io/prtdoc/prtDocGettingStarted.html">Getting Started</a> guide, which will walk you through some examples of using the PRT in practice and show you what the PRT can do.</p>
 
-<p>Even though there are a lot of M-files in the PRT, we’ve built the PRT to be easy to use and to make it easy to find what you need from within MATLAB.  For example, to find a list of all classifiers in the PRT, simply type “prtClass” and then <tab> at the MATLAB command prompt.  Other object types behave the same way, e.g., prtPreProc <tab>. If you have any feed back or questions don&rsquo;t hesitate to ask on on <a href="https://github.com/newfolder/PRT">GitHub</a> or through email at <a href="mailto:prt@newfolderconsulting.com"><a href="&#x6d;&#x61;&#x69;&#x6c;&#x74;&#x6f;&#58;&#112;&#x72;&#116;&#64;&#110;&#x65;&#x77;&#102;&#x6f;&#108;&#100;&#101;&#x72;&#99;&#x6f;&#x6e;&#115;&#x75;&#108;&#x74;&#105;&#110;&#103;&#46;&#x63;&#x6f;&#x6d;">&#x70;&#x72;&#x74;&#x40;&#x6e;&#101;&#119;&#102;&#111;&#x6c;&#x64;&#101;&#114;&#99;&#x6f;&#x6e;&#x73;&#x75;&#108;&#x74;&#x69;&#110;&#x67;&#x2e;&#99;&#x6f;&#x6d;</a></a>.</p>
+<p>Even though there are a lot of M-files in the PRT, we’ve built the PRT to be easy to use and to make it easy to find what you need from within MATLAB.  For example, to find a list of all classifiers in the PRT, simply type “prtClass” and then <tab> at the MATLAB command prompt.  Other object types behave the same way, e.g., prtPreProc <tab>. If you have any feed back or questions don&rsquo;t hesitate to ask on on <a href="https://github.com/newfolder/PRT">GitHub</a> or through email at <a href="mailto:prt@newfolderconsulting.com"><a href="&#x6d;&#97;&#x69;&#x6c;&#116;&#111;&#58;&#x70;&#114;&#116;&#64;&#110;&#x65;&#119;&#x66;&#111;&#108;&#100;&#x65;&#x72;&#99;&#x6f;&#x6e;&#115;&#117;&#x6c;&#x74;&#105;&#110;&#x67;&#x2e;&#99;&#x6f;&#109;">&#x70;&#x72;&#116;&#x40;&#110;&#101;&#119;&#x66;&#x6f;&#x6c;&#x64;&#101;&#114;&#x63;&#111;&#x6e;&#115;&#117;&#108;&#116;&#x69;&#110;&#x67;&#46;&#x63;&#111;&#x6d;</a></a>.</p>
 
 <p>We are going to start blogging every once in a while about the PRT and things it can do. We hope that it starts a conversation about the types of things people are doing with the PRT and what things people might want the PRT to do in the future.</p>
 
 <p>Talk to you soon.  Happy coding!</p>
 
 <p>-Kenny and Pete</p>
-
-<br>
-
-
-<br>
-
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Hello World]]></title>
-    <link href="http://newfolder.github.io/blog/2013/06/23/hello-world/"/>
-    <updated>2013-06-23T12:34:00-04:00</updated>
-    <id>http://newfolder.github.io/blog/2013/06/23/hello-world</id>
-    <content type="html"><![CDATA[<p>This is new home of the PRT blog. In time all of the previous posts will be imported. Bare with us.</p>
-
-<p>-Kenny</p>
 
 <br>
 
