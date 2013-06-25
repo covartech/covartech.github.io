@@ -37,6 +37,54 @@
         <lastmod>2013-06-24T13:20:08-04:00</lastmod>
     </url>
     <url>
+        <loc>http://newfolder.github.io/blog/2013/03/19/feature-selection/</loc>
+        <lastmod>2013-06-24T21:16:59-04:00</lastmod>
+    </url>
+    <url>
+        <loc>http://newfolder.github.io/blog/2013/03/24/rvs-part-2/</loc>
+        <lastmod>2013-06-24T21:10:26-04:00</lastmod>
+    </url>
+    <url>
+        <loc>http://newfolder.github.io/blog/2013/04/02/determining-gender-from-handwriting/</loc>
+        <lastmod>2013-06-24T21:15:16-04:00</lastmod>
+    </url>
+    <url>
+        <loc>http://newfolder.github.io/blog/2013/04/08/rt/</loc>
+        <lastmod>2013-06-24T21:10:46-04:00</lastmod>
+    </url>
+    <url>
+        <loc>http://newfolder.github.io/blog/2013/04/16/principal-component-analysis/</loc>
+        <lastmod>2013-06-24T21:03:20-04:00</lastmod>
+    </url>
+    <url>
+        <loc>http://newfolder.github.io/blog/2013/04/22/prtkernel/</loc>
+        <lastmod>2013-06-24T21:03:35-04:00</lastmod>
+    </url>
+    <url>
+        <loc>
+            http://newfolder.github.io/blog/2013/05/15/prtdatagensandp500-and-prtdatagencylinderbellfunnel/
+        </loc>
+        <lastmod>2013-06-24T21:03:07-04:00</lastmod>
+    </url>
+    <url>
+        <loc>http://newfolder.github.io/blog/2013/05/21/new-visualization-with-imagesc/</loc>
+        <lastmod>2013-06-24T20:55:09-04:00</lastmod>
+    </url>
+    <url>
+        <loc>
+            http://newfolder.github.io/blog/2013/06/03/using-k-means-as-a-feature-extractor/
+        </loc>
+        <lastmod>2013-06-24T21:00:54-04:00</lastmod>
+    </url>
+    <url>
+        <loc>http://newfolder.github.io/blog/2013/06/13/prtclustermeanshift/</loc>
+        <lastmod>2013-06-24T20:55:03-04:00</lastmod>
+    </url>
+    <url>
+        <loc>http://newfolder.github.io/blog/2013/06/24/spectral-clustering/</loc>
+        <lastmod>2013-06-24T21:22:56-04:00</lastmod>
+    </url>
+    <url>
         <loc>http://newfolder.github.io/404.html</loc>
         <lastmod>2013-06-23T20:51:47-04:00</lastmod>
     </url>
@@ -46,10 +94,10 @@
     </url>
     <url>
         <loc>http://newfolder.github.io/blog/archives/</loc>
-        <lastmod>2013-06-24T13:20:08-04:00</lastmod>
+        <lastmod>2013-06-24T21:22:56-04:00</lastmod>
     </url>
     <url>
         <loc>http://newfolder.github.io/</loc>
-        <lastmod>2013-06-24T13:20:08-04:00</lastmod>
+        <lastmod>2013-06-24T21:22:56-04:00</lastmod>
     </url>
 </urlset>

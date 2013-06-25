@@ -121,7 +121,7 @@ span.syscmd { color:#B28C00 }
 </div>
 
 
-  <div class="span4 sidebar">
+  <div class="span3 sidebar">
     <div class="well">
       
         <section>
@@ -129,23 +129,23 @@ span.syscmd { color:#B28C00 }
   <ul id="recent_posts">
     
       <li class="post">
-        <a href="/blog/2013/03/10/max-pooling/">Max-Pooling Feature Representations in MSRCORID</a>
+        <a href="/blog/2013/06/24/spectral-clustering/">Spectral Clustering</a>
       </li>
     
       <li class="post">
-        <a href="/blog/2013/03/06/using-prtpath/">Using prtPath</a>
+        <a href="/blog/2013/06/13/prtclustermeanshift/">prtClusterMeanShift</a>
       </li>
     
       <li class="post">
-        <a href="/blog/2013/02/27/learning-feature-representations/">Learning Feature Representations</a>
+        <a href="/blog/2013/06/03/using-k-means-as-a-feature-extractor/">Using K-Means As a Feature Extractor</a>
       </li>
     
       <li class="post">
-        <a href="/blog/2013/02/16/ieee-grss-hyperspectral-data/">IEEE GRSS Hyperspectral Data</a>
+        <a href="/blog/2013/05/21/new-visualization-with-imagesc/">New Visualization with IMAGESC</a>
       </li>
     
       <li class="post">
-        <a href="/blog/2013/02/11/combining-actions/">Combining Actions</a>
+        <a href="/blog/2013/05/15/prtdatagensandp500-and-prtdatagencylinderbellfunnel/">prtDataGenSandP500 and prtDataGenCylinderBellFunnel</a>
       </li>
     
   </ul>
@@ -173,7 +173,7 @@ span.syscmd { color:#B28C00 }
 
   <header>
     
-      <h1 class="entry-title"><a href="/blog/2013/02/16/ieee-grss-hyperspectral-data/">IEEE GRSS Hyperspectral Data</a></h1>
+      <h1 class="entry-title"><a href="/blog/2013/05/21/new-visualization-with-imagesc/">New Visualization With IMAGESC</a></h1>
     
     
       <p class="meta">
@@ -189,15 +189,16 @@ span.syscmd { color:#B28C00 }
   
 
 
-<time datetime="2013-02-16T20:06:00-05:00" pubdate data-updated="true">Feb 16<span>th</span>, 2013</time>
+<time datetime="2013-05-21T08:42:00-04:00" pubdate data-updated="true">May 21<span>st</span>, 2013</time>
         
       </p>
     
   </header>
 
 
-  <div class="entry-content"><p>
-Hi everyone.  Outside of software development, we also do some work in geoscience and remote sensing.  As a result, we were very excited to see an announcement from the IEEE GRSS that they were making some new data sets available - in particular, a hyperspectral data set, and a LIDAR data set (if you&#8217;re not familiar with these technologies, see here: <a href="http://en.wikipedia.org/wiki/Hyperspectral_imaging">http://en.wikipedia.org/wiki/Hyperspectral_imaging</a> and <a href="http://en.wikipedia.org/wiki/LIDAR">http://en.wikipedia.org/wiki/LIDAR</a>).</p>
+  <div class="entry-content"><p>In the last entry, we introduced a data set - the Cylinder-Bell-Funnel data set, prtDataGenCylinderBellFunnel.  To visualize it easily, we used the MATLAB function imagesc, which makes an image out of the data, with automatically determined colormap settings.  Today we&#8217;ll expand on that, and make the process a lot easier.
+    
+</p>
 
 
 <!--/introduction-->
@@ -206,121 +207,29 @@ Hi everyone.  Outside of software development, we also do some work in geoscienc
 <h2>Contents</h2>
 
 
-<div><ul><li><a href="#1">Getting Started</a></li><li><a href="#3">A Note About UnLabeled Points</a></li><li><a href="#5">Visualization of the Hyperspectral and LIDAR data</a></li><li><a href="#6">Hyperspectral Data</a></li><li><a href="#7">PC Projections</a></li><li><a href="#9">15-Class Classification</a></li><li><a href="#11">Evaluation</a></li><li><a href="#12">Conclusions</a></li></ul></div>
+<div><ul><li><a href="#1">Example</a></li><li><a href="#2">Other Data Sets</a></li><li><a href="#3">Wrapping Up</a></li></ul></div>
 
 
-<h2>Getting Started<a name="1"></a></h2>
+<h2>Example<a name="1"></a></h2>
 
 
-<p>We&#8217;ve made some M-files that will load in the data for you (see the .ZIP file at the end of this post), but you&#8217;ll need to go to the GRSS website to download the data from here first: <a href="http://hyperspectral.ee.uh.edu/?page_id=459">http://hyperspectral.ee.uh.edu/?page_id=459</a>).</p>
+<p>For a lot of high-dimensional data sets, it turns out creating an observations x features image of the data is a great way to visualize and understand your data.  This week we made that process a little easier and cleaner by introducing a method of prtDataSetClass - imagesc.</p>
 
 
-<p>To load the data, first download the .ZIP file at the end of this post, then run the following.  But change the line below to point to the right directory, so for example, I have a file C:\Users\pete\Documents\data\2013IEEE_GRSS_DF_Contest\2013_IEEE_GRSS_DF_Contest_CASI.tif</p>
+<p>The method takes care of a number of things that were a little tricky to do previously - first, it makes sure the observations are sorted by class index, next it creates an image of all the data with black bars denoting the class boundaries, and finally, it makes the y-tick-marks contain the relevant class names.</p>
 
 
-<pre class="codeinput">imgSize = [349 1905];
-grssDir = <span class="string">'C:\Users\pete\Documents\data\2013IEEE_GRSS_DF_Contest\'</span>;
-[dsCasi,dsLidar] = prtExampleReadGrss2013(grssDir);
+<p>It&#8217;s now easy to generate clean visualizations like so:</p>
+
+
+<pre class="codeinput">ds = prtDataGenCylinderBellFunnel;
+ds.imagesc;
 </pre>
 
 
-<p>Note, if you don&#8217;t want to use the PRT for anything, but would like to automatically read in the ROI file provided by GRSS, download the .ZIP at the end of this file, and just use:</p>
-
-
-<pre class="codeinput">
-regions = grssRoiRead(roiFile);
-</pre>
-
-
-<p>Each of these data sets has 664845 observations (from the 349x1905 dimensional image) the hyperspectral data has 144 dimensions, and the LIDAR data only has one dimension. The fine folks at GRSS were kind enough to provide labels for about 2832 pixels from the data sets.  These are from 15 different classes: grass_healthy, grass_stressed, grass_synthetic, tree, soil, water, residential, commercial, road, highway, railway, parking_lot1, parking_lot2, tennis_court, running_track.</p>
-
-
-<h2>A Note About UnLabeled Points<a name="3"></a></h2>
-
-
-<p>This data set contains a lot of unlabeled data.  Previously, to use the PRT with unlabeled data required ad-hoc fiddling with targets and classes.  But as of Jan 7, 2013, the PRT now handles unlabeled data inherently.  The PRT uses NaNs to represent unlabeled data points - e.g.,</p>
-
-
-<pre class="codeinput">numNan = length(find(isnan(dsCasi.targets))); <span class="comment">%there are 662013 unlabeled points</span>
-disp(numNan)
-</pre>
-
-
-<pre class="codeoutput">      662013
-
-</pre>
-
-
-<p>You can get a data set using only the labeled data using new mthods included specifically for unlabeled data:</p>
-
-
-<pre class="codeinput">dsUnLabeled = dsCasi.removeLabeled;
-dsLabeled = dsCasi.retainLabeled;
-</pre>
-
-
-<h2>Visualization of the Hyperspectral and LIDAR data<a name="5"></a></h2>
-
-
-<p>We can visualize the data in the form of the spatial image by re-sizing it to be the correct dimensionality.  For example, the next lines reshape the total intensity (SUM) of the hyperspectral data, and reshape the LIDAR data into the right size:</p>
-
-
-<pre class="codeinput">x = dsCasi.X;
-x = reshape(x',[144 imgSize]);
-imgCasi = sqrt(squeeze(sum(x.^2)));
-
-subplot(2,1,1);
-imagesc(imgCasi)
-title(<span class="string">'CASI Data'</span>);
-
-xLidar = dsLidar.X;
-imgLidar = reshape(xLidar,imgSize);
-subplot(2,1,2);
-imagesc(imgLidar)
-title(<span class="string">'LIDAR Data'</span>);
-</pre>
-
-
-<p><img vspace="5" hspace="5" src="/images/torrione_blog_Grss_01.png" alt=""> <h2>Hyperspectral Data<a name="6"></a></h2><p>The remainder of this blog entry will just show a few examples of how to use the PRT in combination with the CASI hyperspectral data; I want to be clear that we&rsquo;re not doing anything that&rsquo;s particularly well-motivated from a hyperspectral data perspective.  If you&rsquo;re interested, there&rsquo;s a great deal of research in the hyperspectral field &ndash; we can&rsquo;t summarize all the interesting stuff that&rsquo;s going on there, but if you&rsquo;re interested, check out some recent issues of WHISPERS: <a href="http://www.ieee-whispers.com/"><a href="http://www.ieee-whispers.com/">http://www.ieee-whispers.com/</a></a></p><p>In reality, the purpose of the data set from GRSS is to do data fusion, but for today we&rsquo;ll just be concerned with the hyperspectral data &ndash; dsCasi.</p><h2>PC Projections<a name="7"></a></h2><p>As an example, we can explore the data in principal component space. It&rsquo;s easy enought to do &ndash; we can treat the CASI part of the data just like any other prtDataSet.  Let&rsquo;s build an algorithm to do some standard pre-processing.  Each 144 dimensional hyperspectral vector is a row of the data matrix, so we can zero-mean, and normalize the standard deviation of each row with prtPreProcZeroMeanRows and prtPreProcStdNormalizeRows (which is new).</p><pre class="codeinput">preProc = prtPreProcZeroMeanRows + prtPreProcStdNormalizeRows(<span class="string">&lsquo;varianceOffset&rsquo;</span>,10) + prtPreProcPca(<span class="string">&lsquo;nComponents&rsquo;</span>,3);</p>
-
-<p>dsLabeled = dsCasi.retainLabeled;
-preProc = preProc.train(dsLabeled);
-dsPreProc = preProc.run(dsLabeled);
-subplot(1,1,1);
-plot(dsPreProc);
-legend(<span class="string">&lsquo;location&rsquo;</span>,<span class="string">&lsquo;EastOutside&rsquo;</span>)
-title(<span class="string">&lsquo;CASI Hyperspectral PC&rsquo;</span>);
-</pre><img vspace="5" hspace="5" src="/images/torrione_blog_Grss_02.png" alt=""> <p>Visualizing the data in PC space, we can see a few things.  First, all of the grass and tree samples are quite similar in PC space.  Also, synthetic grass looks nothing like the real grass classes &ndash; from a hyperspectral perspective, synthetic grass is clearly a man-made material, despite the color similarity between it and real grass.</p><h2>15-Class Classification<a name="9"></a></h2><p>Let&rsquo;s take a look at doing some classification.  Recall that GRSS labeled 15 unique classes for us; we can do standard machine learning with that data.  We will use similar pre-processing as above, and then a 15 component PLSDA classifier.  PLSDA is nice in this case, since it natively handles multi-class problems, and its quite fast.  We can probably get better results with a non-linear classifier, but for now we&rsquo;ll stick with PLSDA.</p><pre class="codeinput">dsLabeled = dsCasi.retainLabeled;</p>
-
-<p>algo = prtPreProcZeroMeanRows + prtPreProcStdNormalizeRows(<span class="string">&lsquo;varianceOffset&rsquo;</span>,10) + prtClassPlsda(<span class="string">&lsquo;nComponents&rsquo;</span>,15) + prtDecisionMap;
-yOut = algo.kfolds(dsLabeled,3);</p>
-
-<p>close <span class="string">all</span>;
-prtScoreConfusionMatrix(yOut);
-pc = prtScorePercentCorrect(yOut);
-title(sprintf(<span class="string">&lsquo;15 Class Classification; %.2f%% Correct&rsquo;</span>,pc*100));
-xlabel(<span class="string">&lsquo;&rsquo;</span>);
-rotateticklabel(gca,45);
-</pre><img vspace="5" hspace="5" src="/images/torrione_blog_Grss_03.png" alt=""> <p>Over 70% correct, with just this simple processing!  That&rsquo;s not too shabby.  Note, however, that the cross-validation approach we&rsquo;ve used here is a little suspect &ndash; a lot of the truth proivded to us was from neighboring pixels.  These pixels might be only about a meter apart, and two hyperspectral vectors from that close proximity, on, say, grass, will be expected to be much more correlated than two pixels from hundreds of meters apart.</p><p>One way to overcome this would be to build cross-validation folds using the spatial locations of the pixels; it would be interesting to see how cross-validation would work under that case.</p><h2>Evaluation<a name="11"></a></h2><p>To evaluate our algorithm we can visualize the performance on the entire larger hyperspectral image.  First, we run the algorithm, then get the estimated labels, and reshape to the right size for visualization.</p><pre class="codeinput">algo = algo.train(dsLabeled);
-yOutFull = algo.run(dsCasi);</p>
-
-<p>close <span class="string">all</span>;
-img = reshape(yOutFull.X,imgSize);
-imagesc(img);
-colorbar
-<span class="comment">% It&rsquo;s a little hard to judge, but this doesn&rsquo;t look completely</span>
-<span class="comment">% unreasonable&hellip;.</span>
-<span class="comment">%</span>
-<span class="comment">% The following shows only the points labeled as one of the two types of</span>
-<span class="comment">% grasses or trees</span>
-imagesc(img == 1 | img == 2 | img == 4);
-title(<span class="string">&lsquo;Points Classified as Grass (Healthy, and Stressed) or Tree&rsquo;</span>);
-</pre><img vspace="5" hspace="5" src="/images/torrione_blog_Grss_04.png" alt=""> <h2>Conclusions<a name="12"></a></h2><p>If you&rsquo;re interested in hyperspectral data, LIDAR, or data fusion, you should definitely check out the GRSS data set.  We hope the PRT files we&rsquo;re providing will help you get started.</p><p>There&rsquo;s a lot more to do with this data &ndash; we haven&rsquo;t even explored the LIDAR data yet, or how to fuse information from the two.  This data is also a prime candidate for semi-supervised learning (<a href="http://en.wikipedia.org/wiki/Semi-supervised_learning"><a href="http://en.wikipedia.org/wiki/Semi-supervised_learning">http://en.wikipedia.org/wiki/Semi-supervised_learning</a></a>), active learning (<a href="http://en.wikipedia.org/wiki/Active_learning"><a href="http://en.wikipedia.org/wiki/Active_learning">http://en.wikipedia.org/wiki/Active_learning</a></a>), or multi-task learning (<a href="http://en.wikipedia.org/wiki/Multi-task_learning"><a href="http://en.wikipedia.org/wiki/Multi-task_learning">http://en.wikipedia.org/wiki/Multi-task_learning</a></a>).</p><p>Hopefully we&rsquo;ll get a chance to delve more into this data set in the near future.  Let us know if you have any luck with this data!</p></p>
-
-<p><a href="/images/prtGrssBlog_2013_02_16.zip">Here&rsquo;s a link</a> to the .ZIP file with all the code you&rsquo;ll need.</p>
-
-<p><p>
-You may also need rotateticklabel.m, which is available from <a href="http://www.mathworks.com/matlabcentral/fileexchange/8722-rotate-tick-label">MATLAB Central</a></p>
+<p><img vspace="5" hspace="5" src="/images/torrione_blog_imagesc_2013_05_21_01.png" alt=""> <h2>Other Data Sets<a name="2"></a></h2><p>Of course, you can do the same thing with other data sets, too.  Look at how easy it is to see which features are important in prtDataGenFeatureSelection:</p><pre class="codeinput">ds = prtDataGenFeatureSelection;
+ds.imagesc;
+</pre><img vspace="5" hspace="5" src="/images/torrione_blog_imagesc_2013_05_21_02.png" alt=""> <h2>Wrapping Up<a name="3"></a></h2><p>That&rsquo;s it for this week.  We use imagesc-based visualization all the time, and hopefully you&rsquo;ll find it interesting and useful, too.</p></p>
 </div>
   
   

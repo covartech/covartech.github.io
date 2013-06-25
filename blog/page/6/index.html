@@ -121,7 +121,7 @@ span.syscmd { color:#B28C00 }
 </div>
 
 
-  <div class="span4 sidebar">
+  <div class="span3 sidebar">
     <div class="well">
       
         <section>
@@ -129,23 +129,23 @@ span.syscmd { color:#B28C00 }
   <ul id="recent_posts">
     
       <li class="post">
-        <a href="/blog/2013/03/10/max-pooling/">Max-Pooling Feature Representations in MSRCORID</a>
+        <a href="/blog/2013/06/24/spectral-clustering/">Spectral Clustering</a>
       </li>
     
       <li class="post">
-        <a href="/blog/2013/03/06/using-prtpath/">Using prtPath</a>
+        <a href="/blog/2013/06/13/prtclustermeanshift/">prtClusterMeanShift</a>
       </li>
     
       <li class="post">
-        <a href="/blog/2013/02/27/learning-feature-representations/">Learning Feature Representations</a>
+        <a href="/blog/2013/06/03/using-k-means-as-a-feature-extractor/">Using K-Means As a Feature Extractor</a>
       </li>
     
       <li class="post">
-        <a href="/blog/2013/02/16/ieee-grss-hyperspectral-data/">IEEE GRSS Hyperspectral Data</a>
+        <a href="/blog/2013/05/21/new-visualization-with-imagesc/">New Visualization with IMAGESC</a>
       </li>
     
       <li class="post">
-        <a href="/blog/2013/02/11/combining-actions/">Combining Actions</a>
+        <a href="/blog/2013/05/15/prtdatagensandp500-and-prtdatagencylinderbellfunnel/">prtDataGenSandP500 and prtDataGenCylinderBellFunnel</a>
       </li>
     
   </ul>
@@ -173,7 +173,7 @@ span.syscmd { color:#B28C00 }
 
   <header>
     
-      <h1 class="entry-title"><a href="/blog/2013/01/31/random-variables-part-1/">Random Variables (Part 1)</a></h1>
+      <h1 class="entry-title"><a href="/blog/2013/04/22/prtkernel/">prtKernel</a></h1>
     
     
       <p class="meta">
@@ -189,14 +189,14 @@ span.syscmd { color:#B28C00 }
   
 
 
-<time datetime="2013-01-31T16:24:00-05:00" pubdate data-updated="true">Jan 31<span>st</span>, 2013</time>
+<time datetime="2013-04-22T15:37:00-04:00" pubdate data-updated="true">Apr 22<span>nd</span>, 2013</time>
         
       </p>
     
   </header>
 
 
-  <div class="entry-content"><p>Hey ya&#8217;ll! Probability theory and random variables come up all the time in machine learning. Classification techniques like Naive Bayes, the likelihood ratio test and maximum a posterior (MAP). A lot of times when someone says &#8220;Naive Bayes classification&#8221; they imply that they want to assume that the data is multinomial (counts from a fixed dictionary) or when they say &#8220;MAP classification&#8221; they mean they assumed Gaussian distributions for each of the classes. In reality though the choice of these distributions is flexible and assuming different distributions in the PRT is easy thanks to the RV objects. This is the first post in a series that will highlight how RV objects can be used for rapid classifier generation and showcase some of the ways that we use RVs for our research. In part 1, we are going to give an overview of some of the basic RV objects and show how they are used in some basic classification techniques.</p>
+  <div class="entry-content"><p>One of the commonly overlooked &#8220;actions&#8221; in the PRT is prtKernel. They are used internally in several places (RVM, SVM) but they can also be used by themselves. Let&#8217;s talk about em.</p>
 
 
 
@@ -204,148 +204,100 @@ span.syscmd { color:#B28C00 }
 <h2>Contents</h2>
 
 
-<div><ul><li><a href="#1">RV objects</a></li><li><a href="#7">Types of RV objects</a></li><li><a href="#9">Using RV Objects in Classifiers</a></li><li><a href="#12">Conclusions</a></li></ul></div>
+<div><ul><li><a href="#1">Just Another Action</a></li><li><a href="#3">Let&#8217;s see what some other kernel transformations look like.</a></li><li><a href="#5">Kernel Sets</a></li><li><a href="#7">Inside the RVM</a></li><li><a href="#9">Outside of the RVM</a></li><li><a href="#10">Conclusions</a></li></ul></div>
 
 
-<h2>RV objects<a name="1"></a></h2>
+<h2>Just Another Action<a name="1"></a></h2>
 
 
-<p>Admittedly, the RV objects are one of the most under-documented features in the PRT. Sorry about that. I can take the blame there. Hopefully this post gets us started on fixing that.</p>
+<p>Kernels have very precise meanings in certain contexts (Mercer kernels for example) so it is important that we really define what we mean by prtKernel. A prtKernel is a standard prtAction. That means that it supports the train operation, that takes a dataset and outputs a prtKernel with modified parameters, and the run operation, that takes a dataset and outputs modified dataset. What makes prtKernel different than other prtActions is that they typically transform a dataset into a different dimensionality. The new features are usually the distance to a collection of training examples and most kernels differ in their selection of the distance function. The most widely used kernel is the <a href="http://en.wikipedia.org/wiki/Radial_basis_function">radial basis function</a>.</p>
 
 
-<p>Random variable objects are used to state that data is a random variable with an assumed distribution. Therefore, each prtRv*() assumes a different probability density function and implements the necessary methods to infer the parameters of the probability density function mle(), draw data with the same distribution draw(), and evaluate the likelihood of other data pdf() and logPdf().</p>
+<p>Let&#8217;s look at using prtKernelRbf.</p>
 
 
+<pre class="codeinput">ds = prtDataGenBimodal;
+kernel = prtKernelRbf(<span class="string">'sigma'</span>,2); <span class="comment">% Set the kernel Parameter</span>
+trainedKernel = kernel.train(ds); <span class="comment">% Train the kernel using the input data</span>
+kernelTransformedData = trainedKernel.run(ds);
 
-
-<p>
-Let&#8217;s make an RV object with a specified distribution. For the sake of this example we will use the multi-variate Normal distribution &#8220;MVN&#8221;.
-</p>
-
-
-
-
-<pre class="codeinput">
-rv = prtRvMvn(<span class="string">'mu'</span>,[1 2],<span class="string">'sigma'</span>,[1 0.5; 0.5 1])
-</pre>
-
-
-<pre class="codeoutput">rv = 
-  prtRvMvn
-
-  Properties:
-                    name: 'Multi-Variate Normal'
-        nameAbbreviation: 'RVMVN'
-            isSupervised: 0
-    isCrossValidateValid: 1
-     covarianceStructure: 'full'
-                      mu: [1 2]
-                   sigma: [2x2 double]
-             plotOptions: [1x1 prtOptions.prtOptionsRvPlot]
-          verboseStorage: 1
-         showProgressBar: 1
-               isTrained: 0
-          dataSetSummary: []
-                 dataSet: []
-                userData: [1x1 struct]
-</pre>
-
-
-<p>Let&#8217;s draw some data from this RV object and put it into a prtDataSetClass().</p>
-
-
-<pre class="codeinput">x = rv.draw(1000);
-ds = prtDataSetClass(x);
-</pre>
-
-
-<p>Using this RV we can evaluate the log of the probability density function of the data that we drew.</p>
-
-
-<pre class="codeinput">y = rv.logPdf(x);
-</pre>
-
-
-<p>RV objects also have some plot methods and plotLogPdf() is probably the most useful. Let&#8217;s plot the log of the probability density function with the data that we drew fromt the pdf.</p>
-
-
-<pre class="codeinput">rv.plotLogPdf()
-hold <span class="string">on</span>
+subplot(2,1,1)
 plot(ds);
-hold <span class="string">off</span>
+subplot(2,1,2)
+imagesc(kernelTransformedData.X);
+colormap(hot)
+title(<span class="string">'Kernel Transformation'</span>);
+ylabel(<span class="string">'observation'</span>);
+xlabel(<span class="string">'feature'</span>)
 </pre>
 
 
-<p><img vspace="5" hspace="5" src="/images/morton_blog_20130127_01.png" alt=""> <p>Although RV objects can be used by specifying the parameters of the densities their true power is flexibly modeling data. For example, let&rsquo;s make another RV MVN object without specifying parameters and use it to estimate the parameters of the data we drew. Here we will estimate the parameters using maximum likelihood estimation mle()</p><pre class="codeinput">rv2 = prtRvMvn;
-rv2 = rv2.mle(ds); <span class="comment">% or rv2 = rv2.mle(x);</span>
-estimatedMean = rv2.mu
-estimateCovariance = rv2.sigma
-</pre><pre class="codeoutput">estimatedMean =
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0.9647    1.9896
-estimateCovariance =
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0.9479    0.4587
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0.4587    0.9858
-</pre><p>RV objects are actually sub-classes of prtActions() just like classifiers and regressors. This means that they have the train() and run() methods and can be cross-validated. By default, all RV objects implement train by calling the mle() method and implement run by using the logPdf() method. Therefore, some of the things we did above can be done as follows.</p><pre class="codeinput">rv2 = rv2.train(ds);
-y = rv2.run(ds);
-</pre><h2>Types of RV objects<a name="7"></a></h2><p>A list of available RVs that ship with the PRT can be displayed</p><pre class="codeinput">dirContents = what(fullfile(prtRoot,<span class="string">&lsquo;rv&rsquo;</span>));
-availableRvs = dirContents.m
-</pre><pre class="codeoutput">availableRvs =
-&nbsp;&nbsp;&nbsp;&nbsp;&lsquo;prtRv.m&rsquo;
-&nbsp;&nbsp;&nbsp;&nbsp;&lsquo;prtRvDiscrete.m&rsquo;
-&nbsp;&nbsp;&nbsp;&nbsp;&lsquo;prtRvGmm.m&rsquo;
-&nbsp;&nbsp;&nbsp;&nbsp;&lsquo;prtRvHmm.m&rsquo;
-&nbsp;&nbsp;&nbsp;&nbsp;&lsquo;prtRvIndependent.m&rsquo;
-&nbsp;&nbsp;&nbsp;&nbsp;&lsquo;prtRvKde.m&rsquo;
-&nbsp;&nbsp;&nbsp;&nbsp;&lsquo;prtRvMemebershipModel.m&rsquo;
-&nbsp;&nbsp;&nbsp;&nbsp;&lsquo;prtRvMixture.m&rsquo;
-&nbsp;&nbsp;&nbsp;&nbsp;&lsquo;prtRvMultinomial.m&rsquo;
-&nbsp;&nbsp;&nbsp;&nbsp;&lsquo;prtRvMvn.m&rsquo;
-&nbsp;&nbsp;&nbsp;&nbsp;&lsquo;prtRvUniform.m&rsquo;
-&nbsp;&nbsp;&nbsp;&nbsp;&lsquo;prtRvUniformImproper.m&rsquo;
-&nbsp;&nbsp;&nbsp;&nbsp;&lsquo;prtRvVq.m&rsquo;
-</pre><p>As you can, most of the standard probability densities have been implemented. In addition to standard things like prtRvMvn, prtRvDiscrete and prtRvMultinomial, there are also a few RVs that operate on other RVs like prtRvIndependent, prtRvMixture, prtRvGmm and prtRvHmm and there are a few RVs that can be used for more flexible density modeling like prtRvKde and prtRvVq. We will talk about some of these more advanced RVs in a later post.</p><h2>Using RV Objects in Classifiers<a name="9"></a></h2><p>There are two primary classifiers that make use of RV objects prtClassMap and prtClassGlrt. These classifiers have very similar performance but prtClassMap is able to handle M-ary classification problems so we will use that as our example.</p><pre class="codeinput">class = prtClassMap
-</pre></p>
+<p><img vspace="5" hspace="5" src="/images/morton_blog_20130421_01.png" alt=""> <p>You can see in the image space that there is a checkerboard pattern highlighting the multi-modal nature of the data.</p><h2>Let&rsquo;s see what some other kernel transformations look like.<a name="3"></a></h2><pre class="codeinput">kernelRbf = prtKernelRbf(<span class="string">&lsquo;sigma&rsquo;</span>,2);
+trainedKernelRbf = kernelRbf.train(ds);
+kernelTransformedDataRbf = trainedKernelRbf.run(ds);</p>
 
-<pre class="codeoutput">class = 
-  prtClassMap
+<p>subplot(2,2,1)
+imagesc(kernelTransformedDataRbf.X);
+title(<span class="string">&lsquo;RBF Kernel Transformation&rsquo;</span>);
+ylabel(<span class="string">&lsquo;observation&rsquo;</span>);
+xlabel(<span class="string">&lsquo;feature&rsquo;</span>)</p>
 
-  Properties:
-                    name: 'Maximum a Posteriori'
-        nameAbbreviation: 'MAP'
-            isNativeMary: 1
-                     rvs: [1x1 prtRvMvn]
-        twoClassParadigm: 'binary'
-         internalDecider: []
-            isSupervised: 1
-    isCrossValidateValid: 1
-          verboseStorage: 1
-         showProgressBar: 1
-               isTrained: 0
-          dataSetSummary: []
-                 dataSet: []
-                userData: [1x1 struct]
-</pre>
+<p>kernelHyp = prtKernelHyperbolicTangent;
+trainedKernelHyp = kernelHyp.train(ds);
+kernelTransformedDataHyp = trainedKernelHyp.run(ds);</p>
 
+<p>subplot(2,2,2)
+imagesc(kernelTransformedDataHyp.X);
+title(<span class="string">&lsquo;Hyperbolic Tangent Kernel Transformation&rsquo;</span>);
+ylabel(<span class="string">&lsquo;observation&rsquo;</span>);
+xlabel(<span class="string">&lsquo;feature&rsquo;</span>)</p>
 
+<p>kernelPoly = prtKernelPolynomial;
+trainedKernelPoly = kernelPoly.train(ds);
+kernelTransformedDataPoly = trainedKernelPoly.run(ds);</p>
 
+<p>subplot(2,2,3)
+imagesc(kernelTransformedDataPoly.X);
+title(<span class="string">&lsquo;Polynomial Kernel Transformation&rsquo;</span>);
+ylabel(<span class="string">&lsquo;observation&rsquo;</span>);
+xlabel(<span class="string">&lsquo;feature&rsquo;</span>)</p>
 
-<p>prtClassMap has a property rvs that lists the rvs used for each class in the incoming data set. If there is only one RV specified it is used to model all of the classes. Let&#8217;s classify prtDataGenUnimodal using a quadratic classifier that arises by using a MAP classifier with MVN assumption for each class.</p>
+<p>kernelDirect  = prtKernelDirect;
+trainedKernelDirect = kernelDirect.train(ds);
+kernelTransformedDataDirect = trainedKernelDirect.run(ds);</p>
 
+<p>subplot(2,2,4)
+imagesc(kernelTransformedDataDirect.X);
+title(<span class="string">&lsquo;Direct Kernel Transformation&rsquo;</span>);
+ylabel(<span class="string">&lsquo;observation&rsquo;</span>);
+xlabel(<span class="string">&lsquo;feature&rsquo;</span>)
+</pre><img vspace="5" hspace="5" src="/images/morton_blog_20130421_02.png" alt=""> <p>You can see how the choice of the kernel (and kernel parameters) can really effect the outcoming feature space. It is also interesting to notice that the direct kernel is not actually a kernel at all. It just uses the data as the output featurespace (essentially doing nothing). This is useful for combining the original feature space with kernel transformed data using kernel sets.</p><h2>Kernel Sets<a name="5"></a></h2><p>Kernels can be combined using the &amp; operator to great prtKernelSets. These perform collumn wise concatonation of several kernels. This allows one to create a single kernel transformation out of several prtKernels. In theory one could use / to make a parallel prtAlgorithm to accomplish the same task but there are several reasons to use &amp; that allow them to work within the prtClassRvm and prtClassSvm to remain efficient at run-time.</p><pre class="codeinput">clf; <span class="comment">% Clear those subplots from earlier</span>
+kernel = prtKernelDc &amp; prtKernelRbf(<span class="string">&lsquo;sigma&rsquo;</span>,1) &amp; prtKernelHyperbolicTangent;
+trainedKernel = kernel.train(ds); <span class="comment">% Train the kernel using the input data</span>
+kernelTransformedData = trainedKernel.run(ds);
+imagesc(kernelTransformedData.X);
+title(<span class="string">&lsquo;A Kernel Set Transformation&rsquo;</span>);
+ylabel(<span class="string">&lsquo;observation&rsquo;</span>);
+xlabel(<span class="string">&lsquo;feature&rsquo;</span>)
+</pre><img vspace="5" hspace="5" src="/images/morton_blog_20130421_03.png" alt=""> <p>You can see that the different transformed feature spaces are concatenated together.</p><h2>Inside the RVM<a name="7"></a></h2><p>In prtClassRvm the &ldquo;kernels&rdquo; property can be set to the prtKernel of our choosing. The RVM is essentially a sparse (it tries to have most coefficients be zero) linear classifier that opperates on kernel transformed data. Let&rsquo;s look at some classification results of prtDataGenBimodal using several different choices for the kernel.</p><pre class="codeinput">subplot(2,2,1)
+plot(train(prtClassRvm(<span class="string">&lsquo;kernels&rsquo;</span>,prtKernelRbf(<span class="string">&lsquo;sigma&rsquo;</span>,2)),ds))
+title(<span class="string">&lsquo;RBF Kernel RVM&rsquo;</span>);</p>
 
-<pre class="codeinput">class = prtClassMap(<span class="string">'rvs'</span>,prtRvMvn);
-ds = prtDataGenUnimodal;
+<p>subplot(2,2,2)
+plot(train(prtClassRvm(<span class="string">&lsquo;kernels&rsquo;</span>,prtKernelHyperbolicTangent),ds))
+title(<span class="string">&lsquo;Hyperbolic Tangent Kernel RVM&rsquo;</span>);</p>
 
-trainedClassifier = class.train(ds);
-plot(trainedClassifier);
-</pre>
+<p>subplot(2,2,3)
+plot(train(prtClassRvm(<span class="string">&lsquo;kernels&rsquo;</span>,prtKernelPolynomial),ds))
+title(<span class="string">&lsquo;Polynomial Kernel RVM&rsquo;</span>);</p>
 
-
-<p><img vspace="5" hspace="5" src="/images/morton_blog_20130127_02.png" alt=""> <p>If our data is more complex, we can modify the assumptions of the distributions in both of our classes by setting the &ldquo;rvs&rdquo; parameter to something more flexible. Let&rsquo;s classify prtDataGenBimodal using prtRvKde which uses kernel density estimation.</p><pre class="codeinput">class = prtClassMap(<span class="string">&lsquo;rvs&rsquo;</span>,prtRvKde);
-ds = prtDataGenBimodal;</p>
-
-<p>trainedClassifier = class.train(ds);
-plot(trainedClassifier);
-</pre><img vspace="5" hspace="5" src="/images/morton_blog_20130127_03.png" alt=""> <h2>Conclusions<a name="12"></a></h2><p>As you can see, RVs are pretty powerful parts of the PRT and they can be used in other parts of the PRT to make things flexible.</p><p>In future posts we will talk about how RV objects are used to make flexible mixtures like the GMM and hidden Markov models and we will explore some things that are still in beta such as how we use prtBrv objects to perform variational Bayesian inference for models like Dirichlet process mixtures.</p></p>
+<p>subplot(2,2,4)
+plot(train(prtClassRvm(<span class="string">&lsquo;kernels&rsquo;</span>,prtKernelDirect),ds))
+title(<span class="string">&lsquo;Direct Kernel RVM&rsquo;</span>);
+</pre><img vspace="5" hspace="5" src="/images/morton_blog_20130421_04.png" alt=""> <p>As you can see the correct choice for the kernel is very important for robust classifcation. The RBF kenerl is a common choice but even it has the sigma parameter which can grealy impact performance. One interesting variant of the RBF kernel is call prtKernelRbfNeighborhoodScaled. This kernel sets the sigma parameter differently for each data point depending on the local neighborhood of the training point.</p><pre class="codeinput">clf; <span class="comment">% Clear those subplots from earlier</span>
+plot(train(prtClassRvm(<span class="string">&lsquo;kernels&rsquo;</span>,prtKernelRbfNeighborhoodScaled),ds))
+title(<span class="string">&lsquo;Locally Scaled RBF Kernel RVM&rsquo;</span>);
+</pre><img vspace="5" hspace="5" src="/images/morton_blog_20130421_05.png" alt=""> <h2>Outside of the RVM<a name="9"></a></h2><p>In the forum the other day someone asked if we could do non-linear regression with multi-dimensional output. Sadly, the answer is &ldquo;not directly&rdquo; but using kernels you can. By transforming the data to kernel space and then using a linear regression technique you can perform non-linear regression. I wont copy the content over here but check out the answer from the forum. <a href="http://www.newfolderconsulting.com/node/412"><a href="http://www.newfolderconsulting.com/node/412">http://www.newfolderconsulting.com/node/412</a></a></p><h2>Conclusions<a name="10"></a></h2><p>This was a pretty quick overview of things you can do with kernels in the PRT. We don&rsquo;t have every kernel but we have quite a few. If there is something you think we should add let us know.</p></p>
 </div>
   
   
