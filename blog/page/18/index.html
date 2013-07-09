@@ -129,6 +129,10 @@ span.syscmd { color:#B28C00 }
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2013/07/08/twoclassparadigm/">twoClassParadigm</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2013/06/24/spectral-clustering/">Spectral Clustering</a>
       </li>
     
@@ -142,10 +146,6 @@ span.syscmd { color:#B28C00 }
     
       <li class="post">
         <a href="/blog/2013/05/21/new-visualization-with-imagesc/">New Visualization with IMAGESC</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/05/15/prtdatagensandp500-and-prtdatagencylinderbellfunnel/">prtDataGenSandP500 and prtDataGenCylinderBellFunnel</a>
       </li>
     
   </ul>
@@ -175,7 +175,7 @@ span.syscmd { color:#B28C00 }
 
   <header>
     
-      <h1 class="entry-title"><a href="/blog/2013/01/25/decisions-decisions/">Decisions Decisions</a></h1>
+      <h1 class="entry-title"><a href="/blog/2013/01/31/random-variables-part-1/">Random Variables (Part 1)</a></h1>
     
     
       <p class="meta">
@@ -191,77 +191,163 @@ span.syscmd { color:#B28C00 }
   
 
 
-<time datetime="2013-01-25T10:45:00-05:00" pubdate data-updated="true">Jan 25<span>th</span>, 2013</time>
+<time datetime="2013-01-31T16:24:00-05:00" pubdate data-updated="true">Jan 31<span>st</span>, 2013</time>
         
       </p>
     
   </header>
 
 
-  <div class="entry-content"><p>You may have noticed in a lot of examples, we&#8217;ve made use of prtDecision objects, and might have wondered what exactly those are, and how they work.  Today I&#8217;d like to describe the prtDecision* actions, and when you might want to use them.</p>
+  <div class="entry-content"><p>Hey ya&#8217;ll! Probability theory and random variables come up all the time in machine learning. Classification techniques like Naive Bayes, the likelihood ratio test and maximum a posterior (MAP). A lot of times when someone says &#8220;Naive Bayes classification&#8221; they imply that they want to assume that the data is multinomial (counts from a fixed dictionary) or when they say &#8220;MAP classification&#8221; they mean they assumed Gaussian distributions for each of the classes. In reality though the choice of these distributions is flexible and assuming different distributions in the PRT is easy thanks to the RV objects. This is the first post in a series that will highlight how RV objects can be used for rapid classifier generation and showcase some of the ways that we use RVs for our research. In part 1, we are going to give an overview of some of the basic RV objects and show how they are used in some basic classification techniques.</p>
 
 
-<!--/introduction-->
 
 
 <h2>Contents</h2>
 
 
-<div><ul><li><a href="#4">Making Manual Decisions</a></li><li><a href="#8">Decision Objects</a></li><li><a href="#11">Concluding</a></li></ul></div>
+<div><ul><li><a href="#1">RV objects</a></li><li><a href="#7">Types of RV objects</a></li><li><a href="#9">Using RV Objects in Classifiers</a></li><li><a href="#12">Conclusions</a></li></ul></div>
 
 
-<p>Let&#8217;s start out with a pretty standard prtDataSet, and we&#8217;ll make a classifier and score a ROC curve:</p>
+<h2>RV objects<a name="1"></a></h2>
 
 
-<pre class="codeinput">ds = prtDataGenUnimodal;
-classifier = prtClassFld;
-yOutFld = kfolds(classifier,ds,3);
-[pf,pd] = prtScoreRoc(yOutFld);
-h = plot(pf,pd);
-set(h,<span class="string">'linewidth'</span>,3);
-title(<span class="string">'ROC Curve for FLD'</span>);
-xlabel(<span class="string">'Pfa'</span>);
-ylabel(<span class="string">'Pd'</span>);
+<p>Admittedly, the RV objects are one of the most under-documented features in the PRT. Sorry about that. I can take the blame there. Hopefully this post gets us started on fixing that.</p>
+
+
+<p>Random variable objects are used to state that data is a random variable with an assumed distribution. Therefore, each prtRv*() assumes a different probability density function and implements the necessary methods to infer the parameters of the probability density function mle(), draw data with the same distribution draw(), and evaluate the likelihood of other data pdf() and logPdf().</p>
+
+
+
+
+<p>
+Let&#8217;s make an RV object with a specified distribution. For the sake of this example we will use the multi-variate Normal distribution &#8220;MVN&#8221;.
+</p>
+
+
+
+
+<pre class="codeinput">
+rv = prtRvMvn(<span class="string">'mu'</span>,[1 2],<span class="string">'sigma'</span>,[1 0.5; 0.5 1])
 </pre>
 
 
-<p><img vspace="5" hspace="5" src="/images/torrione_blog_Decisions_01.png" alt=""> <p>That ROC curve looks pretty good, but it doesn&rsquo;t tell the whole story. At the end of the day, if you wanted to use your FLD algorithm in a production setting, you&rsquo;ll need to make discrete decisions to take different actions depending on whether you&rsquo;re calling something Class #1 or Class #0.  An ROC curve is suitable for comparing performance across a range of possible operating points, but what if we wanted to know exactly what PD and PFA we were going to get for a particular decision point?</p><p>To clarify matters, let&rsquo;s take a look at what the output from FLD actually looks like.</p><pre class="codeinput">h = plot(1:yOutFld.nObservations,yOutFld.X,1:yOutFld.nObservations,yOutFld.Y);
-set(h,<span class="string">&lsquo;linewidth&rsquo;</span>,3);
-xlabel(<span class="string">&lsquo;Observation Index&rsquo;</span>);
-legend(h,{<span class="string">&lsquo;FLD Output&rsquo;</span>,<span class="string">&lsquo;Class Label&rsquo;</span>});
-title(<span class="string">&lsquo;FLD Output &amp; Actual Class Label vs. Observation Index&rsquo;</span>);
-</pre><img vspace="5" hspace="5" src="/images/torrione_blog_Decisions_02.png" alt=""> <p>The above figure shows what&rsquo;s actually going on under the hood &ndash; when a classifier object is run on a data set, the output data set (yOutFld) has it&rsquo;s X value set to the classifier output.  In this case, the yOutFld.X value is a linear weighting of the input variables, and is shown in blue.  You can see how it correlated with the actual class labels (in green).</p><h2>Making Manual Decisions<a name="4"></a></h2><p>Say we wanted to make decisions based on the output of the FLD.  We have to choose a threshold (a point along the y-axis) such that whenever a blue data point is above the threshold, we call the output &ldquo;Class 1&rdquo;, and otherwise we call it &ldquo;Class 0&rdquo;.  By visual inspection, any value between, say, 0 and 2 looks reasonable.  Let&rsquo;s try manually setting a threshold of 1:</p><pre class="codeinput">yOutManual = yOutFld;
-yOutManual.X = yOutManual.X &gt; 1;
-h = plot(1:yOutManual.nObservations,yOutManual.X,1:yOutManual.nObservations,yOutManual.Y);
-ylim([&ndash;.1 1.1]);
-set(h,<span class="string">&lsquo;linewidth&rsquo;</span>,3);
-xlabel(<span class="string">&lsquo;Observation Index&rsquo;</span>);
-legend(h,{<span class="string">&lsquo;Manual Decision Output&rsquo;</span>,<span class="string">&lsquo;Class Label&rsquo;</span>},4);
-title(<span class="string">&lsquo;Manual Decision &amp; Actual Class Label vs. Observation Index&rsquo;</span>);
-</pre><img vspace="5" hspace="5" src="/images/torrione_blog_Decisions_03.png" alt=""> <p>You can see that our chosen threshold does pretty well.  The vast majority of the time, the blue line corresponds to the green line.  We can confirm this by considering the percent correct, and a confusion matrix:</p><pre class="codeinput">prtScoreConfusionMatrix(yOutManual);
-pc = prtScorePercentCorrect(yOutManual);
-title(sprintf(<span class="string">&lsquo;Percent Correct: %.0f%%&rsquo;</span>,pc<em>100));
-</pre><img vspace="5" hspace="5" src="/images/torrione_blog_Decisions_04.png" alt=""> <p>98% Correct!  That&rsquo;s not bad.  But look at what happens if we try and do the same scoring on the original output from the FLD:</p><pre class="codeinput">prtScoreConfusionMatrix(yOutFld);
-pc = prtScorePercentCorrect(yOutFld);
-title(sprintf(<span class="string">&lsquo;Percent Correct: %.0f%% (This is clearly wrong!)&rsquo;</span>,pc</em>100));
-</pre><img vspace="5" hspace="5" src="/images/torrione_blog_Decisions_05.png" alt=""> <p>What happened?  This is a little subtle, but whenever the PRT has to score discrete classes, like with prtScorePercentCorrect and prtScoreConfusionMatrix, it requires that the X values in the dataset to be equal to your best guess as to the real underlying class.</p><p>That worked out great for yOutManual, since we set yOutManual.X to zero for class 0, and 1 for class 1.  But yOutFld has continuous values stored in it (as the earlier figure shows); you need to make discrete decisions for prtScorePercentCorrect or prtScoreConfusionMatrix to make any sense.</p><h2>Decision Objects<a name="8"></a></h2><p>Fortunately, the PRT provides a special kind of prtAction &ndash; prtDecisions to make those decisions for you automatically, so you can score algorithms very easily.</p><p>For example, prtDecisionBinaryMinPe tries to find a threshold based on the training data to minimize the probability of error (Pe). You can use the decision actions like you would use any other actions in a prtAlgorithm:</p><pre class="codeinput">algo = prtClassFld + prtDecisionBinaryMinPe;
-yOutDecision = kfolds(algo,ds,3);
-prtScoreConfusionMatrix(yOutDecision);
-pc = prtScorePercentCorrect(yOutDecision);
-title(sprintf(<span class="string">&lsquo;Percent Correct: %.0f%%&rsquo;</span>,pc<em>100));
-</pre><img vspace="5" hspace="5" src="/images/torrione_blog_Decisions_06.png" alt=""> <p>Now we&rsquo;re back in the ball game!  You can use different decision objects to get performance at different points on the ROC curve, for example prtDecisionBinarySpecifiedPd let&rsquo;s you specify a Pd to operate at:</p><pre class="codeinput">close <span class="string">all</span>;
-algo = prtClassFld + prtDecisionBinarySpecifiedPd(<span class="string">&lsquo;pd&rsquo;</span>,.99);
-yOutDecision = kfolds(algo,ds,3);
-prtScoreConfusionMatrix(yOutDecision);
-pc = prtScorePercentCorrect(yOutDecision);
-title(sprintf(<span class="string">&lsquo;Percent Correct: %.0f%%&rsquo;</span>,pc</em>100));
-</pre><img vspace="5" hspace="5" src="/images/torrione_blog_Decisions_07.png" alt=""> <p>Note that the overall probability of error is significantly worse, but almost all of the data from Class 1 was identified as Class 1.  (This may not achieve 99% Pd in some cases since the thresholds are learned differently in each fold, so there is some statistical variation in the actual Pd achieved).</p><p>We can also use prtDecisionMap to perform multi-class decision making. The &ldquo;Map&rdquo; in prtDecisionMap stands for maximum a-posteriori.  This basically means &ldquo;decide the class corresponding to the maximum classifier output&rdquo;.</p><pre class="codeinput">ds = prtDataGenMary;
-algo = prtClassKnn + prtDecisionMap;
-yOutDecision = kfolds(algo,ds,3);
-prtScoreConfusionMatrix(yOutDecision);
-pc = prtScorePercentCorrect(yOutDecision);
-title(sprintf(<span class="string">&lsquo;Percent Correct: %.0f%%&rsquo;</span>,pc*100));
-</pre><img vspace="5" hspace="5" src="/images/torrione_blog_Decisions_08.png" alt=""> <h2>Concluding<a name="11"></a></h2><p>So, there you go!  prtDecision objects handle a lot of book-keeping internally, so that you don&rsquo;t generally have to worry about making sure to keep class names and indices straight.  We recommend using them instead of manually making your own decision functions to operate on output classes.</p><p>As always, please feel free to comment or e-mail us with questions or ideas.</p></p>
+<pre class="codeoutput">rv = 
+  prtRvMvn
+
+  Properties:
+                    name: 'Multi-Variate Normal'
+        nameAbbreviation: 'RVMVN'
+            isSupervised: 0
+    isCrossValidateValid: 1
+     covarianceStructure: 'full'
+                      mu: [1 2]
+                   sigma: [2x2 double]
+             plotOptions: [1x1 prtOptions.prtOptionsRvPlot]
+          verboseStorage: 1
+         showProgressBar: 1
+               isTrained: 0
+          dataSetSummary: []
+                 dataSet: []
+                userData: [1x1 struct]
+</pre>
+
+
+<p>Let&#8217;s draw some data from this RV object and put it into a prtDataSetClass().</p>
+
+
+<pre class="codeinput">x = rv.draw(1000);
+ds = prtDataSetClass(x);
+</pre>
+
+
+<p>Using this RV we can evaluate the log of the probability density function of the data that we drew.</p>
+
+
+<pre class="codeinput">y = rv.logPdf(x);
+</pre>
+
+
+<p>RV objects also have some plot methods and plotLogPdf() is probably the most useful. Let&#8217;s plot the log of the probability density function with the data that we drew fromt the pdf.</p>
+
+
+<pre class="codeinput">rv.plotLogPdf()
+hold <span class="string">on</span>
+plot(ds);
+hold <span class="string">off</span>
+</pre>
+
+
+<p><img vspace="5" hspace="5" src="/images/morton_blog_20130127_01.png" alt=""> <p>Although RV objects can be used by specifying the parameters of the densities their true power is flexibly modeling data. For example, let&rsquo;s make another RV MVN object without specifying parameters and use it to estimate the parameters of the data we drew. Here we will estimate the parameters using maximum likelihood estimation mle()</p><pre class="codeinput">rv2 = prtRvMvn;
+rv2 = rv2.mle(ds); <span class="comment">% or rv2 = rv2.mle(x);</span>
+estimatedMean = rv2.mu
+estimateCovariance = rv2.sigma
+</pre><pre class="codeoutput">estimatedMean =
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0.9647    1.9896
+estimateCovariance =
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0.9479    0.4587
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0.4587    0.9858
+</pre><p>RV objects are actually sub-classes of prtActions() just like classifiers and regressors. This means that they have the train() and run() methods and can be cross-validated. By default, all RV objects implement train by calling the mle() method and implement run by using the logPdf() method. Therefore, some of the things we did above can be done as follows.</p><pre class="codeinput">rv2 = rv2.train(ds);
+y = rv2.run(ds);
+</pre><h2>Types of RV objects<a name="7"></a></h2><p>A list of available RVs that ship with the PRT can be displayed</p><pre class="codeinput">dirContents = what(fullfile(prtRoot,<span class="string">&lsquo;rv&rsquo;</span>));
+availableRvs = dirContents.m
+</pre><pre class="codeoutput">availableRvs =
+&nbsp;&nbsp;&nbsp;&nbsp;&lsquo;prtRv.m&rsquo;
+&nbsp;&nbsp;&nbsp;&nbsp;&lsquo;prtRvDiscrete.m&rsquo;
+&nbsp;&nbsp;&nbsp;&nbsp;&lsquo;prtRvGmm.m&rsquo;
+&nbsp;&nbsp;&nbsp;&nbsp;&lsquo;prtRvHmm.m&rsquo;
+&nbsp;&nbsp;&nbsp;&nbsp;&lsquo;prtRvIndependent.m&rsquo;
+&nbsp;&nbsp;&nbsp;&nbsp;&lsquo;prtRvKde.m&rsquo;
+&nbsp;&nbsp;&nbsp;&nbsp;&lsquo;prtRvMemebershipModel.m&rsquo;
+&nbsp;&nbsp;&nbsp;&nbsp;&lsquo;prtRvMixture.m&rsquo;
+&nbsp;&nbsp;&nbsp;&nbsp;&lsquo;prtRvMultinomial.m&rsquo;
+&nbsp;&nbsp;&nbsp;&nbsp;&lsquo;prtRvMvn.m&rsquo;
+&nbsp;&nbsp;&nbsp;&nbsp;&lsquo;prtRvUniform.m&rsquo;
+&nbsp;&nbsp;&nbsp;&nbsp;&lsquo;prtRvUniformImproper.m&rsquo;
+&nbsp;&nbsp;&nbsp;&nbsp;&lsquo;prtRvVq.m&rsquo;
+</pre><p>As you can, most of the standard probability densities have been implemented. In addition to standard things like prtRvMvn, prtRvDiscrete and prtRvMultinomial, there are also a few RVs that operate on other RVs like prtRvIndependent, prtRvMixture, prtRvGmm and prtRvHmm and there are a few RVs that can be used for more flexible density modeling like prtRvKde and prtRvVq. We will talk about some of these more advanced RVs in a later post.</p><h2>Using RV Objects in Classifiers<a name="9"></a></h2><p>There are two primary classifiers that make use of RV objects prtClassMap and prtClassGlrt. These classifiers have very similar performance but prtClassMap is able to handle M-ary classification problems so we will use that as our example.</p><pre class="codeinput">class = prtClassMap
+</pre></p>
+
+<pre class="codeoutput">class = 
+  prtClassMap
+
+  Properties:
+                    name: 'Maximum a Posteriori'
+        nameAbbreviation: 'MAP'
+            isNativeMary: 1
+                     rvs: [1x1 prtRvMvn]
+        twoClassParadigm: 'binary'
+         internalDecider: []
+            isSupervised: 1
+    isCrossValidateValid: 1
+          verboseStorage: 1
+         showProgressBar: 1
+               isTrained: 0
+          dataSetSummary: []
+                 dataSet: []
+                userData: [1x1 struct]
+</pre>
+
+
+
+
+<p>prtClassMap has a property rvs that lists the rvs used for each class in the incoming data set. If there is only one RV specified it is used to model all of the classes. Let&#8217;s classify prtDataGenUnimodal using a quadratic classifier that arises by using a MAP classifier with MVN assumption for each class.</p>
+
+
+<pre class="codeinput">class = prtClassMap(<span class="string">'rvs'</span>,prtRvMvn);
+ds = prtDataGenUnimodal;
+
+trainedClassifier = class.train(ds);
+plot(trainedClassifier);
+</pre>
+
+
+<p><img vspace="5" hspace="5" src="/images/morton_blog_20130127_02.png" alt=""> <p>If our data is more complex, we can modify the assumptions of the distributions in both of our classes by setting the &ldquo;rvs&rdquo; parameter to something more flexible. Let&rsquo;s classify prtDataGenBimodal using prtRvKde which uses kernel density estimation.</p><pre class="codeinput">class = prtClassMap(<span class="string">&lsquo;rvs&rsquo;</span>,prtRvKde);
+ds = prtDataGenBimodal;</p>
+
+<p>trainedClassifier = class.train(ds);
+plot(trainedClassifier);
+</pre><img vspace="5" hspace="5" src="/images/morton_blog_20130127_03.png" alt=""> <h2>Conclusions<a name="12"></a></h2><p>As you can see, RVs are pretty powerful parts of the PRT and they can be used in other parts of the PRT to make things flexible.</p><p>In future posts we will talk about how RV objects are used to make flexible mixtures like the GMM and hidden Markov models and we will explore some things that are still in beta such as how we use prtBrv objects to perform variational Bayesian inference for models like Dirichlet process mixtures.</p></p>
 </div>
   
   

@@ -4,7 +4,7 @@
   <title><![CDATA[PRT Blog]]></title>
   <link href="http://newfolder.github.io/atom.xml" rel="self"/>
   <link href="http://newfolder.github.io/"/>
-  <updated>2013-06-25T08:32:36-04:00</updated>
+  <updated>2013-07-08T21:23:20-04:00</updated>
   <id>http://newfolder.github.io/</id>
   <author>
     <name><![CDATA[Kenneth Morton and Peter Torrione]]></name>
@@ -12,6 +12,158 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[twoClassParadigm]]></title>
+    <link href="http://newfolder.github.io/blog/2013/07/08/twoclassparadigm/"/>
+    <updated>2013-07-08T20:57:00-04:00</updated>
+    <id>http://newfolder.github.io/blog/2013/07/08/twoclassparadigm</id>
+    <content type="html"><![CDATA[<p>When using an M-ary classifier on a binary classification problem, sometimes you want multiple dimension output and sometimes you don&#8217;t. In the PRT the default is to only supply a single output but this can be overwritten by setting the twoClassParadigm property.</p>
+
+
+<!--/introduction-->
+
+
+<h2>Contents</h2>
+
+
+<div><ul><li><a href="#1">An Quick Example</a></li><li><a href="#5">twoClassParadigm</a></li><li><a href="#7">Why did you do that?</a></li><li><a href="#10">Conclusion</a></li></ul></div>
+
+
+<h2>An Quick Example<a name="1"></a></h2>
+
+
+<p>Consider a binary classification problem with an m-ary classifer (MAP).</p>
+
+
+
+
+<pre class="codeinput">dsTrain = prtDataGenUnimodal;
+dsTest = prtDataGenUnimodal;
+
+classifier = prtClassMap;
+trainedClassifier = train(classifier, dsTrain);
+
+plot(trainedClassifier);
+title(<span class="string">'Binary Classification with MAP'</span>,<span class="string">'FontSize'</span>,16);
+
+output = run(trainedClassifier, dsTest);
+</pre>
+
+
+<pre class="codeoutput">
+output.nFeatures
+ans =
+ 1
+</pre>
+
+
+<p><img vspace="5" hspace="5" src="http://newfolder.github.io/images/morton_blog_20130708_twoClassParadigm_01.png" alt=""> <p>As you can see the output only has one feature. But consider the same M-ary classifier with a 3-class problem.</p></p>
+
+<pre class="codeinput">dsTrainMary = prtDataGenMary;
+dsTestMary = prtDataGenMary;
+
+trainedClassifierMary = train(classifier, dsTrainMary);
+
+plot(trainedClassifierMary);
+title(<span class="string">'M-ary Classification with MAP'</span>,<span class="string">'FontSize'</span>,16);
+
+outputMary = run(trainedClassifierMary, dsTestMary);
+
+outputMary.nFeatures
+</pre>
+
+
+<pre class="codeoutput">
+ans =
+ 3
+</pre>
+
+
+<p><img vspace="5" hspace="5" src="http://newfolder.github.io/images/morton_blog_20130708_twoClassParadigm_02.png" alt=""> <p>Now the output has 3 feautres. The trend continues with more classes, because prtClassMap declares itself as an Mary classififer</p></p>
+
+<pre class="codeinput">classifier.isNativeMary
+</pre>
+
+
+<pre class="codeoutput">
+ans =
+ 1
+</pre>
+
+
+<p>the output is (as it should) have a column corresponding to the confidence of each class. Binary classification is an exception.</p>
+
+
+<h2>twoClassParadigm<a name="5"></a></h2>
+
+
+<p>By default the PRT checks when M-ary classifiers are run on binary data to see if it should output a single confidence or binary confidences. The mode of operation is stored in twoClassParadigm which by default is set to the string M-ary.</p>
+
+
+<pre class="codeinput">classifier.twoClassParadigm
+</pre>
+
+
+<pre class="codeoutput">
+ans =
+binary
+</pre>
+
+
+<p>If we return to the binary classification problem and set twoClassParadigm to mary we can see that we get the two outputs that we expect.</p>
+
+
+
+
+<pre class="codeinput">classifier.twoClassParadigm = <span class="string">'mary'</span>;
+trainedClassifierBinaryActingAsMary = train(classifier, dsTrain);
+
+outputBinaryActingAsMary = run(trainedClassifierBinaryActingAsMary, dsTest);
+
+outputBinaryActingAsMary.nFeatures
+</pre>
+
+
+<pre class="codeoutput">
+ans =
+ 2
+</pre>
+
+
+
+
+<h2>Why did you do that?<a name="7"></a></h2>
+
+
+<p>We debated, but ultimately we decided that it was less confusing this way. It is more rare to want both outputs for a binary classification problem than it is to expect a single. Most users expected this to run out of the box.</p>
+
+
+
+
+<pre class="codeinput">classifier = prtClassMap;
+trainedClassifier = train(classifier, dsTrain);
+output = run(trainedClassifier, dsTest);
+
+prtScoreRoc(output);
+title(<span class="string">'Binary Classification with an M-ary Classifier'</span>,<span class="string">'FontSize'</span>,16);
+</pre>
+
+
+<p><img vspace="5" hspace="5" src="http://newfolder.github.io/images/morton_blog_20130708_twoClassParadigm_03.png" alt=""> <p>If you change the classifier to non-m-ary classification (prtClassGlrt for example) you expect the same code to work only by changing the classifier declaration.</p></p>
+
+<pre class="codeinput">classifier = prtClassGlrt;
+trainedClassifier = train(classifier, dsTrain);
+output = run(trainedClassifier, dsTest);
+
+prtScoreRoc(output);
+title(<span class="string">'Binary Classification with a Binary Classifier'</span>,<span class="string">'FontSize'</span>,16);
+</pre>
+
+
+<p><img vspace="5" hspace="5" src="http://newfolder.github.io/images/morton_blog_20130708_twoClassParadigm_04.png" alt=""> <p>Without the twoClassParadigm system it wouldn&rsquo;t be as easy to switch classifiers for binary problems as an extra step would be required to manually select which column of the output should be used to calculate the ROC.</p><h2>Conclusion<a name="10"></a></h2><p>Well that&rsquo;s twoClassParadigm. It&rsquo;s a convenient feature of the PRT that not many people know about because they don&rsquo;t have to. In the rare cases when you want the confidence assigned to each class, you now know how to get them.</p></p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Spectral Clustering]]></title>
@@ -2007,29 +2159,6 @@ title(sprintf(<span class="string">'Actual: %d; SVM Label: %d'</span>,yOutTestMi
 
 
 <p><img vspace="5" hspace="5" src="http://newfolder.github.io/images/testBlog_06.png" alt=""> <p>Visual inspection of these mistakes illustrate some of the causes of confusions in the SVM.  For example, highly slanted digits are often mis-labeled.  Mitigating some of these mistakes may require significantly more than simply optimizing SVM parameters!</p><p>Interested readers can refer to a large body of literature that has previously investigated this data set (<a href="http://yann.lecun.com/exdb/mnist/"><a href="http://yann.lecun.com/exdb/mnist/">http://yann.lecun.com/exdb/mnist/</a></a>) for tips, tricks, and ideas for further improving performance on this data set.  One particularly exciting recent advance is based on Hinton&#8217;s deep learning networks, which enables very efficient learning on the MNIST database <a href="www.cs.toronto.edu/~hinton/science.pdf">www.cs.toronto.edu/~hinton/science.pdf</a>).</p><p>We hope this example shows how quickly you can get from data to results with the PRT.  Please let us know if you have comments or questions!</p></p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Hi]]></title>
-    <link href="http://newfolder.github.io/blog/2013/01/21/hi/"/>
-    <updated>2013-01-21T16:02:00-05:00</updated>
-    <id>http://newfolder.github.io/blog/2013/01/21/hi</id>
-    <content type="html"><![CDATA[<p>Hi,</p>
-
-<p>Thanks for checking out the PRT. The PRT is intended to help people who do machine learning handle the most common classification tasks within MATLAB.  This includes things like cross-validation, data visualization, classifier development and feature selection. The PRT includes object types for data set storage, pre-processing, classification, clustering, distance calculations, outlier removal, kernel learning, data generation, scoring and classifier evaluation, feature selection, random variable definitions, and visualization. We think it serves as a great platform for both machine learning research and applied algorithm development (that&rsquo;s why we built it!).</p>
-
-<p>The PRT is free and released under the MIT license which means that it is free for academic and commercial use. The PRT is hosted on <a href="https://github.com/newfolder/PRT">GitHub</a> so feel free to fork or clone the repository or just download the latest <a href="https://github.com/newfolder/PRT/zipball/master">zip</a>.</p>
-
-<p>Check out the <a href="http://newfolder.github.io/prtdoc/prtDocInstallation.html">installation instructions</a> to get you up and running. Once installed, open up MATLAB&reg;, and follow through with our <a href="http://newfolder.github.io/prtdoc/prtDocGettingStarted.html">Getting Started</a> guide, which will walk you through some examples of using the PRT in practice and show you what the PRT can do.</p>
-
-<p>Even though there are a lot of M-files in the PRT, we’ve built the PRT to be easy to use and to make it easy to find what you need from within MATLAB.  For example, to find a list of all classifiers in the PRT, simply type “prtClass” and then <tab> at the MATLAB command prompt.  Other object types behave the same way, e.g., prtPreProc <tab>. If you have any feed back or questions don&rsquo;t hesitate to ask on on <a href="https://github.com/newfolder/PRT">GitHub</a> or through email at <a href="mailto:prt@newfolderconsulting.com"><a href="&#109;&#97;&#x69;&#x6c;&#116;&#x6f;&#58;&#x70;&#x72;&#x74;&#64;&#110;&#101;&#x77;&#x66;&#x6f;&#108;&#x64;&#x65;&#x72;&#99;&#111;&#110;&#115;&#x75;&#108;&#x74;&#x69;&#110;&#103;&#46;&#99;&#111;&#x6d;">&#x70;&#x72;&#x74;&#x40;&#110;&#101;&#119;&#102;&#x6f;&#108;&#x64;&#101;&#x72;&#x63;&#111;&#110;&#115;&#117;&#x6c;&#x74;&#105;&#110;&#x67;&#46;&#x63;&#x6f;&#109;</a></a>.</p>
-
-<p>We are going to start blogging every once in a while about the PRT and things it can do. We hope that it starts a conversation about the types of things people are doing with the PRT and what things people might want the PRT to do in the future.</p>
-
-<p>Talk to you soon.  Happy coding!</p>
-
-<p>-Kenny and Pete</p>
 ]]></content>
   </entry>
   

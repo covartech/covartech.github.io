@@ -129,6 +129,10 @@ span.syscmd { color:#B28C00 }
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2013/07/08/twoclassparadigm/">twoClassParadigm</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2013/06/24/spectral-clustering/">Spectral Clustering</a>
       </li>
     
@@ -142,10 +146,6 @@ span.syscmd { color:#B28C00 }
     
       <li class="post">
         <a href="/blog/2013/05/21/new-visualization-with-imagesc/">New Visualization with IMAGESC</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/05/15/prtdatagensandp500-and-prtdatagencylinderbellfunnel/">prtDataGenSandP500 and prtDataGenCylinderBellFunnel</a>
       </li>
     
   </ul>
@@ -175,7 +175,7 @@ span.syscmd { color:#B28C00 }
 
   <header>
     
-      <h1 class="entry-title"><a href="/blog/2013/05/15/prtdatagensandp500-and-prtdatagencylinderbellfunnel/">prtDataGenSandP500 and prtDataGenCylinderBellFunnel</a></h1>
+      <h1 class="entry-title"><a href="/blog/2013/05/21/new-visualization-with-imagesc/">New Visualization With IMAGESC</a></h1>
     
     
       <p class="meta">
@@ -191,16 +191,17 @@ span.syscmd { color:#B28C00 }
   
 
 
-<time datetime="2013-05-15T07:50:00-04:00" pubdate data-updated="true">May 15<span>th</span>, 2013</time>
+<time datetime="2013-05-21T08:42:00-04:00" pubdate data-updated="true">May 21<span>st</span>, 2013</time>
         
       </p>
     
   </header>
 
 
-  <div class="entry-content"><p>Hi everyone, a quick update this time &ndash; we added two new prtDataGen*
-functions to the PRT that people might find useful &ndash; prtDataGenSandP500,
-and prtDataGenCylinderBellFunnel.</p>
+  <div class="entry-content"><p>In the last entry, we introduced a data set - the Cylinder-Bell-Funnel data set, prtDataGenCylinderBellFunnel.  To visualize it easily, we used the MATLAB function imagesc, which makes an image out of the data, with automatically determined colormap settings.  Today we&#8217;ll expand on that, and make the process a lot easier.
+    
+</p>
+
 
 <!--/introduction-->
 
@@ -208,38 +209,29 @@ and prtDataGenCylinderBellFunnel.</p>
 <h2>Contents</h2>
 
 
-<div><ul><li><a href="#1">prtDataGenSandP500</a></li><li><a href="#3">Cylinder-Bell-Funnel</a></li><li><a href="#4">Conclusion</a></li></ul></div>
+<div><ul><li><a href="#1">Example</a></li><li><a href="#2">Other Data Sets</a></li><li><a href="#3">Wrapping Up</a></li></ul></div>
 
 
-<h2>prtDataGenSandP500<a name="1"></a></h2>
+<h2>Example<a name="1"></a></h2>
 
 
-<p>prtDataGenSandP500 generates data containing stock-price information from the S&amp;P 500.  The information dates back to January 3, 1950, and includes the index&#8217;s open, close, volume, and other features.</p>
+<p>For a lot of high-dimensional data sets, it turns out creating an observations x features image of the data is a great way to visualize and understand your data.  This week we made that process a little easier and cleaner by introducing a method of prtDataSetClass - imagesc.</p>
 
 
-<p>Check it out:</p>
+<p>The method takes care of a number of things that were a little tricky to do previously - first, it makes sure the observations are sorted by class index, next it creates an image of all the data with black bars denoting the class boundaries, and finally, it makes the y-tick-marks contain the relevant class names.</p>
 
 
-<pre class="codeinput">ds = prtDataGenSandP500;
-ds.featureNames
-spClose = ds.retainFeatures(5);
-plot(spClose.X,<span class="string">'linewidth'</span>,2);
-title(<span class="string">'S&amp;P 500 Closing Value vs. Days since 1/3/1950'</span>);
+<p>It&#8217;s now easy to generate clean visualizations like so:</p>
+
+
+<pre class="codeinput">ds = prtDataGenCylinderBellFunnel;
+ds.imagesc;
 </pre>
 
 
-<pre class="codeoutput">
-ans = 
-
-    'Date'    'Open'    'High'    'Low'    'Close'    'Volume'    'AdjClose'
-
-</pre>
-
-
-<p><img vspace="5" hspace="5" src="/images/torrione_blog_dataGen_2013_05_14_01.png" alt=""> <p>If you can do decent prediction on that data&hellip; you might be able to make some money :)</p><h2>Cylinder-Bell-Funnel<a name="3"></a></h2><p>prtDataGenCylinderBellFunnel is a tool for generating a synthetic data set which contains a number of time-series, each of which has either a flat plateau (cylinder), a rising (bell) or a falling (funnel) slope.</p><p>You can find the specification we used to generate the data here: <a href="http://www.cse.unsw.edu.au/~waleed/phd/html/node119.html"><a href="http://www.cse.unsw.edu.au/~waleed/phd/html/node119.html">http://www.cse.unsw.edu.au/~waleed/phd/html/node119.html</a></a></p><p>And the data was used in an important paper in the data-mining community &ndash; Keogh and Lin, Clustering of Time Series Subsequences is Meaningless: Implications for Previous and Future Research. <a href="http://www.cs.ucr.edu/~eamonn/meaningless.pdf"><a href="http://www.cs.ucr.edu/~eamonn/meaningless.pdf">http://www.cs.ucr.edu/~eamonn/meaningless.pdf</a></a></p><pre class="codeinput">ds = prtDataGenCylinderBellFunnel;
-imagesc(ds.X);
-title(<span class="string">&lsquo;Cylinders (1:266), Bells (267:532), and Funnels (533:798)&rsquo;</span>);
-</pre><img vspace="5" hspace="5" src="/images/torrione_blog_dataGen_2013_05_14_02.png" alt=""> <h2>Conclusion<a name="4"></a></h2><p>That&rsquo;s all for now.  Hope you enjoy these new data sets, we&rsquo;re always adding new data to the PRT; let us know what you&rsquo;d like to see!</p></p>
+<p><img vspace="5" hspace="5" src="/images/torrione_blog_imagesc_2013_05_21_01.png" alt=""> <h2>Other Data Sets<a name="2"></a></h2><p>Of course, you can do the same thing with other data sets, too.  Look at how easy it is to see which features are important in prtDataGenFeatureSelection:</p><pre class="codeinput">ds = prtDataGenFeatureSelection;
+ds.imagesc;
+</pre><img vspace="5" hspace="5" src="/images/torrione_blog_imagesc_2013_05_21_02.png" alt=""> <h2>Wrapping Up<a name="3"></a></h2><p>That&rsquo;s it for this week.  We use imagesc-based visualization all the time, and hopefully you&rsquo;ll find it interesting and useful, too.</p></p>
 </div>
   
   

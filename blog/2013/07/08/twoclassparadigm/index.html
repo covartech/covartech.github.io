@@ -5,11 +5,11 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>rt() - PRT Blog</title>
+  <title>twoClassParadigm - PRT Blog</title>
   <meta name="author" content="Kenneth Morton and Peter Torrione">
 
   
-  <meta name="description" content="Rt() Apr 8th, 2013 In the PRT we have a a few hidden features that we don&#8217;t really advertise but at times they make life easier. This quick &hellip;">
+  <meta name="description" content="twoClassParadigm Jul 8th, 2013 When using an M-ary classifier on a binary classification problem, sometimes you want multiple dimension output and &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -18,7 +18,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://newfolder.github.io/blog/2013/04/08/rt">
+  <link rel="canonical" href="http://newfolder.github.io/blog/2013/07/08/twoclassparadigm">
   <link href="/favicon.ico" rel="icon">
   
   <link href="/assets/bootstrap/css/spacelab.min.css" rel="stylesheet" type="text/css">
@@ -111,7 +111,7 @@ span.syscmd { color:#B28C00 }
 
   <header>
     
-      <h1 class="entry-title">Rt()</h1>
+      <h1 class="entry-title">twoClassParadigm</h1>
     
     
       <p class="meta">
@@ -127,41 +127,157 @@ span.syscmd { color:#B28C00 }
   
 
 
-<time datetime="2013-04-08T13:04:00-04:00" pubdate data-updated="true">Apr 8<span>th</span>, 2013</time>
+<time datetime="2013-07-08T20:57:00-04:00" pubdate data-updated="true">Jul 8<span>th</span>, 2013</time>
         
       </p>
     
   </header>
 
 
-  <div class="entry-content"><p>In the PRT we have a a few hidden features that we don&#8217;t really advertise but at times they make life easier. This quick post is to reveal one of those quick features, <tt>prtAction.rt()</tt></p>
+  <div class="entry-content"><p>When using an M-ary classifier on a binary classification problem, sometimes you want multiple dimension output and sometimes you don&#8217;t. In the PRT the default is to only supply a single output but this can be overwritten by setting the twoClassParadigm property.</p>
 
 
-<p><tt>rt()</tt> stands run, train. You can use it to perform a &#8220;run on train&#8221; operation and you only the output dataset. In other words, it&#8217;s a quick and dirty method for when you would otherwise need to call <tt>run(train(action, dataset), dataset)</tt>.  To see how one might use <tt>rt()</tt>, let&#8217;s calculated the first two principal components of Fisher&#8217;s Iris dataset.</p>
+<!--/introduction-->
 
 
-<pre class="codeinput">ds = prtDataGenIris;
-pca = train(prtPreProcPca(<span class="string">'nComponents'</span>,2), ds);
-dsPca = run(pca, ds);
+<h2>Contents</h2>
+
+
+<div><ul><li><a href="#1">An Quick Example</a></li><li><a href="#5">twoClassParadigm</a></li><li><a href="#7">Why did you do that?</a></li><li><a href="#10">Conclusion</a></li></ul></div>
+
+
+<h2>An Quick Example<a name="1"></a></h2>
+
+
+<p>Consider a binary classification problem with an m-ary classifer (MAP).</p>
+
+
+
+
+<pre class="codeinput">dsTrain = prtDataGenUnimodal;
+dsTest = prtDataGenUnimodal;
+
+classifier = prtClassMap;
+trainedClassifier = train(classifier, dsTrain);
+
+plot(trainedClassifier);
+title(<span class="string">'Binary Classification with MAP'</span>,<span class="string">'FontSize'</span>,16);
+
+output = run(trainedClassifier, dsTest);
 </pre>
 
 
-<p>If we didn&#8217;t really care about keeping the (trained) PCA object around we could have done this all in one line.</p>
-
-
-<pre class="codeinput">dsPca = run(train(prtPreProcPca(<span class="string">'nComponents'</span>,2), ds),ds);
+<pre class="codeoutput">
+output.nFeatures
+ans =
+ 1
 </pre>
 
 
-<p>That string at the end <tt>ds),ds)</tt> is odd looking and this is when <tt>rt()</tt> comes to the rescue.</p>
+<p><img vspace="5" hspace="5" src="/images/morton_blog_20130708_twoClassParadigm_01.png" alt=""> <p>As you can see the output only has one feature. But consider the same M-ary classifier with a 3-class problem.</p></p>
 
+<pre class="codeinput">dsTrainMary = prtDataGenMary;
+dsTestMary = prtDataGenMary;
 
-<pre class="codeinput">dsPca = rt(prtPreProcPca(<span class="string">'nComponents'</span>,2), ds);
+trainedClassifierMary = train(classifier, dsTrainMary);
+
+plot(trainedClassifierMary);
+title(<span class="string">'M-ary Classification with MAP'</span>,<span class="string">'FontSize'</span>,16);
+
+outputMary = run(trainedClassifierMary, dsTestMary);
+
+outputMary.nFeatures
 </pre>
 
 
-<p>That&#8217;s how you can use <tt>rt()</tt> in a nutshell. It&#8217;s a nice method to keep in your back pocket when you are just beginning to explore a dataset and cross-validation isn&#8217;t yet on your mind. Remember <tt>rt()</tt> is a (hidden) method of <tt>prtAction</tt> and therefore can be used with all classifiers, pre-processors etc. Let us know if you find any use for it. We do.</p>
+<pre class="codeoutput">
+ans =
+ 3
+</pre>
 
+
+<p><img vspace="5" hspace="5" src="/images/morton_blog_20130708_twoClassParadigm_02.png" alt=""> <p>Now the output has 3 feautres. The trend continues with more classes, because prtClassMap declares itself as an Mary classififer</p></p>
+
+<pre class="codeinput">classifier.isNativeMary
+</pre>
+
+
+<pre class="codeoutput">
+ans =
+ 1
+</pre>
+
+
+<p>the output is (as it should) have a column corresponding to the confidence of each class. Binary classification is an exception.</p>
+
+
+<h2>twoClassParadigm<a name="5"></a></h2>
+
+
+<p>By default the PRT checks when M-ary classifiers are run on binary data to see if it should output a single confidence or binary confidences. The mode of operation is stored in twoClassParadigm which by default is set to the string M-ary.</p>
+
+
+<pre class="codeinput">classifier.twoClassParadigm
+</pre>
+
+
+<pre class="codeoutput">
+ans =
+binary
+</pre>
+
+
+<p>If we return to the binary classification problem and set twoClassParadigm to mary we can see that we get the two outputs that we expect.</p>
+
+
+
+
+<pre class="codeinput">classifier.twoClassParadigm = <span class="string">'mary'</span>;
+trainedClassifierBinaryActingAsMary = train(classifier, dsTrain);
+
+outputBinaryActingAsMary = run(trainedClassifierBinaryActingAsMary, dsTest);
+
+outputBinaryActingAsMary.nFeatures
+</pre>
+
+
+<pre class="codeoutput">
+ans =
+ 2
+</pre>
+
+
+
+
+<h2>Why did you do that?<a name="7"></a></h2>
+
+
+<p>We debated, but ultimately we decided that it was less confusing this way. It is more rare to want both outputs for a binary classification problem than it is to expect a single. Most users expected this to run out of the box.</p>
+
+
+
+
+<pre class="codeinput">classifier = prtClassMap;
+trainedClassifier = train(classifier, dsTrain);
+output = run(trainedClassifier, dsTest);
+
+prtScoreRoc(output);
+title(<span class="string">'Binary Classification with an M-ary Classifier'</span>,<span class="string">'FontSize'</span>,16);
+</pre>
+
+
+<p><img vspace="5" hspace="5" src="/images/morton_blog_20130708_twoClassParadigm_03.png" alt=""> <p>If you change the classifier to non-m-ary classification (prtClassGlrt for example) you expect the same code to work only by changing the classifier declaration.</p></p>
+
+<pre class="codeinput">classifier = prtClassGlrt;
+trainedClassifier = train(classifier, dsTrain);
+output = run(trainedClassifier, dsTest);
+
+prtScoreRoc(output);
+title(<span class="string">'Binary Classification with a Binary Classifier'</span>,<span class="string">'FontSize'</span>,16);
+</pre>
+
+
+<p><img vspace="5" hspace="5" src="/images/morton_blog_20130708_twoClassParadigm_04.png" alt=""> <p>Without the twoClassParadigm system it wouldn&rsquo;t be as easy to switch classifiers for binary problems as an extra step would be required to manually select which column of the output should be used to calculate the ROC.</p><h2>Conclusion<a name="10"></a></h2><p>Well that&rsquo;s twoClassParadigm. It&rsquo;s a convenient feature of the PRT that not many people know about because they don&rsquo;t have to. In the rare cases when you want the confidence assigned to each class, you now know how to get them.</p></p>
 </div>
 
 
@@ -187,7 +303,7 @@ dsPca = run(pca, ds);
   
 
 
-<time datetime="2013-04-08T13:04:00-04:00" pubdate data-updated="true">Apr 8<span>th</span>, 2013</time>
+<time datetime="2013-07-08T20:57:00-04:00" pubdate data-updated="true">Jul 8<span>th</span>, 2013</time>
         
 
 
@@ -203,10 +319,8 @@ dsPca = run(pca, ds);
       
       <p class="meta">
         
-          <a class="basic-alignment pull-left" href="/blog/2013/04/02/determining-gender-from-handwriting/" title="Previous Post: Determining Gender from Handwriting - A Kaggle Competition!">&laquo; Determining Gender from Handwriting - A Kaggle Competition!</a>
+          <a class="basic-alignment pull-left" href="/blog/2013/06/24/spectral-clustering/" title="Previous Post: Spectral Clustering">&laquo; Spectral Clustering</a>
         
-        
-          <a class="basic-alignment pull-right" href="/blog/2013/04/16/principal-component-analysis/" title="Next Post: Principal Component Analysis - prtPreProcPca">Principal Component Analysis - prtPreProcPca &raquo;</a>
         
       </p>
     </footer>
@@ -279,8 +393,8 @@ dsPca = run(pca, ds);
       
         
         // var disqus_developer = 1;
-        var disqus_identifier = 'http://newfolder.github.io/blog/2013/04/08/rt/';
-        var disqus_url = 'http://newfolder.github.io/blog/2013/04/08/rt/';
+        var disqus_identifier = 'http://newfolder.github.io/blog/2013/07/08/twoclassparadigm/';
+        var disqus_url = 'http://newfolder.github.io/blog/2013/07/08/twoclassparadigm/';
         var disqus_script = 'embed.js';
       
     (function () {
