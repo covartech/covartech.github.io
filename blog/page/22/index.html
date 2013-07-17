@@ -18,7 +18,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://newfolder.github.io/blog/page/10">
+  <link rel="canonical" href="http://newfolder.github.io/blog/page/22">
   <link href="/favicon.ico" rel="icon">
   
   <link href="/assets/bootstrap/css/spacelab.min.css" rel="stylesheet" type="text/css">
@@ -175,7 +175,7 @@ span.syscmd { color:#B28C00 }
 
   <header>
     
-      <h1 class="entry-title"><a href="/blog/2013/04/08/rt/">Rt()</a></h1>
+      <h1 class="entry-title"><a href="/blog/2013/01/21/hi/">Hi</a></h1>
     
     
       <p class="meta">
@@ -191,41 +191,28 @@ span.syscmd { color:#B28C00 }
   
 
 
-<time datetime="2013-04-08T13:04:00-04:00" pubdate data-updated="true">Apr 8<span>th</span>, 2013</time>
+<time datetime="2013-01-21T16:02:00-05:00" pubdate data-updated="true">Jan 21<span>st</span>, 2013</time>
         
       </p>
     
   </header>
 
 
-  <div class="entry-content"><p>In the PRT we have a a few hidden features that we don&#8217;t really advertise but at times they make life easier. This quick post is to reveal one of those quick features, <tt>prtAction.rt()</tt></p>
+  <div class="entry-content"><p>Hi,</p>
 
+<p>Thanks for checking out the PRT. The PRT is intended to help people who do machine learning handle the most common classification tasks within MATLAB.  This includes things like cross-validation, data visualization, classifier development and feature selection. The PRT includes object types for data set storage, pre-processing, classification, clustering, distance calculations, outlier removal, kernel learning, data generation, scoring and classifier evaluation, feature selection, random variable definitions, and visualization. We think it serves as a great platform for both machine learning research and applied algorithm development (that&rsquo;s why we built it!).</p>
 
-<p><tt>rt()</tt> stands run, train. You can use it to perform a &#8220;run on train&#8221; operation and you only the output dataset. In other words, it&#8217;s a quick and dirty method for when you would otherwise need to call <tt>run(train(action, dataset), dataset)</tt>.  To see how one might use <tt>rt()</tt>, let&#8217;s calculated the first two principal components of Fisher&#8217;s Iris dataset.</p>
+<p>The PRT is free and released under the MIT license which means that it is free for academic and commercial use. The PRT is hosted on <a href="https://github.com/newfolder/PRT">GitHub</a> so feel free to fork or clone the repository or just download the latest <a href="https://github.com/newfolder/PRT/zipball/master">zip</a>.</p>
 
+<p>Check out the <a href="/prtdoc/prtDocInstallation.html">installation instructions</a> to get you up and running. Once installed, open up MATLAB&reg;, and follow through with our <a href="/prtdoc/prtDocGettingStarted.html">Getting Started</a> guide, which will walk you through some examples of using the PRT in practice and show you what the PRT can do.</p>
 
-<pre class="codeinput">ds = prtDataGenIris;
-pca = train(prtPreProcPca(<span class="string">'nComponents'</span>,2), ds);
-dsPca = run(pca, ds);
-</pre>
+<p>Even though there are a lot of M-files in the PRT, we’ve built the PRT to be easy to use and to make it easy to find what you need from within MATLAB.  For example, to find a list of all classifiers in the PRT, simply type “prtClass” and then <tab> at the MATLAB command prompt.  Other object types behave the same way, e.g., prtPreProc <tab>. If you have any feed back or questions don&rsquo;t hesitate to ask on on <a href="https://github.com/newfolder/PRT">GitHub</a> or through email at <a href="mailto:prt@newfolderconsulting.com"><a href="&#109;&#x61;&#x69;&#x6c;&#x74;&#x6f;&#58;&#x70;&#114;&#116;&#64;&#x6e;&#x65;&#x77;&#x66;&#111;&#x6c;&#x64;&#x65;&#114;&#x63;&#x6f;&#110;&#x73;&#x75;&#108;&#x74;&#105;&#110;&#x67;&#46;&#99;&#x6f;&#x6d;">&#x70;&#114;&#116;&#64;&#110;&#101;&#119;&#102;&#x6f;&#108;&#x64;&#101;&#114;&#99;&#x6f;&#110;&#x73;&#117;&#x6c;&#x74;&#105;&#110;&#x67;&#x2e;&#99;&#111;&#x6d;</a></a>.</p>
 
+<p>We are going to start blogging every once in a while about the PRT and things it can do. We hope that it starts a conversation about the types of things people are doing with the PRT and what things people might want the PRT to do in the future.</p>
 
-<p>If we didn&#8217;t really care about keeping the (trained) PCA object around we could have done this all in one line.</p>
+<p>Talk to you soon.  Happy coding!</p>
 
-
-<pre class="codeinput">dsPca = run(train(prtPreProcPca(<span class="string">'nComponents'</span>,2), ds),ds);
-</pre>
-
-
-<p>That string at the end <tt>ds),ds)</tt> is odd looking and this is when <tt>rt()</tt> comes to the rescue.</p>
-
-
-<pre class="codeinput">dsPca = rt(prtPreProcPca(<span class="string">'nComponents'</span>,2), ds);
-</pre>
-
-
-<p>That&#8217;s how you can use <tt>rt()</tt> in a nutshell. It&#8217;s a nice method to keep in your back pocket when you are just beginning to explore a dataset and cross-validation isn&#8217;t yet on your mind. Remember <tt>rt()</tt> is a (hidden) method of <tt>prtAction</tt> and therefore can be used with all classifiers, pre-processors etc. Let us know if you find any use for it. We do.</p>
-
+<p>-Kenny and Pete</p>
 </div>
   
   
@@ -238,11 +225,9 @@ dsPca = run(pca, ds);
   
   <div class="pagination">
     
-      <a class="prev" href="/blog/page/11/">&larr; Older</a>
-    
     <a href="/blog/archives">Blog Archives</a>
     
-    <a class="next" href="/blog/page/9/">Newer &rarr;</a>
+    <a class="next" href="/blog/page/21/">Newer &rarr;</a>
     
   </div>
 </div>
