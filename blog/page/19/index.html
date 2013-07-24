@@ -129,6 +129,10 @@ span.syscmd { color:#B28C00 }
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2013/07/24/using-svms/">Using SVMs</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2013/07/15/observation-info/">Observation Info</a>
       </li>
     
@@ -142,10 +146,6 @@ span.syscmd { color:#B28C00 }
     
       <li class="post">
         <a href="/blog/2013/06/13/prtclustermeanshift/">prtClusterMeanShift</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/06/03/using-k-means-as-a-feature-extractor/">Using K-Means As a Feature Extractor</a>
       </li>
     
   </ul>
@@ -175,7 +175,7 @@ span.syscmd { color:#B28C00 }
 
   <header>
     
-      <h1 class="entry-title"><a href="/blog/2013/01/31/random-variables-part-1/">Random Variables (Part 1)</a></h1>
+      <h1 class="entry-title"><a href="/blog/2013/02/11/combining-actions/">Combining Actions</a></h1>
     
     
       <p class="meta">
@@ -191,163 +191,122 @@ span.syscmd { color:#B28C00 }
   
 
 
-<time datetime="2013-01-31T16:24:00-05:00" pubdate data-updated="true">Jan 31<span>st</span>, 2013</time>
+<time datetime="2013-02-11T13:46:00-05:00" pubdate data-updated="true">Feb 11<span>th</span>, 2013</time>
         
       </p>
     
   </header>
 
 
-  <div class="entry-content"><p>Hey ya&#8217;ll! Probability theory and random variables come up all the time in machine learning. Classification techniques like Naive Bayes, the likelihood ratio test and maximum a posterior (MAP). A lot of times when someone says &#8220;Naive Bayes classification&#8221; they imply that they want to assume that the data is multinomial (counts from a fixed dictionary) or when they say &#8220;MAP classification&#8221; they mean they assumed Gaussian distributions for each of the classes. In reality though the choice of these distributions is flexible and assuming different distributions in the PRT is easy thanks to the RV objects. This is the first post in a series that will highlight how RV objects can be used for rapid classifier generation and showcase some of the ways that we use RVs for our research. In part 1, we are going to give an overview of some of the basic RV objects and show how they are used in some basic classification techniques.</p>
+  <div class="entry-content"><p>Hi!  Today I&#8217;d like to talk about how you can use the PRT to combine actions together to form algorithms.  This is an important and powerful tool in the PRT, and understanding it can solve a lot of headaches for you.</p>
 
 
+<!--/introduction-->
 
 
 <h2>Contents</h2>
 
 
-<div><ul><li><a href="#1">RV objects</a></li><li><a href="#7">Types of RV objects</a></li><li><a href="#9">Using RV Objects in Classifiers</a></li><li><a href="#12">Conclusions</a></li></ul></div>
+<div><ul><li><a href="#1">An Example</a></li><li><a href="#5">The Problem</a></li><li><a href="#9">Combining Actions into Algorithms</a></li><li><a href="#13">Using Algorithms</a></li></ul></div>
 
 
-<h2>RV objects<a name="1"></a></h2>
+<h2>An Example<a name="1"></a></h2>
 
 
-<p>Admittedly, the RV objects are one of the most under-documented features in the PRT. Sorry about that. I can take the blame there. Hopefully this post gets us started on fixing that.</p>
+<p>Let&#8217;s start with a concrete example.  Say we want to classify some very high dimensional data.  We&#8217;ll start with the following:</p>
 
 
-<p>Random variable objects are used to state that data is a random variable with an assumed distribution. Therefore, each prtRv*() assumes a different probability density function and implements the necessary methods to infer the parameters of the probability density function mle(), draw data with the same distribution draw(), and evaluate the likelihood of other data pdf() and logPdf().</p>
-
-
-
-
-<p>
-Let&#8217;s make an RV object with a specified distribution. For the sake of this example we will use the multi-variate Normal distribution &#8220;MVN&#8221;.
-</p>
-
-
-
-
-<pre class="codeinput">
-rv = prtRvMvn(<span class="string">'mu'</span>,[1 2],<span class="string">'sigma'</span>,[1 0.5; 0.5 1])
-</pre>
-
-
-<pre class="codeoutput">rv = 
-  prtRvMvn
-
-  Properties:
-                    name: 'Multi-Variate Normal'
-        nameAbbreviation: 'RVMVN'
-            isSupervised: 0
-    isCrossValidateValid: 1
-     covarianceStructure: 'full'
-                      mu: [1 2]
-                   sigma: [2x2 double]
-             plotOptions: [1x1 prtOptions.prtOptionsRvPlot]
-          verboseStorage: 1
-         showProgressBar: 1
-               isTrained: 0
-          dataSetSummary: []
-                 dataSet: []
-                userData: [1x1 struct]
-</pre>
-
-
-<p>Let&#8217;s draw some data from this RV object and put it into a prtDataSetClass().</p>
-
-
-<pre class="codeinput">x = rv.draw(1000);
-ds = prtDataSetClass(x);
-</pre>
-
-
-<p>Using this RV we can evaluate the log of the probability density function of the data that we drew.</p>
-
-
-<pre class="codeinput">y = rv.logPdf(x);
-</pre>
-
-
-<p>RV objects also have some plot methods and plotLogPdf() is probably the most useful. Let&#8217;s plot the log of the probability density function with the data that we drew fromt the pdf.</p>
-
-
-<pre class="codeinput">rv.plotLogPdf()
-hold <span class="string">on</span>
-plot(ds);
-hold <span class="string">off</span>
-</pre>
-
-
-<p><img vspace="5" hspace="5" src="/images/morton_blog_20130127_01.png" alt=""> <p>Although RV objects can be used by specifying the parameters of the densities their true power is flexibly modeling data. For example, let&rsquo;s make another RV MVN object without specifying parameters and use it to estimate the parameters of the data we drew. Here we will estimate the parameters using maximum likelihood estimation mle()</p><pre class="codeinput">rv2 = prtRvMvn;
-rv2 = rv2.mle(ds); <span class="comment">% or rv2 = rv2.mle(x);</span>
-estimatedMean = rv2.mu
-estimateCovariance = rv2.sigma
-</pre><pre class="codeoutput">estimatedMean =
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0.9647    1.9896
-estimateCovariance =
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0.9479    0.4587
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0.4587    0.9858
-</pre><p>RV objects are actually sub-classes of prtActions() just like classifiers and regressors. This means that they have the train() and run() methods and can be cross-validated. By default, all RV objects implement train by calling the mle() method and implement run by using the logPdf() method. Therefore, some of the things we did above can be done as follows.</p><pre class="codeinput">rv2 = rv2.train(ds);
-y = rv2.run(ds);
-</pre><h2>Types of RV objects<a name="7"></a></h2><p>A list of available RVs that ship with the PRT can be displayed</p><pre class="codeinput">dirContents = what(fullfile(prtRoot,<span class="string">&lsquo;rv&rsquo;</span>));
-availableRvs = dirContents.m
-</pre><pre class="codeoutput">availableRvs =
-&nbsp;&nbsp;&nbsp;&nbsp;&lsquo;prtRv.m&rsquo;
-&nbsp;&nbsp;&nbsp;&nbsp;&lsquo;prtRvDiscrete.m&rsquo;
-&nbsp;&nbsp;&nbsp;&nbsp;&lsquo;prtRvGmm.m&rsquo;
-&nbsp;&nbsp;&nbsp;&nbsp;&lsquo;prtRvHmm.m&rsquo;
-&nbsp;&nbsp;&nbsp;&nbsp;&lsquo;prtRvIndependent.m&rsquo;
-&nbsp;&nbsp;&nbsp;&nbsp;&lsquo;prtRvKde.m&rsquo;
-&nbsp;&nbsp;&nbsp;&nbsp;&lsquo;prtRvMemebershipModel.m&rsquo;
-&nbsp;&nbsp;&nbsp;&nbsp;&lsquo;prtRvMixture.m&rsquo;
-&nbsp;&nbsp;&nbsp;&nbsp;&lsquo;prtRvMultinomial.m&rsquo;
-&nbsp;&nbsp;&nbsp;&nbsp;&lsquo;prtRvMvn.m&rsquo;
-&nbsp;&nbsp;&nbsp;&nbsp;&lsquo;prtRvUniform.m&rsquo;
-&nbsp;&nbsp;&nbsp;&nbsp;&lsquo;prtRvUniformImproper.m&rsquo;
-&nbsp;&nbsp;&nbsp;&nbsp;&lsquo;prtRvVq.m&rsquo;
-</pre><p>As you can, most of the standard probability densities have been implemented. In addition to standard things like prtRvMvn, prtRvDiscrete and prtRvMultinomial, there are also a few RVs that operate on other RVs like prtRvIndependent, prtRvMixture, prtRvGmm and prtRvHmm and there are a few RVs that can be used for more flexible density modeling like prtRvKde and prtRvVq. We will talk about some of these more advanced RVs in a later post.</p><h2>Using RV Objects in Classifiers<a name="9"></a></h2><p>There are two primary classifiers that make use of RV objects prtClassMap and prtClassGlrt. These classifiers have very similar performance but prtClassMap is able to handle M-ary classification problems so we will use that as our example.</p><pre class="codeinput">class = prtClassMap
-</pre></p>
-
-<pre class="codeoutput">class = 
-  prtClassMap
-
-  Properties:
-                    name: 'Maximum a Posteriori'
-        nameAbbreviation: 'MAP'
-            isNativeMary: 1
-                     rvs: [1x1 prtRvMvn]
-        twoClassParadigm: 'binary'
-         internalDecider: []
-            isSupervised: 1
-    isCrossValidateValid: 1
-          verboseStorage: 1
-         showProgressBar: 1
-               isTrained: 0
-          dataSetSummary: []
-                 dataSet: []
-                userData: [1x1 struct]
-</pre>
-
-
-
-
-<p>prtClassMap has a property rvs that lists the rvs used for each class in the incoming data set. If there is only one RV specified it is used to model all of the classes. Let&#8217;s classify prtDataGenUnimodal using a quadratic classifier that arises by using a MAP classifier with MVN assumption for each class.</p>
-
-
-<pre class="codeinput">class = prtClassMap(<span class="string">'rvs'</span>,prtRvMvn);
+<pre class="codeinput">nFeatures = 200;
 ds = prtDataGenUnimodal;
-
-trainedClassifier = class.train(ds);
-plot(trainedClassifier);
+xNoise = randn(ds.nObservations,nFeatures);
+ds.X = cat(2,ds.X,xNoise); <span class="comment">%add nFeatures meaningless features</span>
 </pre>
 
 
-<p><img vspace="5" hspace="5" src="/images/morton_blog_20130127_02.png" alt=""> <p>If our data is more complex, we can modify the assumptions of the distributions in both of our classes by setting the &ldquo;rvs&rdquo; parameter to something more flexible. Let&rsquo;s classify prtDataGenBimodal using prtRvKde which uses kernel density estimation.</p><pre class="codeinput">class = prtClassMap(<span class="string">&lsquo;rvs&rsquo;</span>,prtRvKde);
-ds = prtDataGenBimodal;</p>
+<p>If we try and classify this with a GLRT, for example, we&#8217;re going to run into trouble, since there are more features than there are observations, so we can&#8217;t generate a full-rank covariance structure.  For example, using the prtAction prtClassGlrt, we might write this:</p>
 
-<p>trainedClassifier = class.train(ds);
-plot(trainedClassifier);
-</pre><img vspace="5" hspace="5" src="/images/morton_blog_20130127_03.png" alt=""> <h2>Conclusions<a name="12"></a></h2><p>As you can see, RVs are pretty powerful parts of the PRT and they can be used in other parts of the PRT to make things flexible.</p><p>In future posts we will talk about how RV objects are used to make flexible mixtures like the GMM and hidden Markov models and we will explore some things that are still in beta such as how we use prtBrv objects to perform variational Bayesian inference for models like Dirichlet process mixtures.</p></p>
+
+<pre class="codeinput">glrt = prtClassGlrt;
+glrt = glrt.train(ds);
+<span class="keyword">try</span>
+   yOut = glrt.run(ds);  <span class="comment">%This causes errors</span>
+<span class="keyword">catch</span> ME
+    disp(<span class="string">'Error encountered:'</span>)
+    disp(ME);
+<span class="keyword">end</span>
+</pre>
+
+
+<pre class="codeoutput">Warning: Covariance matrix is not positive definite. This may cause errors.
+Consider modifying "covarianceStructure". 
+Warning: Covariance matrix is not positive definite. This may cause errors.
+Consider modifying "covarianceStructure". 
+Error encountered:
+  MException
+  Properties:
+    identifier: 'prtRvUtilMvnLogPdf:BadCovariance'
+       message: 'SIGMA must be symmetric and positive definite.'
+         cause: {0x1 cell}
+         stack: [9x1 struct]
+
+</pre>
+
+
+<p>We can always use dimension-reduction techniques to reduce the number of features in our data set, and then evaluate performance.  For example:</p>
+
+
+<pre class="codeinput">pca = prtPreProcPca(<span class="string">'nComponents'</span>,2);
+pca = pca.train(ds);
+dsPca = pca.run(ds);
+plot(dsPca);
+</pre>
+
+
+<p><img vspace="5" hspace="5" src="/images/torrione_blog_combiningActions_01.png" alt=""> <p>Now we can evaluate our GLRT on the dsPca:</p><pre class="codeinput">glrt = prtClassGlrt;
+yOutKfolds = glrt.kfolds(dsPca,10);
+[pf,pd] = prtScoreRoc(yOutKfolds);
+h = plot(pf,pd);
+set(h,<span class="string">&lsquo;linewidth&rsquo;</span>,3);
+title(<span class="string">&lsquo;Example GLRT ROC Curve (Running on PCA Features)&rsquo;</span>);
+</pre><img vspace="5" hspace="5" src="/images/torrione_blog_combiningActions_02.png" alt=""> <h2>The Problem<a name="5"></a></h2><p>There&rsquo;s a problem in the above, though.  Even though we cross-validated the GLRT using 3 random folds, we didn&rsquo;t do the same thing with the PCA. This is technically not fair, since the PCA part of the algorithm was trained using all the data.</p><p>Maybe we can get around this like so:</p><pre class="codeinput">pca = prtPreProcPca(<span class="string">&lsquo;nComponents&rsquo;</span>,2);
+dsPca = pca.kfolds(ds,10);
+</pre><p>But now, when we do:</p><pre class="codeinput">glrt = prtClassGlrt;
+yOutKfolds = glrt.kfolds(dsPca,10);
+[pf,pd] = prtScoreRoc(yOutKfolds);
+h = plot(pf,pd);
+set(h,<span class="string">&lsquo;linewidth&rsquo;</span>,3);
+title(<span class="string">&lsquo;This is no good&hellip;&rsquo;</span>);
+</pre><img vspace="5" hspace="5" src="/images/torrione_blog_combiningActions_03.png" alt=""> <p>We have a problem!  At every fold, we learn a unique set of PCA loadings. Since PCA loadings have arbitrary sign (+/&ndash;), the outputs across all these folds will overlap!</p><pre class="codeinput">plot(dsPca)
+</pre><img vspace="5" hspace="5" src="/images/torrione_blog_combiningActions_04.png" alt=""> <p>The underlying problem is that there&rsquo;s no guarantee that the folds used for PCA and GLRT evaluation were the same.  We can get around <b>that</b> if we specified the folds, and wrote our own cross-validate specifically for this new process we&rsquo;ve made, but suddenly this is getting complicated.</p><p>And what if we had an even more complicated process, including other pre-processing streams, feature selection, classifiers and decision-makers?  Suddenly our code is going to be a mess!</p><h2>Combining Actions into Algorithms<a name="9"></a></h2><p>At the heart of the problem outlined above is that the PCA and GLRT parts of our process weren&rsquo;t considered as two parts of the same process &ndash; they were two separate variables, and the PRT and MATLAB didn&rsquo;t know that they should work together.</p><p>Since this problem is so common, the PRT provides an easy way to combine each individual part of a process (prtActions) into one big process (a prtAlgorithm).  This is easily done using the &ldquo;+&rdquo; operator:</p><pre class="codeinput">pcaGlrt = prtPreProcPca(<span class="string">&lsquo;nComponents&rsquo;</span>,2) + prtClassGlrt;
+</pre><p>If you&rsquo;re not used to object oriented programming, the above might look a little weird.  But it&rsquo;s straightforward &ndash; we&rsquo;ve defined &ldquo;plus&rdquo; (&ldquo;+&rdquo;) for prtActions (e.g., prtPreProcPca) to mean &ldquo;Combine these into one object, where that object will perform each action in sequence from left to right&rdquo;.  Technically this returns a special kind of prtAction, called a prtAlgorithm.  That&rsquo;s just the date type we use to store a bunch of actions.  You can see that here:</p><pre class="codeinput">disp(pcaGlrt)
+</pre><pre class="codeoutput">  prtAlgorithm</p>
+
+<p>  Properties:</p>
+
+<pre><code>                name: 'PRT Algorithm'
+    nameAbbreviation: 'ALGO'
+        isSupervised: 1
+isCrossValidateValid: 1
+          actionCell: {2x1 cell}
+  connectivityMatrix: [4x4 logical]
+      verboseStorage: 1
+     showProgressBar: 1
+           isTrained: 0
+      dataSetSummary: []
+             dataSet: []
+            userData: [1x1 struct]
+</code></pre>
+
+<p></pre><p>You can visualize the structure of the algorithm using PLOT:</p><pre class="codeinput">plot(pcaGlrt)
+</pre><img vspace="5" hspace="5" src="/images/torrione_blog_combiningActions_05.png" alt=""> <p>You can combine any number of prtActions into an algorithm like this, so, although its silly, this is technically a valid command:</p><pre class="codeinput">sillyAlgo = prtPreProcZmuv + prtPreProcHistEq + prtPreProcPca + prtClassGlrt;
+plot(sillyAlgo)
+</pre><img vspace="5" hspace="5" src="/images/torrione_blog_combiningActions_06.png" alt=""> <h2>Using Algorithms<a name="13"></a></h2><p>So we&rsquo;ve made a prtAlgorithm.  Now what?  Well, anything you can do to a prtAction, you can do with a prtAlgorithm.  What does that mean?  Methods like plot, kfolds, and crossValidate all work exactly the same as they do with regular prtActions.  And they make your life much simpler than what we had to do above:</p><pre class="codeinput">pcaGlrt = prtPreProcPca(<span class="string">&lsquo;nComponents&rsquo;</span>,2) + prtClassGlrt;
+yOutKfolds = pcaGlrt.kfolds(ds,10);
+[pf,pd] = prtScoreRoc(yOutKfolds);
+h = plot(pf,pd);
+set(h,<span class="string">&lsquo;linewidth&rsquo;</span>,3);
+title(<span class="string">&lsquo;ROC Curve for a prtAlgorithm (PCA + GLRT)&rsquo;</span>);
+</pre><img vspace="5" hspace="5" src="/images/torrione_blog_combiningActions_07.png" alt=""> <p>The results in the ROC curve above were generated using 10-folds cross-validation on the combination of PCA and GLRT.  At each fold, 9/10ths of the data were used to train the PCA and GLRT, and 1/10th was used for evaluation.</p><p>prtAlgorithms are a very powerful tool for pattern recognition, and we hope this blog post helps clear up how to make and use them!</p><p>Let us know if you have any questions or comments.</p></p>
 </div>
   
   

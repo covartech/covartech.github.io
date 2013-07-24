@@ -129,6 +129,10 @@ span.syscmd { color:#B28C00 }
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2013/07/24/using-svms/">Using SVMs</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2013/07/15/observation-info/">Observation Info</a>
       </li>
     
@@ -142,10 +146,6 @@ span.syscmd { color:#B28C00 }
     
       <li class="post">
         <a href="/blog/2013/06/13/prtclustermeanshift/">prtClusterMeanShift</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/06/03/using-k-means-as-a-feature-extractor/">Using K-Means As a Feature Extractor</a>
       </li>
     
   </ul>
@@ -175,7 +175,7 @@ span.syscmd { color:#B28C00 }
 
   <header>
     
-      <h1 class="entry-title"><a href="/blog/2013/03/06/using-prtpath/">Using prtPath</a></h1>
+      <h1 class="entry-title"><a href="/blog/2013/03/10/max-pooling/">Max-Pooling Feature Representations in MSRCORID</a></h1>
     
     
       <p class="meta">
@@ -191,75 +191,190 @@ span.syscmd { color:#B28C00 }
   
 
 
-<time datetime="2013-03-06T13:24:00-05:00" pubdate data-updated="true">Mar 6<span>th</span>, 2013</time>
+<time datetime="2013-03-10T18:13:00-04:00" pubdate data-updated="true">Mar 10<span>th</span>, 2013</time>
         
       </p>
     
   </header>
 
 
-  <div class="entry-content"><p>We recommend as part of installation that you edit (or create) your startup.m file to include a call to prtPath. This is adds the PRT to your MATLAB search path automatically each time you start MATLAB. There are alternatives to path management (such as the pathtool() or addpath() and savepath()) but we recommend using a startup.m file. Hopefully this post will explain one reason we recommend that.</p>
-
-
-
-
-<p>One of the reasons that we like to use prtPath in a startup file is that prtPath does more than just add the PRT and all of it&#8217;s subfolders to your path.</p>
+  <div class="entry-content"><p>A few weeks ago we took a look at a paper by Coates and Ng that dealt with learning feature representations for image processing and classification.  (See: <a href="/blog/2013/02/27/learning-feature-representations/">this</a>). Today I want to take a second look at that paper, and especially what they mean by max-pooling over regions of the image.</p>
 
 
 <!--/introduction-->
 
 
+
+
 <h2>Contents</h2>
 
 
-<div><ul><li><a href="#1">prtPath and ] directories</a></li><li><a href="#3">Why &#8220;]&#8221;?</a></li><li><a href="#4">Conclusions</a></li></ul></div>
+<div><ul><li><a href="#1">The MSRCORID Database</a></li><li><a href="#2">Max-Pooling</a></li><li><a href="#5">Multiple Classes</a></li><li><a href="#7">Conclusions</a></li><li><a href="#8">Bibliography</a></li></ul></div>
 
 
-<h2>prtPath and ] directories<a name="1"></a></h2>
+<h2>The MSRCORID Database<a name="1"></a></h2>
 
 
-<p>prtPath is actually very basic. It calls the function prtRoot and uses the MATLAB function genpath() to get a list of all of the subdirectories in the prtFolder. It then eventually calls addpath() to add that list of directories to the MATLAB path (it does not save the path for future sessions of MATLAB).</p>
+<p>If you have already read through <a href="/blog/2013/02/27/learning-feature-representations/">our previous post</a>, you know how to get the Microsoft Research Cambridge Object Recognition Image Database (MSRCORID), which is really a fantastic resource for image processing and classification.</p>
 
 
-<p>Before prtPath() calls addpath() though, it selectively removes some directories from the subdirectory list.</p>
+<p>Once you&#8217;ve downloaded, we can run the following code which was for the most-prt ripped right out of the previous blog post:</p>
 
 
-<p>First it removes any directory that starts with a &#8220;.&#8221;. This was added to prevent any hidden folders (like those from source control systems) from showing up in the MATLAB path.</p>
+<pre class="codeinput">ds = prtDataGenMsrcorid;
 
+patchSize = [8 8];
+col = [];
+<span class="keyword">for</span> imgInd = 1:ds.nObservations;
+    img = ds.X{imgInd};
+    img = rgb2gray(img);
+    img = imresize(img,.5);
+    col = cat(1,col,im2col(img,patchSize,<span class="string">'distinct'</span>)');
+<span class="keyword">end</span>
+dsCol = prtDataSetClass(double(col));
 
-<p>More importantly though, it removes any folders from the list that start with a &#8220;]&#8221;. This is something special that we put in to add some extra functionality to the PRT.</p>
+preProc = prtPreProcZeroMeanRows + prtPreProcStdNormalizeRows(<span class="string">'varianceOffset'</span>,10) + prtPreProcZca;
+preProc = preProc.train(dsCol);
+dsNorm = preProc.run(dsCol);
 
-
-<p>Most of our users want to stick to code that is well tested and is known to behave nicely. But as we go about our jobs and use the PRT we need to add some new functionality. We typically add things like: new classifiers, new datatypes or new pre processing techniques.</p>
-
-
-<p>Some of our users want access to this newest code so it gets added to the PRT in the &#8220;]alpha&#8221; and eventually the &#8220;]beta&#8221; folder. By default prtPath will not include these folders in the path. Instead you have to tell prtPath that you are willing to accept the responsibilities of the bleeding edge. You do this by giving prtPath a list of &#8220;]&#8221; folders that you want to include. (Or rather not exclude).</p>
-
-
-<p>For example:</p>
-
-
-<pre class="codeinput">prtPath(<span class="string">'alpha'</span>, <span class="string">'beta'</span>);
+skm = prtClusterSphericalKmeans(<span class="string">'nClusters'</span>,50);
+skm = skm.train(dsNorm);
 </pre>
 
 
-<p>will add both the &#8220;]alpha&#8221; and &#8220;]beta&#8221; folders (and their subfolders) to the path.</p>
+<h2>Max-Pooling<a name="2"></a></h2>
 
 
-<p>Currently in the PRT we have one other &#8220;]&#8221; folder, &#8220;]internal&#8221;. In the internal folder you will find some code on unit testing and documentation building. You probably wont be interested in much that&#8217;s in there so I probably wouldn&#8217;t clutter my path with it.</p>
+<p>Last time, we used a simple bag-of-words model to do classification based on the feature vectors in each image.  That&#8217;s definitely an interesting way to proceed, but most image-processing techniques make use of something called &#8220;max-pooling&#8221; to aggregate feature vectors over small regions of an image.</p>
 
 
-<h2>Why &#8220;]&#8221;?<a name="3"></a></h2>
+<p>The process can be accomplished in MATLAB using blockproc.m, which is in the Image-processing toolbox.  (If you don&#8217;t have image processing, it&#8217;s not too hard to write a replacement for blockproc.)</p>
 
 
-<p>We were searching for a character that is a valid path (folder) name character on all major operating systems and is at the same time a character that most people wouldn&#8217;t start a directory name with. MATLAB already uses &#8220;@&#8221; for (old style) class definitions and &#8220;+&#8221; for packages. We thought &#8220;]&#8221; fit all of these criteria.</p>
+<p>The goal of max-pooling is to aggregate feature vectors over local regions of an image.  For example, we can take the MAX of the cluster memberships over each 8x8 region in an image using something like:</p>
 
 
-<h2>Conclusions<a name="4"></a></h2>
+<p>featsBp = blockproc(feats,[8 8],@(x)max(max(x.data,[],1),[],2));</p>
 
 
-<p>We hope that cleared up a little of why we recommend prtPath over pathtool(), at least for the PRT. In general just call prtPath() by itself but if you want to see what might lie ahead for the PRT checkout the ]alpha and ]beta folders. In some future posts we will talk about some things in these folders that might be of interest to you. Maybe that will entice you to explore the ].</p>
+<p>Where we&#8217;ve assumed that feats is size nx x ny x nFeats.</p>
 
+
+<p>Max pooling is nice because it reduces the dependency of the feature vectors on their exact placement in an image (each element of each 8x8 block gets treated about the same), and it also maintains a lot of the information that was in each of the feature vectors, especially when the feature vectors are expected to be sparse (e.g., have a lot of zeros; see http//www.ece.duke.edu/~lcarin/Bo12.3.2010.ppt).</p>
+
+
+<p>There&#8217;s a lot more to max-pooling than we have time to get into here, for example, you can max-pool, and then re-cluster, and then re-max-pool! This is actually a super clever technique to reduce the amount of spatial variation in your image, and also capture information about the relative placements of various objects.</p>
+
+
+<pre class="codeinput">featVec = nan(ds.nObservations,skm.nClusters*20);
+clusters = skm.run(dsNorm);
+
+<span class="keyword">for</span> imgInd = 1:ds.nObservations;
+    img = ds.X{imgInd};
+    img = rgb2gray(img);
+    imgSize = size(img);
+
+    <span class="comment">% Extract the sub-patches</span>
+    col = im2col(img,patchSize,<span class="string">'distinct'</span>);
+    col = double(col);
+    dsCol = prtDataSetClass(col');
+    dsCol = run(preProc,dsCol);
+    dsFeat = skm.run(dsCol);
+    dsFeat.X = max(dsFeat.X,.05);
+
+    <span class="comment">% Max Pool!</span>
+    <span class="comment">%   Feats will be size 30 x 40 x nClusters</span>
+    <span class="comment">%   featsBp will be size [4 x 5] x nClusters (because of the way</span>
+    <span class="comment">%   blockproc handles edsges)</span>
+    feats = reshape(dsFeat.X,imgSize(1)/8,imgSize(2)/8,[]);
+    featsBp = blockproc(feats,[8 8],@(x)max(max(x.data,[],1),[],2));
+
+    <span class="comment">% We'll cheat a little here, and use the whole max-pooled feature set</span>
+    <span class="comment">% as our feature vector.  Instead, we might want to re-cluster, and</span>
+    <span class="comment">% re-max-pool, and repeat this process a few times.  For now, we'll</span>
+    <span class="comment">% keep it simple:</span>
+    featVec(imgInd,:) = featsBp(:);
+<span class="keyword">end</span>
+</pre>
+
+
+<p>Now that we&#8217;ve max-pooled, we can use our extracted features for classification - we&#8217;ll use a simple PLSDA + MAP classifier and decision algorithm here:</p>
+
+
+<pre class="codeinput">dsFeat = prtDataSetClass(featVec,ds.targets);
+dsFeat.classNames = ds.classNames;
+
+yOut = kfolds(prtClassPlsda + prtDecisionMap,dsFeat,3);
+
+close <span class="string">all</span>;
+prtScoreConfusionMatrix(yOut)
+</pre>
+
+
+<p><img vspace="5" hspace="5" src="/images/torrione_ExampleCoatesNg_Kmeans_Mscorid_2_01.png" alt=""> <p>Almost 99% correct!  We&rsquo;ve improved performance over our previous work with bag-of-words models, and an SVM, by just (1) max-pooling, and (2) replacing the SVM with a PLSDA classifier.</p><h2>Multiple Classes<a name="5"></a></h2><p>Until now we&rsquo;ve focused on just two classes in MSRCORID.  But there are a lot of types of objects in the MSRCORID database.  In the following, we just repeat a bunch of the code from above, and run it on a data set containing images of benches, buildings, cars, chimneys, clouds and doors:</p><pre class="codeinput">ds = prtDataGenMsrcorid({<span class="string">&lsquo;benches_and_chairs&rsquo;</span>,<span class="string">&lsquo;buildings&rsquo;</span>,<span class="string">&lsquo;cars\front view&rsquo;</span>,<span class="string">&lsquo;cars\rear view&rsquo;</span>,<span class="string">&lsquo;cars\side view&rsquo;</span>,<span class="string">&lsquo;chimneys&rsquo;</span>,<span class="string">&lsquo;clouds&rsquo;</span>,<span class="string">&lsquo;doors&rsquo;</span>});</p>
+
+<p>patchSize = [8 8];
+col = [];
+<span class="keyword">for</span> imgInd = 1:ds.nObservations;</p>
+
+<pre><code>img = ds.X{imgInd};
+img = rgb2gray(img);
+img = imresize(img,.5);
+col = cat(1,col,im2col(img,patchSize,&lt;span class="string"&gt;'distinct'&lt;/span&gt;)');
+</code></pre>
+
+<p><span class="keyword">end</span>
+dsCol = prtDataSetClass(double(col));</p>
+
+<p>preProc = prtPreProcZeroMeanRows + prtPreProcStdNormalizeRows(<span class="string">&lsquo;varianceOffset&rsquo;</span>,10) + prtPreProcZca;
+preProc = preProc.train(dsCol);
+dsNorm = preProc.run(dsCol);</p>
+
+<p>skm = prtClusterSphericalKmeans(<span class="string">&lsquo;nClusters&rsquo;</span>,50);
+skm = skm.train(dsNorm);</p>
+
+<p>featVec = nan(ds.nObservations,skm.nClusters*20);
+clusters = skm.run(dsNorm);</p>
+
+<p><span class="keyword">for</span> imgInd = 1:ds.nObservations;</p>
+
+<pre><code>img = ds.X{imgInd};
+img = rgb2gray(img);
+imgSize = size(img);
+
+&lt;span class="comment"&gt;% Extract the sub-patches&lt;/span&gt;
+col = im2col(img,patchSize,&lt;span class="string"&gt;'distinct'&lt;/span&gt;);
+col = double(col);
+dsCol = prtDataSetClass(col');
+dsCol = run(preProc,dsCol);
+dsFeat = skm.run(dsCol);
+dsFeat.X = max(dsFeat.X,.05);
+
+&lt;span class="comment"&gt;% Max Pool!&lt;/span&gt;
+&lt;span class="comment"&gt;%   Feats will be size 30 x 40 x nClusters&lt;/span&gt;
+&lt;span class="comment"&gt;%   featsBp will be size [4 x 5] x nClusters (because of the way&lt;/span&gt;
+&lt;span class="comment"&gt;%   blockproc handles edsges)&lt;/span&gt;
+feats = reshape(dsFeat.X,imgSize(1)/8,imgSize(2)/8,[]);
+featsBp = blockproc(feats,[8 8],@(x)max(max(x.data,[],1),[],2));
+
+&lt;span class="comment"&gt;% We'll cheat a little here, and use the whole max-pooled feature set&lt;/span&gt;
+&lt;span class="comment"&gt;% as our feature vector.  Instead, we might want to re-cluster, and&lt;/span&gt;
+&lt;span class="comment"&gt;% re-max-pool, and repeat this process a few times.  For now, we'll&lt;/span&gt;
+&lt;span class="comment"&gt;% keep it simple:&lt;/span&gt;
+featVec(imgInd,:) = featsBp(:);
+</code></pre>
+
+<p><span class="keyword">end</span></p>
+
+<p>dsFeat = prtDataSetClass(featVec,ds.targets);
+dsFeat.classNames = ds.classNames;</p>
+
+<p>yOut = kfolds(prtClassPlsda(<span class="string">&lsquo;nComponents&rsquo;</span>,10) + prtDecisionMap,dsFeat,3);
+yOut.classNames = cellfun(@(s)s(1:min([length(s),10])),yOut.classNames,<span class="string">&lsquo;uniformoutput&rsquo;</span>,false);
+close <span class="string">all</span>;
+prtScoreConfusionMatrix(yOut);
+set(gcf,<span class="string">&lsquo;position&rsquo;</span>,[426   125   777   558]);
+</pre><img vspace="5" hspace="5" src="/images/torrione_ExampleCoatesNg_Kmeans_Mscorid_2_02.png" alt=""> <p>Now we&rsquo;re doing some image processing!  Overall we got about 90% correct, and that includes a lot of confusions between cars\front and cars\rear. That makes sense since the front and backs of cars look pretty similar, and there are only 23 car front examples in the whole data set.</p><h2>Conclusions<a name="7"></a></h2><p>The code in a lot of this blog entry is pretty gross &ndash; for example we have to constantly be taking data out of, and putting it back into the appropriate image sizes.</p><p>At some point in the future, we&rsquo;d like to introduce a good prtDataSet that will handle cell-arrays containing images properly.  We&rsquo;re not there yet, but when we are, we&rsquo;ll let you know on this blog!</p><p>Happy coding!</p><h2>Bibliography<a name="8"></a></h2><p>Adam Coates and Andrew Y. Ng, Learning Feature Representations with K-means, G. Montavon, G. B. Orr, K.-R. Muller (Eds.), Neural Networks: Tricks of the Trade, 2nd edn, Springer LNCS 7700, 2012</p></p>
 </div>
   
   

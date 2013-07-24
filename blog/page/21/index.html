@@ -129,6 +129,10 @@ span.syscmd { color:#B28C00 }
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2013/07/24/using-svms/">Using SVMs</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2013/07/15/observation-info/">Observation Info</a>
       </li>
     
@@ -142,10 +146,6 @@ span.syscmd { color:#B28C00 }
     
       <li class="post">
         <a href="/blog/2013/06/13/prtclustermeanshift/">prtClusterMeanShift</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/06/03/using-k-means-as-a-feature-extractor/">Using K-Means As a Feature Extractor</a>
       </li>
     
   </ul>
@@ -175,7 +175,7 @@ span.syscmd { color:#B28C00 }
 
   <header>
     
-      <h1 class="entry-title"><a href="/blog/2013/01/21/introduction-to-the-prt/">An Introduction to the PRT With MNIST</a></h1>
+      <h1 class="entry-title"><a href="/blog/2013/01/25/decisions-decisions/">Decisions Decisions</a></h1>
     
     
       <p class="meta">
@@ -191,16 +191,14 @@ span.syscmd { color:#B28C00 }
   
 
 
-<time datetime="2013-01-21T18:58:00-05:00" pubdate data-updated="true">Jan 21<span>st</span>, 2013</time>
+<time datetime="2013-01-25T10:45:00-05:00" pubdate data-updated="true">Jan 25<span>th</span>, 2013</time>
         
       </p>
     
   </header>
 
 
-  <div class="entry-content"><p>The MNIST Database (<a href="http://yann.lecun.com/exdb/mnist/">http://yann.lecun.com/exdb/mnist/</a>) is a very well-known machine learning dataset consisting of a few thousand instances of handwritten digits from 0-9.  MNIST is actually a subset of a larger NIST database, but the authors (see the linked page above) were kind enough to do some basic pre-processing of MNIST for us.  MNIST was for a long time very widely used in the ML literature as an example of an easy to use real data set to evaluate new ideas.</p>
-
-
+  <div class="entry-content"><p>You may have noticed in a lot of examples, we&#8217;ve made use of prtDecision objects, and might have wondered what exactly those are, and how they work.  Today I&#8217;d like to describe the prtDecision* actions, and when you might want to use them.</p>
 
 
 <!--/introduction-->
@@ -209,133 +207,61 @@ span.syscmd { color:#B28C00 }
 <h2>Contents</h2>
 
 
-<div><ul><li><a href="#1">Obtaining, Loading, and Visualizing MNIST Data</a></li><li><a href="#5">Classification: PLSDA</a></li><li><a href="#8">Classification: SVM</a></li><li><a href="#12">Exploring the Results</a></li></ul></div>
+<div><ul><li><a href="#4">Making Manual Decisions</a></li><li><a href="#8">Decision Objects</a></li><li><a href="#11">Concluding</a></li></ul></div>
 
 
-<h2>Obtaining, Loading, and Visualizing MNIST Data<a name="1"></a></h2>
+<p>Let&#8217;s start out with a pretty standard prtDataSet, and we&#8217;ll make a classifier and score a ROC curve:</p>
 
 
-<p>Tools to read in the MNIST database into the PRT are available in the newest PRT version.  To conserve bandwidth, the actual MNIST data isn&#8217;t included in the PRT (it would kill our subversion servers).  Instead you can download the MNIST database from the website linked above.  Once you&#8217;ve downloaded it, extract the data into:</p>
-
-
-<pre class="codeinput">fullfile(prtRoot,<span class="string">'dataGen'</span>,<span class="string">'dataStorage'</span>,<span class="string">'MNIST'</span>) <span class="comment">%MATLAB command will tell you the directory</span>
+<pre class="codeinput">ds = prtDataGenUnimodal;
+classifier = prtClassFld;
+yOutFld = kfolds(classifier,ds,3);
+[pf,pd] = prtScoreRoc(yOutFld);
+h = plot(pf,pd);
+set(h,<span class="string">'linewidth'</span>,3);
+title(<span class="string">'ROC Curve for FLD'</span>);
+xlabel(<span class="string">'Pfa'</span>);
+ylabel(<span class="string">'Pd'</span>);
 </pre>
 
 
-<pre class="codeoutput">
-ans =
-
-C:\Users\Pete\Documents\MATLAB\toolboxes\nfPrt\dataGen\dataStorage\MNIST
-
-</pre>
-
-
-<p>For example, on my system:</p>
-
-
-<pre class="codeinput">ls(fullfile(prtRoot,<span class="string">'dataGen'</span>,<span class="string">'dataStorage'</span>,<span class="string">'MNIST'</span>))
-</pre>
-
-
-<pre class="codeoutput">
-.                        t10k-labels.idx1-ubyte   
-..                       train-images.idx3-ubyte  
-t10k-images.idx3-ubyte   train-labels.idx1-ubyte  
-
-</pre>
-
-
-<p>Once the MNIST files are in the right place, execute the PRT command:</p>
-
-
-<pre class="codeinput">dsTrain = prtDataGenMnist;
-</pre>
-
-
-<p>to extract the data.  ( Note, prtDataGenMnist makes use of a M-file function called readMNIST by Siddharth Hegde.  It&#8217;s available from: <a href="http://www.mathworks.com/matlabcentral/fileexchange/27675-read-digits-and-labels-from-mnist-database">http://www.mathworks.com/matlabcentral/fileexchange/27675-read-digits-and-labels-from-mnist-database</a> ).</p>
-
-
-<p>Once loaded, we can use a number of different tools to visualize the data.  First, let&#8217;s visualize the data as images.  We know that the images are size 28x28, but since the prtDataSetClass object expects each observation to correspond to a 1xN vector, we store all the 28x28 images as 1x784 vectors.</p>
-
-
-<pre class="codeinput">imageSize = [28 28];
-
-<span class="keyword">for</span> i = 1:9;
-    subplot(3,3,i);
-    x = dsTrain.getX(i); <span class="comment">%1x784</span>
-    y = dsTrain.getY(i);
-    imagesc(reshape(x,imageSize));
-    colormap <span class="string">gray</span>;
-    title(sprintf(<span class="string">'MNIST; Digit = %d'</span>,y));
-<span class="keyword">end</span>
-</pre>
-
-
-<p><img vspace="5" hspace="5" src="/images/testBlog_01.png" alt=""> <h2>Classification: PLSDA<a name="5"></a></h2><p>What kinds of classification approaches can we apply to this data set? We need to satisfy a few requirements: 1) M-Ary classification, 2) Relatively fast, 3) Relatively insensitive to a large number of dimensions (784 dimensional vectors). One particularly fast, linear approach to classification that&#8217;s relatively insensitive to the number of feature dimensions is partial-least squares discriminant analysis, implemented in the PRT as prtClassPLSDA.  With only a few lines of code we can implement and evaluate a PLSDA classifier on the MNIST data, for example:</p><pre class="codeinput">algo = prtClassPlsda(<span class="string">&lsquo;nComponents&rsquo;</span>,20) + prtDecisionMap; <span class="comment">%we include the Max-A-Posteriori classifier</span>
-yOut = algo.kfolds(dsTrain,3); <span class="comment">%3 folds x-val</span>
-pc = prtScorePercentCorrect(yOut);
-subplot(1,1,1);
-prtScoreConfusionMatrix(yOut);
-title(sprintf(<span class="string">&lsquo;3-Fold X-Val PLSDA on 10,000 MNIST Database Train Samples; %.0f%% Correct&rsquo;</span>,pc*100));
-</pre><img vspace="5" hspace="5" src="/images/testBlog_02.png" alt=""> <p>This basic example results in the above figure, where we see we&#8217;ve achieved about 84% correct classification, and we can analyze confusions between digits.  For example, the digits 4 and 9 are often confused, which seems intuitive since they look relatively similar.</p><p>We can also evaluate the PLSDA classifier trained on 10,000 training points and evaluated on the MNIST testing data.  To do so we first load the testing data, then train our classifier and evaluate it:</p></p>
-
-<pre class="codeinput">dsTest = prtDataGenMnistTest;
-algo = algo.train(dsTrain);
-yOut = algo.run(dsTest);
-pc = prtScorePercentCorrect(yOut);
-subplot(1,1,1);
-prtScoreConfusionMatrix(yOut);
-title(sprintf(<span class="string">'PLSDA on 10,000 MNIST Database Test Samples; %.0f%% Correct'</span>,pc*100));
-</pre>
-
-
-<p><img vspace="5" hspace="5" src="/images/testBlog_03.png" alt=""> <p>Performance on the test set is relatively similar to performance in cross-validation as can be seen above.</p><p>Overall, our performance is hovering around a 15% error rate.  That&#8217;s roughly comparable to the 12% error reported in LeCun et al., 1988, and here we&#8217;re not using a lot of the techniques in the Le Cun paper (and this is with barely 5 lines of code!).</p><h2>Classification: SVM<a name="8"></a></h2><p>As the results on <a href="http://yann.lecun.com/exdb/mnist/"><a href="http://yann.lecun.com/exdb/mnist/">http://yann.lecun.com/exdb/mnist/</a></a> illustrate, other approaches to digit classification have done much better than our simple PLSDA classifier.  We can use the PRT to apply more complicated classifiers to the same data also, and hopefully decrease our error rate.</p><p>For example, consider a simple application of an SVM classifier to the digit recognition problem.  Since the SVM is not an M-ary classification technique, we need to wrap our SVM in a One-Vs-All classifier to perform M-ary classification (Warning: the following code took about 30 minutes to run on my laptop):</p><pre class="codeinput">marySvm = prtPreProcZmuv + prtClassBinaryToMaryOneVsAll(<span class="string">&lsquo;baseClassifier&rsquo;</span>,prtClassLibSvm) + prtDecisionMap;
-yOut = marySvm.kfolds(dsTrain,3);
-pc = prtScorePercentCorrect(yOut);
-subplot(1,1,1);
-prtScoreConfusionMatrix(yOut);
-title(sprintf(<span class="string">&lsquo;3-Fold X-Val SVM on 10,000 MNIST Database Train Samples; %.0f%% Correct&rsquo;</span>,pc*100));
-</pre><pre class="codeoutput">Warning: Non-finite or zero standard deviation encountered.  Replacing invalid
-standard deviations with 1
-Warning: Non-finite or zero standard deviation encountered.  Replacing invalid
-standard deviations with 1
-Warning: Non-finite or zero standard deviation encountered.  Replacing invalid
-standard deviations with 1
-</pre><img vspace="5" hspace="5" src="/images/testBlog_04.png" alt=""> <p>As can be seen above, the SVM achieves an error rate of 5% on this data set!  That&#8217;s a significant improvement over the PLSDA classification we showed before.  Similarly to with PLSDA, we can also evaluate the algorithm on completely separate testing data:</p></p>
-
-<pre class="codeinput">marySvm = marySvm.train(dsTrain);
-yOut = marySvm.run(dsTest);
-pc = prtScorePercentCorrect(yOut);
-subplot(1,1,1);
-prtScoreConfusionMatrix(yOut);
-title(sprintf(<span class="string">'PLSDA on 10,000 MNIST Database Test Samples; %.0f%% Correct'</span>,pc*100));
-</pre>
-
-
-<pre class="codeoutput">Warning: Non-finite or zero standard deviation encountered.  Replacing invalid
-standard deviations with 1 
-</pre>
-
-
-<p><img vspace="5" hspace="5" src="/images/testBlog_05.png" alt=""> <p>And we see that performance is comparable to the cross-validated results. (Note that more advanced applications of SVM classifiers can do even better than the results reported here &#8211; Le Cun et al., 1998 reported 1.4% error rates with an SVM and some additional processing).</p><h2>Exploring the Results<a name="12"></a></h2><p>If we wanted to improve classification, we could optimize over the SVM parameters, kernel, pre-processing etc.  But before we did that, it might be instructive to investigate what digits the SVM classifier is mislabeling, and see if some of them seem like reasonable mistakes to make.  The following code will pick 9 instances where the SVM output label was different from the actual data label, and plot them in a subplot.</p></p>
-
-<pre class="codeinput">incorrect = find(yOut.getX ~= yOut.getY);
-yOutTestMisLabeled = yOut.retainObservations(incorrect);
-dsTestMisLabeled = dsTest.retainObservations(incorrect);
-<span class="keyword">for</span> i = 1:9; <span class="comment">%dsTestMisLabeled.nObservations;</span>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;randWrong = ceil(rand*dsTestMisLabeled.nObservations); <span class="comment">%pick a random wrong element</span>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;subplot(3,3,i);
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;x = dsTestMisLabeled.getX(randWrong);
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;img = reshape(x,imageSize);
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;imagesc(img);
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;colormap <span class="string">gray</span>;
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-title(sprintf(<span class="string">'Actual: %d; SVM Label: %d'</span>,yOutTestMisLabeled.getY(randWrong),yOutTestMisLabeled.getX(randWrong)));
-<span class="keyword">end</span>
-</pre>
-
-
-<p><img vspace="5" hspace="5" src="/images/testBlog_06.png" alt=""> <p>Visual inspection of these mistakes illustrate some of the causes of confusions in the SVM.  For example, highly slanted digits are often mis-labeled.  Mitigating some of these mistakes may require significantly more than simply optimizing SVM parameters!</p><p>Interested readers can refer to a large body of literature that has previously investigated this data set (<a href="http://yann.lecun.com/exdb/mnist/"><a href="http://yann.lecun.com/exdb/mnist/">http://yann.lecun.com/exdb/mnist/</a></a>) for tips, tricks, and ideas for further improving performance on this data set.  One particularly exciting recent advance is based on Hinton&#8217;s deep learning networks, which enables very efficient learning on the MNIST database <a href="www.cs.toronto.edu/~hinton/science.pdf">www.cs.toronto.edu/~hinton/science.pdf</a>).</p><p>We hope this example shows how quickly you can get from data to results with the PRT.  Please let us know if you have comments or questions!</p></p>
+<p><img vspace="5" hspace="5" src="/images/torrione_blog_Decisions_01.png" alt=""> <p>That ROC curve looks pretty good, but it doesn&rsquo;t tell the whole story. At the end of the day, if you wanted to use your FLD algorithm in a production setting, you&rsquo;ll need to make discrete decisions to take different actions depending on whether you&rsquo;re calling something Class #1 or Class #0.  An ROC curve is suitable for comparing performance across a range of possible operating points, but what if we wanted to know exactly what PD and PFA we were going to get for a particular decision point?</p><p>To clarify matters, let&rsquo;s take a look at what the output from FLD actually looks like.</p><pre class="codeinput">h = plot(1:yOutFld.nObservations,yOutFld.X,1:yOutFld.nObservations,yOutFld.Y);
+set(h,<span class="string">&lsquo;linewidth&rsquo;</span>,3);
+xlabel(<span class="string">&lsquo;Observation Index&rsquo;</span>);
+legend(h,{<span class="string">&lsquo;FLD Output&rsquo;</span>,<span class="string">&lsquo;Class Label&rsquo;</span>});
+title(<span class="string">&lsquo;FLD Output &amp; Actual Class Label vs. Observation Index&rsquo;</span>);
+</pre><img vspace="5" hspace="5" src="/images/torrione_blog_Decisions_02.png" alt=""> <p>The above figure shows what&rsquo;s actually going on under the hood &ndash; when a classifier object is run on a data set, the output data set (yOutFld) has it&rsquo;s X value set to the classifier output.  In this case, the yOutFld.X value is a linear weighting of the input variables, and is shown in blue.  You can see how it correlated with the actual class labels (in green).</p><h2>Making Manual Decisions<a name="4"></a></h2><p>Say we wanted to make decisions based on the output of the FLD.  We have to choose a threshold (a point along the y-axis) such that whenever a blue data point is above the threshold, we call the output &ldquo;Class 1&rdquo;, and otherwise we call it &ldquo;Class 0&rdquo;.  By visual inspection, any value between, say, 0 and 2 looks reasonable.  Let&rsquo;s try manually setting a threshold of 1:</p><pre class="codeinput">yOutManual = yOutFld;
+yOutManual.X = yOutManual.X &gt; 1;
+h = plot(1:yOutManual.nObservations,yOutManual.X,1:yOutManual.nObservations,yOutManual.Y);
+ylim([&ndash;.1 1.1]);
+set(h,<span class="string">&lsquo;linewidth&rsquo;</span>,3);
+xlabel(<span class="string">&lsquo;Observation Index&rsquo;</span>);
+legend(h,{<span class="string">&lsquo;Manual Decision Output&rsquo;</span>,<span class="string">&lsquo;Class Label&rsquo;</span>},4);
+title(<span class="string">&lsquo;Manual Decision &amp; Actual Class Label vs. Observation Index&rsquo;</span>);
+</pre><img vspace="5" hspace="5" src="/images/torrione_blog_Decisions_03.png" alt=""> <p>You can see that our chosen threshold does pretty well.  The vast majority of the time, the blue line corresponds to the green line.  We can confirm this by considering the percent correct, and a confusion matrix:</p><pre class="codeinput">prtScoreConfusionMatrix(yOutManual);
+pc = prtScorePercentCorrect(yOutManual);
+title(sprintf(<span class="string">&lsquo;Percent Correct: %.0f%%&rsquo;</span>,pc<em>100));
+</pre><img vspace="5" hspace="5" src="/images/torrione_blog_Decisions_04.png" alt=""> <p>98% Correct!  That&rsquo;s not bad.  But look at what happens if we try and do the same scoring on the original output from the FLD:</p><pre class="codeinput">prtScoreConfusionMatrix(yOutFld);
+pc = prtScorePercentCorrect(yOutFld);
+title(sprintf(<span class="string">&lsquo;Percent Correct: %.0f%% (This is clearly wrong!)&rsquo;</span>,pc</em>100));
+</pre><img vspace="5" hspace="5" src="/images/torrione_blog_Decisions_05.png" alt=""> <p>What happened?  This is a little subtle, but whenever the PRT has to score discrete classes, like with prtScorePercentCorrect and prtScoreConfusionMatrix, it requires that the X values in the dataset to be equal to your best guess as to the real underlying class.</p><p>That worked out great for yOutManual, since we set yOutManual.X to zero for class 0, and 1 for class 1.  But yOutFld has continuous values stored in it (as the earlier figure shows); you need to make discrete decisions for prtScorePercentCorrect or prtScoreConfusionMatrix to make any sense.</p><h2>Decision Objects<a name="8"></a></h2><p>Fortunately, the PRT provides a special kind of prtAction &ndash; prtDecisions to make those decisions for you automatically, so you can score algorithms very easily.</p><p>For example, prtDecisionBinaryMinPe tries to find a threshold based on the training data to minimize the probability of error (Pe). You can use the decision actions like you would use any other actions in a prtAlgorithm:</p><pre class="codeinput">algo = prtClassFld + prtDecisionBinaryMinPe;
+yOutDecision = kfolds(algo,ds,3);
+prtScoreConfusionMatrix(yOutDecision);
+pc = prtScorePercentCorrect(yOutDecision);
+title(sprintf(<span class="string">&lsquo;Percent Correct: %.0f%%&rsquo;</span>,pc<em>100));
+</pre><img vspace="5" hspace="5" src="/images/torrione_blog_Decisions_06.png" alt=""> <p>Now we&rsquo;re back in the ball game!  You can use different decision objects to get performance at different points on the ROC curve, for example prtDecisionBinarySpecifiedPd let&rsquo;s you specify a Pd to operate at:</p><pre class="codeinput">close <span class="string">all</span>;
+algo = prtClassFld + prtDecisionBinarySpecifiedPd(<span class="string">&lsquo;pd&rsquo;</span>,.99);
+yOutDecision = kfolds(algo,ds,3);
+prtScoreConfusionMatrix(yOutDecision);
+pc = prtScorePercentCorrect(yOutDecision);
+title(sprintf(<span class="string">&lsquo;Percent Correct: %.0f%%&rsquo;</span>,pc</em>100));
+</pre><img vspace="5" hspace="5" src="/images/torrione_blog_Decisions_07.png" alt=""> <p>Note that the overall probability of error is significantly worse, but almost all of the data from Class 1 was identified as Class 1.  (This may not achieve 99% Pd in some cases since the thresholds are learned differently in each fold, so there is some statistical variation in the actual Pd achieved).</p><p>We can also use prtDecisionMap to perform multi-class decision making. The &ldquo;Map&rdquo; in prtDecisionMap stands for maximum a-posteriori.  This basically means &ldquo;decide the class corresponding to the maximum classifier output&rdquo;.</p><pre class="codeinput">ds = prtDataGenMary;
+algo = prtClassKnn + prtDecisionMap;
+yOutDecision = kfolds(algo,ds,3);
+prtScoreConfusionMatrix(yOutDecision);
+pc = prtScorePercentCorrect(yOutDecision);
+title(sprintf(<span class="string">&lsquo;Percent Correct: %.0f%%&rsquo;</span>,pc*100));
+</pre><img vspace="5" hspace="5" src="/images/torrione_blog_Decisions_08.png" alt=""> <h2>Concluding<a name="11"></a></h2><p>So, there you go!  prtDecision objects handle a lot of book-keeping internally, so that you don&rsquo;t generally have to worry about making sure to keep class names and indices straight.  We recommend using them instead of manually making your own decision functions to operate on output classes.</p><p>As always, please feel free to comment or e-mail us with questions or ideas.</p></p>
 </div>
   
   
