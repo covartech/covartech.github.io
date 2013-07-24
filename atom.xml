@@ -4,7 +4,7 @@
   <title><![CDATA[PRT Blog]]></title>
   <link href="http://newfolder.github.io/atom.xml" rel="self"/>
   <link href="http://newfolder.github.io/"/>
-  <updated>2013-07-24T13:52:51-04:00</updated>
+  <updated>2013-07-24T13:54:54-04:00</updated>
   <id>http://newfolder.github.io/</id>
   <author>
     <name><![CDATA[Kenneth Morton and Peter Torrione]]></name>
@@ -14,7 +14,7 @@
 
   
   <entry>
-    <title type="html"><![CDATA[Using SVMs]]></title>
+    <title type="html"><![CDATA[Using SVMs for Scientists and Engineers]]></title>
     <link href="http://newfolder.github.io/blog/2013/07/24/using-svms/"/>
     <updated>2013-07-24T13:40:00-04:00</updated>
     <id>http://newfolder.github.io/blog/2013/07/24/using-svms</id>
