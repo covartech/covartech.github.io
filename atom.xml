@@ -4,7 +4,7 @@
   <title><![CDATA[PRT Blog]]></title>
   <link href="http://newfolder.github.io/atom.xml" rel="self"/>
   <link href="http://newfolder.github.io/"/>
-  <updated>2013-07-24T13:54:54-04:00</updated>
+  <updated>2013-07-25T08:58:06-04:00</updated>
   <id>http://newfolder.github.io/</id>
   <author>
     <name><![CDATA[Kenneth Morton and Peter Torrione]]></name>
@@ -34,7 +34,7 @@
 <h2>Contents</h2>
 
 
-<div><ul><li><a href="#1">Quick Notes</a></li><li><a href="#2">SVM Forumation</a></li><li><a href="#3">Appropriate Data Sets</a></li><li><a href="#4">SVM Parameters &amp; Notes</a></li><li><a href="#5">Parameter: Cost (Scalar)</a></li><li><a href="#6">Parameter: Relative Class Error Weights</a></li><li><a href="#7">Parameter: Kernel Choice &amp; Associated Parameters</a></li><li><a href="#8">SVM Pre-Prccessing</a></li><li><a href="#10">Optimizing Parameters</a></li><li><a href="#11">Some Rules-Of-Thumb</a></li><li><a href="#12">Concluding</a></li></ul></div>
+<div><ul><li><a href="#1">Quick Notes</a></li><li><a href="#2">SVM Formulation</a></li><li><a href="#3">Appropriate Data Sets</a></li><li><a href="#4">SVM Parameters &amp; Notes</a></li><li><a href="#5">Parameter: Cost (Scalar)</a></li><li><a href="#6">Parameter: Relative Class Error Weights</a></li><li><a href="#7">Parameter: Kernel Choice &amp; Associated Parameters</a></li><li><a href="#8">SVM Pre-Prccessing</a></li><li><a href="#10">Optimizing Parameters</a></li><li><a href="#11">Some Rules-Of-Thumb</a></li><li><a href="#12">Concluding</a></li></ul></div>
 
 
 
@@ -51,7 +51,7 @@
 <p>The parameter nomenclature we&#8217;re using matches theirs pretty closely, so feel free to leverage their documentation as well.</p>
 
 
-<h2>SVM Forumation<a name="2"></a></h2>
+<h2>SVM Formulation<a name="2"></a></h2>
 
 
 <p>Typical SVM formulations assume that you have a set of n-dimensional real training vectors, {x_i} for i = 1&#8230;N, and corresponding labels {y_i}, y_i \in {-1,1}.  Let x_ik represent the k&#8217;th element of the vector x_i.</p>
