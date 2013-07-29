@@ -129,6 +129,10 @@ span.syscmd { color:#B28C00 }
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2013/07/29/supervised-learning/">Supervised Learning: An Introduction for Scientists and Engineers</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2013/07/24/using-svms/">Using SVMs for Scientists and Engineers</a>
       </li>
     
@@ -142,10 +146,6 @@ span.syscmd { color:#B28C00 }
     
       <li class="post">
         <a href="/blog/2013/06/24/spectral-clustering/">Spectral Clustering</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/06/13/prtclustermeanshift/">prtClusterMeanShift</a>
       </li>
     
   </ul>
@@ -175,7 +175,7 @@ span.syscmd { color:#B28C00 }
 
   <header>
     
-      <h1 class="entry-title"><a href="/blog/2013/07/08/twoclassparadigm/">twoClassParadigm</a></h1>
+      <h1 class="entry-title"><a href="/blog/2013/07/15/observation-info/">Observation Info</a></h1>
     
     
       <p class="meta">
@@ -191,14 +191,14 @@ span.syscmd { color:#B28C00 }
   
 
 
-<time datetime="2013-07-08T20:57:00-04:00" pubdate data-updated="true">Jul 8<span>th</span>, 2013</time>
+<time datetime="2013-07-15T14:56:00-04:00" pubdate data-updated="true">Jul 15<span>th</span>, 2013</time>
         
       </p>
     
   </header>
 
 
-  <div class="entry-content"><p>When using an M-ary classifier on a binary classification problem, sometimes you want multiple dimensional output and sometimes you don&#8217;t. In the PRT the default is to supply only a single output but this can be specified by setting the twoClassParadigm property of classifiers.</p>
+  <div class="entry-content"><p>One of the hidden gems of the PRT is the observationInfo property. Let&#8217;s talk about a few ways you can use it to simplify your workflow.</p>
 
 
 <!--/introduction-->
@@ -207,142 +207,89 @@ span.syscmd { color:#B28C00 }
 <h2>Contents</h2>
 
 
-<div><ul><li><a href="#1">A Quick Example</a></li><li><a href="#5">twoClassParadigm</a></li><li><a href="#7">Why did you do that?</a></li><li><a href="#10">Conclusion</a></li></ul></div>
+<div><ul><li><a href="#1">What is observationInfo?</a></li><li><a href="#4">Retain Observations</a></li><li><a href="#5">Select</a></li><li><a href="#6">Graphically</a></li><li><a href="#8">Conclusions</a></li></ul></div>
 
 
-<h2>A Quick Example<a name="1"></a></h2>
+<h2>What is observationInfo?<a name="1"></a></h2>
 
 
-<p>Consider a binary classification problem with an m-ary classifer (prtClassMap).</p>
+<p>Simply put, observationInfo is a structure array stored in a prtDataSetStandard that has a number of entries equal to the number of observations in the dataSet. This structure array has user defined fields that store side information. When observations are removed from a dataset the observationInfo structure is also properly indexed. Here is a quick example.</p>
 
 
+<p>First let&#8217;s make a simple dataset with only 4 observations</p>
 
 
-<pre class="codeinput">dsTrain = prtDataGenUnimodal;
-dsTest = prtDataGenUnimodal;
+<pre class="codeinput">X = cat(1,prtRvUtilMvnDraw([0 0],eye(2),2),prtRvUtilMvnDraw([2 2],eye(2),2));
+Y = [0; 0; 1; 1;];
 
-classifier = prtClassMap;
-trainedClassifier = train(classifier, dsTrain);
+ds = prtDataSetClass(X,Y);
 
-plot(trainedClassifier);
-title(<span class="string">'Binary Classification with MAP'</span>,<span class="string">'FontSize'</span>,16);
-
-output = run(trainedClassifier, dsTest);
-
-output.nFeatures
+plot(ds);
 </pre>
 
 
-<pre class="codeoutput">
+<p><img vspace="5" hspace="5" src="/images/morton_blog_20130708_observationInfo_01.png" alt=""> <p>Now let&rsquo;s create a structure of observationInfo and set it.</p><pre class="codeinput">obsInfo = struct(<span class="string">&lsquo;fileIndex&rsquo;</span>,{1,2,3,4}&lsquo;,<span class="string">'timeOfDay&rsquo;</span>,{<span class="string">&lsquo;day&rsquo;</span>,<span class="string">&lsquo;night&rsquo;</span>,<span class="string">&lsquo;day&rsquo;</span>,<span class="string">&lsquo;night&rsquo;</span>}&lsquo;);</p>
+
+<p>ds.observationInfo = obsInfo;
+</pre></p>
+
+<h2>Retain Observations<a name="4"></a></h2>
+
+
+<p>If we retain (or remove) observations from this dataSet, the observation info is properly indexed.</p>
+
+
+<pre class="codeinput">dsSub = ds.retainObservations([1; 4]);
+dsSub.observationInfo.fileIndex
+</pre>
+
+
+<pre class="codeoutput">ans =
+  1
 ans =
- 1
+  4
 </pre>
 
 
-<p><img vspace="5" hspace="5" src="/images/morton_blog_20130708_twoClassParadigm_01.png" alt=""> <p>As you can see the output only has one feature. But consider the same M-ary classifier with a 3-class problem.</p></p>
+<h2>Select<a name="5"></a></h2>
 
-<pre class="codeinput">dsTrainMary = prtDataGenMary;
-dsTestMary = prtDataGenMary;
 
-trainedClassifierMary = train(classifier, dsTrainMary);
+<p>A hidden method of prtDataSetClass allows us to &#8220;select&#8221; observations from a dataSet by evaluating a function on the observationInfo. select() takes a function handle that is evaluated for each entry in the dataSet and returns a logical index. A dataSet containing only the observations for which the function was true is returned.</p>
 
-plot(trainedClassifierMary);
-title(<span class="string">'M-ary Classification with MAP'</span>,<span class="string">'FontSize'</span>,16);
 
-outputMary = run(trainedClassifierMary, dsTestMary);
-
-outputMary.nFeatures
+<pre class="codeinput">dsDayOnly = ds.select(@(s)strcmpi(s.timeOfDay,<span class="string">'day'</span>));
+{dsDayOnly.observationInfo.timeOfDay}
 </pre>
 
 
-<pre class="codeoutput">
-ans =
- 3
+<pre class="codeoutput">ans = 
+  'day'    'day'
 </pre>
 
 
-<p><img vspace="5" hspace="5" src="/images/morton_blog_20130708_twoClassParadigm_02.png" alt=""> <p>Now the output has 3 feautres. The trend continues with more classes, because prtClassMap declares itself as an Mary classififer</p></p>
+<h2>Graphically<a name="6"></a></h2>
 
-<pre class="codeinput">classifier.isNativeMary
+
+<p>Sometimes with complex dataSets with lots of observationInfo sorting through the data can be difficult. A graphical way to view observationInfo and create a function handle for select. This functionality is currently in Beta so make sure you <a href="/blog/2013/03/06/using-prtpath/">include those directories in your path.</a></p>
+
+
+<pre class="codeinput">prtUiDataSetStandardObservationInfoSelect(ds);
 </pre>
 
 
-<pre class="codeoutput">
-ans =
- 1
-</pre>
+<p><img vspace="5" hspace="5" src="/images/morton_blog_20130708_observationInfo_02.png" alt=""></p>
+
+<p>Right clicking (ctrl+click in OSX) in the table allows you to graphically select observations that will be returned by select.</p>
 
 
-<p>the output is (as it should) have a column corresponding to the confidence of each class. Binary classification is an exception.</p>
+<p><img vspace="5" hspace="5" src="/images/morton_blog_20130708_observationInfo_03.png" alt="">
+<img vspace="5" hspace="5" src="/images/morton_blog_20130708_observationInfo_04.png" alt=""></p>
+
+<h2>Conclusions<a name="8"></a></h2>
 
 
-<h2>twoClassParadigm<a name="5"></a></h2>
+<p>This is a simple example of what observation info is and how it can be used. We use it all of the time to manage all of our side information. Because all calls to retainObservation correctly index the observationInfo the side information is available within actions even during cross-validation. Making use of observation info is a quick way to fake a custom type of dataSet that contains other side information. Let us know how you use observationInfo and if you have any ideas to improve it.</p>
 
-
-<p>By default the PRT checks when M-ary classifiers are run on binary data to see if it should output a single confidence or binary confidences. The mode of operation is stored in twoClassParadigm which by default is set to the string M-ary.</p>
-
-
-<pre class="codeinput">classifier.twoClassParadigm
-</pre>
-
-
-<pre class="codeoutput">
-ans =
-binary
-</pre>
-
-
-<p>If we return to the binary classification problem and set twoClassParadigm to mary we can see that we get the two outputs that we expect.</p>
-
-
-
-
-<pre class="codeinput">classifier.twoClassParadigm = <span class="string">'mary'</span>;
-trainedClassifierBinaryActingAsMary = train(classifier, dsTrain);
-
-outputBinaryActingAsMary = run(trainedClassifierBinaryActingAsMary, dsTest);
-
-outputBinaryActingAsMary.nFeatures
-</pre>
-
-
-<pre class="codeoutput">
-ans =
- 2
-</pre>
-
-
-
-
-<h2>Why did you do that?<a name="7"></a></h2>
-
-
-<p>We debated, but ultimately we decided that it was less confusing this way. It is more rare to want both outputs for a binary classification problem than it is to expect a single. Most users expected this to run out of the box.</p>
-
-
-
-
-<pre class="codeinput">classifier = prtClassMap;
-trainedClassifier = train(classifier, dsTrain);
-output = run(trainedClassifier, dsTest);
-
-prtScoreRoc(output);
-title(<span class="string">'Binary Classification with an M-ary Classifier'</span>,<span class="string">'FontSize'</span>,16);
-</pre>
-
-
-<p><img vspace="5" hspace="5" src="/images/morton_blog_20130708_twoClassParadigm_03.png" alt=""> <p>If you change the classifier to non-m-ary classification (prtClassGlrt for example) you expect the same code to work only by changing the classifier declaration.</p></p>
-
-<pre class="codeinput">classifier = prtClassGlrt;
-trainedClassifier = train(classifier, dsTrain);
-output = run(trainedClassifier, dsTest);
-
-prtScoreRoc(output);
-title(<span class="string">'Binary Classification with a Binary Classifier'</span>,<span class="string">'FontSize'</span>,16);
-</pre>
-
-
-<p><img vspace="5" hspace="5" src="/images/morton_blog_20130708_twoClassParadigm_04.png" alt=""> <p>Without the twoClassParadigm system it wouldn&rsquo;t be as easy to switch classifiers for binary problems as an extra step would be required to manually select which column of the output should be used to calculate the ROC.</p><h2>Conclusion<a name="10"></a></h2><p>Well that&rsquo;s twoClassParadigm. It&rsquo;s a convenient feature of the PRT that not many people know about because they don&rsquo;t have to. In the rare cases when you want the confidence assigned to each class, you now know how to get them.</p></p>
 </div>
   
   

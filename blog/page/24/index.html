@@ -18,7 +18,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://newfolder.github.io/blog/page/9">
+  <link rel="canonical" href="http://newfolder.github.io/blog/page/24">
   <link href="/favicon.ico" rel="icon">
   
   <link href="/assets/bootstrap/css/spacelab.min.css" rel="stylesheet" type="text/css">
@@ -175,7 +175,7 @@ span.syscmd { color:#B28C00 }
 
   <header>
     
-      <h1 class="entry-title"><a href="/blog/2013/05/15/prtdatagensandp500-and-prtdatagencylinderbellfunnel/">prtDataGenSandP500 and prtDataGenCylinderBellFunnel</a></h1>
+      <h1 class="entry-title"><a href="/blog/2013/01/21/hi/">Hi</a></h1>
     
     
       <p class="meta">
@@ -191,55 +191,28 @@ span.syscmd { color:#B28C00 }
   
 
 
-<time datetime="2013-05-15T07:50:00-04:00" pubdate data-updated="true">May 15<span>th</span>, 2013</time>
+<time datetime="2013-01-21T16:02:00-05:00" pubdate data-updated="true">Jan 21<span>st</span>, 2013</time>
         
       </p>
     
   </header>
 
 
-  <div class="entry-content"><p>Hi everyone, a quick update this time &ndash; we added two new prtDataGen*
-functions to the PRT that people might find useful &ndash; prtDataGenSandP500,
-and prtDataGenCylinderBellFunnel.</p>
+  <div class="entry-content"><p>Hi,</p>
 
-<!--/introduction-->
+<p>Thanks for checking out the PRT. The PRT is intended to help people who do machine learning handle the most common classification tasks within MATLAB.  This includes things like cross-validation, data visualization, classifier development and feature selection. The PRT includes object types for data set storage, pre-processing, classification, clustering, distance calculations, outlier removal, kernel learning, data generation, scoring and classifier evaluation, feature selection, random variable definitions, and visualization. We think it serves as a great platform for both machine learning research and applied algorithm development (that&rsquo;s why we built it!).</p>
 
+<p>The PRT is free and released under the MIT license which means that it is free for academic and commercial use. The PRT is hosted on <a href="https://github.com/newfolder/PRT">GitHub</a> so feel free to fork or clone the repository or just download the latest <a href="https://github.com/newfolder/PRT/zipball/master">zip</a>.</p>
 
-<h2>Contents</h2>
+<p>Check out the <a href="/prtdoc/prtDocInstallation.html">installation instructions</a> to get you up and running. Once installed, open up MATLAB&reg;, and follow through with our <a href="/prtdoc/prtDocGettingStarted.html">Getting Started</a> guide, which will walk you through some examples of using the PRT in practice and show you what the PRT can do.</p>
 
+<p>Even though there are a lot of M-files in the PRT, we’ve built the PRT to be easy to use and to make it easy to find what you need from within MATLAB.  For example, to find a list of all classifiers in the PRT, simply type “prtClass” and then <tab> at the MATLAB command prompt.  Other object types behave the same way, e.g., prtPreProc <tab>. If you have any feed back or questions don&rsquo;t hesitate to ask on on <a href="https://github.com/newfolder/PRT">GitHub</a> or through email at <a href="mailto:prt@newfolderconsulting.com"><a href="&#109;&#97;&#105;&#x6c;&#116;&#x6f;&#58;&#x70;&#x72;&#116;&#64;&#110;&#101;&#119;&#102;&#x6f;&#x6c;&#x64;&#101;&#x72;&#99;&#111;&#110;&#x73;&#x75;&#x6c;&#x74;&#105;&#110;&#x67;&#46;&#x63;&#111;&#109;">&#112;&#114;&#x74;&#64;&#x6e;&#x65;&#119;&#102;&#x6f;&#108;&#100;&#x65;&#x72;&#99;&#111;&#110;&#x73;&#x75;&#108;&#116;&#105;&#x6e;&#x67;&#46;&#x63;&#x6f;&#x6d;</a></a>.</p>
 
-<div><ul><li><a href="#1">prtDataGenSandP500</a></li><li><a href="#3">Cylinder-Bell-Funnel</a></li><li><a href="#4">Conclusion</a></li></ul></div>
+<p>We are going to start blogging every once in a while about the PRT and things it can do. We hope that it starts a conversation about the types of things people are doing with the PRT and what things people might want the PRT to do in the future.</p>
 
+<p>Talk to you soon.  Happy coding!</p>
 
-<h2>prtDataGenSandP500<a name="1"></a></h2>
-
-
-<p>prtDataGenSandP500 generates data containing stock-price information from the S&amp;P 500.  The information dates back to January 3, 1950, and includes the index&#8217;s open, close, volume, and other features.</p>
-
-
-<p>Check it out:</p>
-
-
-<pre class="codeinput">ds = prtDataGenSandP500;
-ds.featureNames
-spClose = ds.retainFeatures(5);
-plot(spClose.X,<span class="string">'linewidth'</span>,2);
-title(<span class="string">'S&amp;P 500 Closing Value vs. Days since 1/3/1950'</span>);
-</pre>
-
-
-<pre class="codeoutput">
-ans = 
-
-    'Date'    'Open'    'High'    'Low'    'Close'    'Volume'    'AdjClose'
-
-</pre>
-
-
-<p><img vspace="5" hspace="5" src="/images/torrione_blog_dataGen_2013_05_14_01.png" alt=""> <p>If you can do decent prediction on that data&hellip; you might be able to make some money :)</p><h2>Cylinder-Bell-Funnel<a name="3"></a></h2><p>prtDataGenCylinderBellFunnel is a tool for generating a synthetic data set which contains a number of time-series, each of which has either a flat plateau (cylinder), a rising (bell) or a falling (funnel) slope.</p><p>You can find the specification we used to generate the data here: <a href="http://www.cse.unsw.edu.au/~waleed/phd/html/node119.html"><a href="http://www.cse.unsw.edu.au/~waleed/phd/html/node119.html">http://www.cse.unsw.edu.au/~waleed/phd/html/node119.html</a></a></p><p>And the data was used in an important paper in the data-mining community &ndash; Keogh and Lin, Clustering of Time Series Subsequences is Meaningless: Implications for Previous and Future Research. <a href="http://www.cs.ucr.edu/~eamonn/meaningless.pdf"><a href="http://www.cs.ucr.edu/~eamonn/meaningless.pdf">http://www.cs.ucr.edu/~eamonn/meaningless.pdf</a></a></p><pre class="codeinput">ds = prtDataGenCylinderBellFunnel;
-imagesc(ds.X);
-title(<span class="string">&lsquo;Cylinders (1:266), Bells (267:532), and Funnels (533:798)&rsquo;</span>);
-</pre><img vspace="5" hspace="5" src="/images/torrione_blog_dataGen_2013_05_14_02.png" alt=""> <h2>Conclusion<a name="4"></a></h2><p>That&rsquo;s all for now.  Hope you enjoy these new data sets, we&rsquo;re always adding new data to the PRT; let us know what you&rsquo;d like to see!</p></p>
+<p>-Kenny and Pete</p>
 </div>
   
   
@@ -252,11 +225,9 @@ title(<span class="string">&lsquo;Cylinders (1:266), Bells (267:532), and Funnel
   
   <div class="pagination">
     
-      <a class="prev" href="/blog/page/10/">&larr; Older</a>
-    
     <a href="/blog/archives">Blog Archives</a>
     
-    <a class="next" href="/blog/page/8/">Newer &rarr;</a>
+    <a class="next" href="/blog/page/23/">Newer &rarr;</a>
     
   </div>
 </div>

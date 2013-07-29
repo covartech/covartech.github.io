@@ -129,6 +129,10 @@ span.syscmd { color:#B28C00 }
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2013/07/29/supervised-learning/">Supervised Learning: An Introduction for Scientists and Engineers</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2013/07/24/using-svms/">Using SVMs for Scientists and Engineers</a>
       </li>
     
@@ -142,10 +146,6 @@ span.syscmd { color:#B28C00 }
     
       <li class="post">
         <a href="/blog/2013/06/24/spectral-clustering/">Spectral Clustering</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/06/13/prtclustermeanshift/">prtClusterMeanShift</a>
       </li>
     
   </ul>
@@ -175,7 +175,7 @@ span.syscmd { color:#B28C00 }
 
   <header>
     
-      <h1 class="entry-title"><a href="/blog/2013/03/19/feature-selection/">Feature Selection - prtFeatSelSfs</a></h1>
+      <h1 class="entry-title"><a href="/blog/2013/03/24/rvs-part-2/">RVs Part 2 - Mixture Models</a></h1>
     
     
       <p class="meta">
@@ -191,14 +191,14 @@ span.syscmd { color:#B28C00 }
   
 
 
-<time datetime="2013-03-19T21:58:00-04:00" pubdate data-updated="true">Mar 19<span>th</span>, 2013</time>
+<time datetime="2013-03-24T11:03:00-04:00" pubdate data-updated="true">Mar 24<span>th</span>, 2013</time>
         
       </p>
     
   </header>
 
 
-  <div class="entry-content"><p>Today I&#8217;d like to take a look at using a particular approach to feature selection in the PRT, and how that can be used to perform dimension reduction.  The approach we&#8217;ll use is called &#8220;sequential forward search&#8221;, and is implemented in prtFeatSelSfs.</p>
+  <div class="entry-content"><p>In <a href="/blog/2013/01/31/random-variables-part-1/">part 1</a> we talked about how use RVs to change the statistical model used by prtClassMap so that we can flexibly model the data. If you recall we can set the &#8220;rvs&#8221; property to correspond to prtRvMvn to model the data using multi-variate normal distributions or we can set it some other value to change the resulting model and thus the classifier. Now, we are going to talk about how we can make probabilistic mixtures in much the same way.</p>
 
 
 <!--/introduction-->
@@ -207,89 +207,89 @@ span.syscmd { color:#B28C00 }
 <h2>Contents</h2>
 
 
-<div><ul><li><a href="#1">Some Data</a></li><li><a href="#3">Feature Selection</a></li><li><a href="#4">Defining &#8220;Informative&#8221;</a></li><li><a href="#7">Conclusions</a></li></ul></div>
+<div><ul><li><a href="#1">Mixture Models</a></li><li><a href="#2">prtRvMixture</a></li><li><a href="#6">Using prtRvMixtures for Classification</a></li><li><a href="#8">prtRvGmm</a></li><li><a href="#10">Using prtRvGmm for classification</a></li><li><a href="#13">Conclusions</a></li></ul></div>
 
 
-<h2>Some Data<a name="1"></a></h2>
+<h2>Mixture Models<a name="1"></a></h2>
 
 
-<p>The PRT comes with a utility function to generate data that has about 10 features, and for which only 5 of the features are actually informative. The function is prtDataGenFeatureSelection, I&#8217;ll let the help entry explain how it works:</p>
+<p>In general, the term &#8220;mixture model&#8221; implies that each observation of data has an associated hidden variable and that observation is drawn from a distribution that is dependent on that hidden variable. In general statistics, a mixture model can have either continuous or discrete hidden variables. In the PRT, our prtRvMixture only considers discrete mixtures. That is, there are fixed number of &#8220;components&#8221; each with a mixing proportion and each component is itself a parameterized distribution, like a Gaussian.</p>
 
 
-<pre class="codeinput">help <span class="string">prtDataGenFeatureSelection</span>
+<p>The most common mixture is the Gaussian mixture model (GMM). A guassian mixture model with K components has a K dimensional discrite distrubtion for the mixing variable and has K individual Gaussian components. Today&#8217;s post will focus on using working with Gaussian mixture models.</p>
+
+
+<h2>prtRvMixture<a name="2"></a></h2>
+
+
+<p>prtRvMixture has two main properties that are of interest &#8220;components&#8221; and &#8220;mixingProportions&#8221;.</p>
+
+
+<p>components should be an array of prtRvs that also inherit from prtRvMembershipModel. Without getting too indepth a prtRvMembershipModel is a special attribute of some prtRvs that specifies that this RV knows how to work inside of a mixture model. As we mentioned before, we are focusing on mixture of prtRvMvn objects to make a Gaussian mixture model. Luckily prtRvMvn inherits from prtRvMembershipModel and therefore it knows how to work in a mixture.</p>
+
+
+<p>mixingProportions is the discrite mixing density for the mixture model. It should be a vector that sums to one with the same length as the &#8220;components&#8221; array.</p>
+
+
+<p>To get started let&#8217;s make an array of 2D MVN RV objects with different means and a non-diagonal covariance matrix.</p>
+
+
+<pre class="codeinput">gaussianSet1 = repmat(prtRvMvn(<span class="string">'sigma'</span>,[1 -0.5; -0.5 2;]),2,1);
+gaussianSet1(1).mu = [-2 -2];
+gaussianSet1(2).mu = [2 2];
 </pre>
 
 
-<pre class="codeoutput"> prtDataGenFeatureSelection   Generates some unimodal example data for the prt.
-   DataSet = prtDataGenFeatureSelection
-   The data is distributed:
-        H0: N([0 0 0 0 0 0 0 0 0 0],eye(10))
-        H1: N([0 2 0 1 0 2 0 1 0 2],eye(10))
- 
-  Syntax: [X, Y] = prtDataGenFeatureSelection(N)
- 
-  Inputs: 
-        N ~ number of samples per class (200)
- 
-  Outputs:
-    X - 2Nx2 Unimodal data
-    Y - 2Nx1 Class labels
- 
-  Example:
-    DataSet = prtDataGenFeatureSelection;
-    explore(DataSet)
- 
-  Other m-files required: none
-  Subfunctions: none
-  MAT-files required: none
- 
-  See also: prtDataGenUnimodal
+<p>Then we will can make a mixture by specifying some mixingProportions</p>
 
+
+<pre class="codeinput">mixture1 = prtRvMixture(<span class="string">'components'</span>,gaussianSet1,<span class="string">'mixingProportions'</span>,[0.5 0.5]);
 </pre>
 
 
-<p>As you can see from the help, only dimensions 2, 4, 6, 8, and 10 are actually informative in this data set.  And we can use feature selection to help us pick out what features are actually useful.</p>
+<p>Because prtRvMixtures are prtRvs we get all of the nice plotting that comes along with things. Let&#8217;s take  a look at the density of our prtRv</p>
 
 
-<h2>Feature Selection<a name="3"></a></h2>
-
-
-<p>Feature selection objects are prefaced in the prt with prtFeatSel*, and they act just like any other prtAction objects.  During training a feature selection action will typically perform some iterative search over the feature space, and determine which features are most informative.  At run-time, the same object will return a prtDataSet containing onlt the features the algorithm considered &#8220;informative&#8221;.</p>
-
-
-<p>For example:</p>
-
-
-<pre class="codeinput">ds = prtDataGenFeatureSelection;
-featSel = prtFeatSelSfs;
-featSel = featSel.train(ds);
-dsFeatSel = featSel.run(ds);
-
-plot(dsFeatSel);
-title(<span class="string">'Three Most Informative Features'</span>);
+<pre class="codeinput">plotPdf(mixture1);
 </pre>
 
 
-<p><img vspace="5" hspace="5" src="/images/torrione_ExampleFeatureSelection_01.png" alt=""> <h2>Defining &ldquo;Informative&rdquo;<a name="4"></a></h2><p>How does the feature selection algorithm determine what features are informative?  For many (but not necessarily all) feature selection objects, the interesting field is &ldquo;evaluationMetric&rdquo;.</p><p>Let&rsquo;s take a look:</p><pre class="codeinput">featSel.evaluationMetric
-</pre><pre class="codeoutput">
-ans =</p>
+<p><img vspace="5" hspace="5" src="/images/morton_blog_20130227_01.png" alt=""> <p>To show how we can do classification with these mixtures, let&rsquo;s make another mixture with different parameters. Then we will draw some data from both mixtures and plot our classification dataset.</p><pre class="codeinput">gaussianSet2 = repmat(prtRvMvn(<span class="string">&lsquo;sigma&rsquo;</span>,[1 0.5; 0.5 3;]),2,1);
+gaussianSet2(1).mu = [2 -2];
+gaussianSet2(2).mu = [-2 2];</p>
 
-<pre><code>@(DS)prtEvalAuc(prtClassFld,DS)
+<p>mixture2 = prtRvMixture(<span class="string">&lsquo;components&rsquo;</span>,gaussianSet2,<span class="string">&lsquo;mixingProportions&rsquo;</span>,[0.5 0.5]);</p>
+
+<p>ds = prtDataSetClass( cat(1,mixture1.draw(500),mixture2.draw(500)), prtUtilY(500,500)); <span class="comment">% Draw 500 samples from each mixture</span>
+plot(ds)
+</pre><img vspace="5" hspace="5" src="/images/morton_blog_20130227_02.png" alt=""> <h2>Using prtRvMixtures for Classification<a name="6"></a></h2><p>Like we showed in part 1 of this series we can set the &ldquo;rvs&rdquo; property of prtClassMap to any prtRv object and use that rv for classification. Let&rsquo;s for prtClassMap to use a mixture of prtRvMvn objects.</p><pre class="codeinput">emptyMixture = prtRvMixture(<span class="string">&lsquo;components&rsquo;</span>,repmat(prtRvMvn,2,1)); <span class="comment">% 2 component mixture</span></p>
+
+<p>classifier = prtClassMap(<span class="string">&lsquo;rvs&rsquo;</span>,emptyMixture);</p>
+
+<p>trainedClassifier = train(classifier, ds);</p>
+
+<p>plot(trainedClassifier);
+</pre><img vspace="5" hspace="5" src="/images/morton_blog_20130227_03.png" alt=""> <p>As you can see it looks like this classifier would perform quite well. We can see that the learned means of the class 0 data (blue) closely match the means that we specified above for guassianSet1. So things appear to be working well.</p><pre class="codeinput">cat(1,trainedClassifier.rvs(1).components.mu)
+</pre><pre class="codeoutput">ans =
+   -1.9712   -2.0488</p>
+
+<pre><code>2.0139    1.9548
 </code></pre>
 
-<p></pre><p>Obviously, evaluationMetric is a function handle &ndash; in particular it represents a call to a prtEval<em> method.  prtEval</em> methods typically take 2 or 3 input arguments &ndash; a classifier to train and run, a data set to train and run on, and (optionally) a number of folds (or fold specification) to use for cross-validation.</p><p>Feature selection objects iteratively search through the features available &ndash; in this case, all 10 of them, and apply the prtEval* method to the sub-sets of data formed by retaining a sub-set of the available features.  The exact order in which the features are retained and removed depends on the feature selection approach &ndash; in SFS, the algorithm first iteratively searches through the features &ndash; 1,2,3&hellip;,10.  Then it remembers which single feature provided the best performance &ndash; say it was feature 2.  Next, the SFS algorithm iteratively searches through all 9 combinations of other features with feature 2:    { {1,2},{3,2},{4,2},&hellip;,{10,2}} And remembers which of <b>those</b> performed best.  This process is iterated, and features continually added to the set being evaluated until nFeatures are selected.</p><p>The resulting performance is then stored in &ldquo;performance&rdquo;, and the features selected are stored in &ldquo;selectedFeatures&rdquo;.  Let&rsquo;s force the SFS approach to look for 10 features (so it will eventually select all of them).</p><pre class="codeinput">ds = prtDataGenFeatureSelection;
-featSel = prtFeatSelSfs;
-featSel.nFeatures = ds.nFeatures;
-featSel.evaluationMetric = @(DS)prtEvalAuc(prtClassFld,DS,3);
-featSel = featSel.train(ds);</p>
+<p></pre><h2>prtRvGmm<a name="8"></a></h2><p>Since Guassian mixture models are the most common type of mixture a number of techniques have been established that help them perform better when working with limited and/or high dimensional data. To help facilitate some of those tweak there is prtRvGmm. It works much the same way as prtRvMixture only the components must be prtRvMvns.</p><pre class="codeinput">mixture1Gmm = prtRvGmm(<span class="string">&lsquo;components&rsquo;</span>,gaussianSet1,<span class="string">&lsquo;mixingProportions&rsquo;</span>,[0.5 0.5]);</p>
 
-<p>h = plot(1:ds.nFeatures,featSel.performance);
-set(h,<span class="string">&lsquo;linewidth&rsquo;</span>,3);
-set(gca,<span class="string">&lsquo;xtick&rsquo;</span>,1:ds.nFeatures);
-set(gca,<span class="string">&lsquo;xticklabel&rsquo;</span>,featSel.selectedFeatures);
-xlabel(<span class="string">&lsquo;Features Selected&rsquo;</span>);
-title(<span class="string">&lsquo;AUC vs. Features Selected&rsquo;</span>);
-</pre><img vspace="5" hspace="5" src="/images/torrione_ExampleFeatureSelection_02.png" alt=""> <p>The features that get selected tend to favor features 2,6, and 10, then features 4 and 8, which makes sense as these are the 3 most informative followed by the two moderately-informative features!</p><h2>Conclusions<a name="7"></a></h2><p>There are a number of prtFeatSel<em> actions available, but not as many as we&rsquo;d like.  We&rsquo;re constantly on the look-out for new ones, and we&rsquo;d like to one day include &ldquo;K-forward, L-Backward&rdquo; searches, but just haven&rsquo;t had the time recently.</p><p>Also, this example only used prtEvalAuc as the performance metric, but there are a number of prtEval</em> functions you can use, or, of course &ndash; feel free to write your own!</p><p>Take a look at prtEvalAuc to see how they work and how to create your own!</p><p>Enjoy!</p></p>
+<p>plotPdf(mixture1Gmm);
+</pre><img vspace="5" hspace="5" src="/images/morton_blog_20130227_04.png" alt=""> <p>One of the available tweaks is that the covarianceStructure of all components is controled by a single parameter, &ldquo;covarianceStructure&#8217;. See the documentation prtRvMvn to know how this works. Let&rsquo;s see how changing the covarianceStructure of all of our components changes the appears of our density.</p><pre class="codeinput">mixture1GmmMod = mixture1Gmm;
+mixture1GmmMod.covarianceStructure = <span class="string">&lsquo;spherical&rsquo;</span>; <span class="comment">% Force independence with a shared variance.</span></p>
+
+<p>plotPdf(mixture1GmmMod);
+</pre><img vspace="5" hspace="5" src="/images/morton_blog_20130227_05.png" alt=""> <h2>Using prtRvGmm for classification<a name="10"></a></h2><p>Using prtRvGmm for classification is a little easier than prtRvMixture because we only need to specify the number of components. We don&rsquo;t have to built the array of components ourselves.</p><p>Let&rsquo;s redo the same problem as before.</p><pre class="codeinput">classifier = prtClassMap(<span class="string">&lsquo;rvs&rsquo;</span>,prtRvGmm(<span class="string">&lsquo;nComponents&rsquo;</span>,2));
+trainedClassifier = train(classifier,ds);
+plot(trainedClassifier);
+</pre><img vspace="5" hspace="5" src="/images/morton_blog_20130227_06.png" alt=""> <p>As you can see, things look nearly identical (as they should). Now, let&rsquo;s make use of a few of the extra tweak offered by prtRvGmm and see how they change our decision contours.</p><pre class="codeinput">classifier = prtClassMap(<span class="string">&lsquo;rvs&rsquo;</span>,prtRvGmm(<span class="string">&lsquo;nComponents&rsquo;</span>,2,<span class="string">&lsquo;covarianceStructure&rsquo;</span>,<span class="string">&lsquo;spherical&rsquo;</span>,<span class="string">&lsquo;covariancePool&rsquo;</span>,true));
+trainedClassifier = train(classifier,ds);
+plot(trainedClassifier);
+</pre><img vspace="5" hspace="5" src="/images/morton_blog_20130227_07.png" alt=""> <p>You can see that the decision contours are more regular now. This may help classificaiton performance in the precense of limited and/or high dimensional data.</p><h2>Conclusions<a name="13"></a></h2><p>We hope this post showed how you can use mixture models just like any other prtRv object when doing classificaiton using prtClassMap.</p><p>Chances are that you want to use prtRvGmm for your mixture modeling needs but you might be able to guess that prtRvMixture is much more general allowing you to make mixture models out of general prtRvs. However, at this time the only prtRv that is able to be used is prtRvMvn. We are interested in making more prtRvs compatible but we want to know what people want to use. Let us know if you need something specific.</p><p>In the next part of this series we will look at prtRvHmm and how it can be used for time-series classification.</p></p>
 </div>
   
   
