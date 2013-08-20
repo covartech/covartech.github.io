@@ -18,7 +18,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://newfolder.github.io/blog/page/4">
+  <link rel="canonical" href="http://newfolder.github.io/blog/page/25">
   <link href="/favicon.ico" rel="icon">
   
   <link href="/assets/bootstrap/css/spacelab.min.css" rel="stylesheet" type="text/css">
@@ -175,7 +175,7 @@ span.syscmd { color:#B28C00 }
 
   <header>
     
-      <h1 class="entry-title"><a href="/blog/2013/07/15/observation-info/">Observation Info</a></h1>
+      <h1 class="entry-title"><a href="/blog/2013/01/21/hi/">Hi</a></h1>
     
     
       <p class="meta">
@@ -191,105 +191,28 @@ span.syscmd { color:#B28C00 }
   
 
 
-<time datetime="2013-07-15T14:56:00-04:00" pubdate data-updated="true">Jul 15<span>th</span>, 2013</time>
+<time datetime="2013-01-21T16:02:00-05:00" pubdate data-updated="true">Jan 21<span>st</span>, 2013</time>
         
       </p>
     
   </header>
 
 
-  <div class="entry-content"><p>One of the hidden gems of the PRT is the observationInfo property. Let&#8217;s talk about a few ways you can use it to simplify your workflow.</p>
+  <div class="entry-content"><p>Hi,</p>
 
+<p>Thanks for checking out the PRT. The PRT is intended to help people who do machine learning handle the most common classification tasks within MATLAB.  This includes things like cross-validation, data visualization, classifier development and feature selection. The PRT includes object types for data set storage, pre-processing, classification, clustering, distance calculations, outlier removal, kernel learning, data generation, scoring and classifier evaluation, feature selection, random variable definitions, and visualization. We think it serves as a great platform for both machine learning research and applied algorithm development (that&rsquo;s why we built it!).</p>
 
-<!--/introduction-->
+<p>The PRT is free and released under the MIT license which means that it is free for academic and commercial use. The PRT is hosted on <a href="https://github.com/newfolder/PRT">GitHub</a> so feel free to fork or clone the repository or just download the latest <a href="https://github.com/newfolder/PRT/zipball/master">zip</a>.</p>
 
+<p>Check out the <a href="/prtdoc/prtDocInstallation.html">installation instructions</a> to get you up and running. Once installed, open up MATLAB&reg;, and follow through with our <a href="/prtdoc/prtDocGettingStarted.html">Getting Started</a> guide, which will walk you through some examples of using the PRT in practice and show you what the PRT can do.</p>
 
-<h2>Contents</h2>
+<p>Even though there are a lot of M-files in the PRT, we’ve built the PRT to be easy to use and to make it easy to find what you need from within MATLAB.  For example, to find a list of all classifiers in the PRT, simply type “prtClass” and then <tab> at the MATLAB command prompt.  Other object types behave the same way, e.g., prtPreProc <tab>. If you have any feed back or questions don&rsquo;t hesitate to ask on on <a href="https://github.com/newfolder/PRT">GitHub</a> or through email at <a href="mailto:prt@newfolderconsulting.com"><a href="&#x6d;&#97;&#x69;&#108;&#x74;&#x6f;&#x3a;&#x70;&#x72;&#116;&#x40;&#110;&#x65;&#119;&#102;&#x6f;&#108;&#x64;&#101;&#x72;&#x63;&#x6f;&#x6e;&#115;&#117;&#108;&#x74;&#x69;&#x6e;&#x67;&#x2e;&#99;&#x6f;&#x6d;">&#112;&#x72;&#116;&#64;&#110;&#x65;&#119;&#x66;&#x6f;&#108;&#x64;&#x65;&#x72;&#99;&#111;&#x6e;&#x73;&#x75;&#108;&#116;&#105;&#110;&#x67;&#x2e;&#x63;&#111;&#109;</a></a>.</p>
 
+<p>We are going to start blogging every once in a while about the PRT and things it can do. We hope that it starts a conversation about the types of things people are doing with the PRT and what things people might want the PRT to do in the future.</p>
 
-<div><ul><li><a href="#1">What is observationInfo?</a></li><li><a href="#4">Retain Observations</a></li><li><a href="#5">Select</a></li><li><a href="#6">Graphically</a></li><li><a href="#8">Conclusions</a></li></ul></div>
+<p>Talk to you soon.  Happy coding!</p>
 
-
-<h2>What is observationInfo?<a name="1"></a></h2>
-
-
-<p>Simply put, observationInfo is a structure array stored in a prtDataSetStandard that has a number of entries equal to the number of observations in the dataSet. This structure array has user defined fields that store side information. When observations are removed from a dataset the observationInfo structure is also properly indexed. Here is a quick example.</p>
-
-
-<p>First let&#8217;s make a simple dataset with only 4 observations</p>
-
-
-<pre class="codeinput">X = cat(1,prtRvUtilMvnDraw([0 0],eye(2),2),prtRvUtilMvnDraw([2 2],eye(2),2));
-Y = [0; 0; 1; 1;];
-
-ds = prtDataSetClass(X,Y);
-
-plot(ds);
-</pre>
-
-
-<p><img vspace="5" hspace="5" src="/images/morton_blog_20130708_observationInfo_01.png" alt=""> <p>Now let&rsquo;s create a structure of observationInfo and set it.</p><pre class="codeinput">obsInfo = struct(<span class="string">&lsquo;fileIndex&rsquo;</span>,{1,2,3,4}&lsquo;,<span class="string">'timeOfDay&rsquo;</span>,{<span class="string">&lsquo;day&rsquo;</span>,<span class="string">&lsquo;night&rsquo;</span>,<span class="string">&lsquo;day&rsquo;</span>,<span class="string">&lsquo;night&rsquo;</span>}&lsquo;);</p>
-
-<p>ds.observationInfo = obsInfo;
-</pre></p>
-
-<h2>Retain Observations<a name="4"></a></h2>
-
-
-<p>If we retain (or remove) observations from this dataSet, the observation info is properly indexed.</p>
-
-
-<pre class="codeinput">dsSub = ds.retainObservations([1; 4]);
-dsSub.observationInfo.fileIndex
-</pre>
-
-
-<pre class="codeoutput">ans =
-  1
-ans =
-  4
-</pre>
-
-
-<h2>Select<a name="5"></a></h2>
-
-
-<p>A hidden method of prtDataSetClass allows us to &#8220;select&#8221; observations from a dataSet by evaluating a function on the observationInfo. select() takes a function handle that is evaluated for each entry in the dataSet and returns a logical index. A dataSet containing only the observations for which the function was true is returned.</p>
-
-
-<pre class="codeinput">dsDayOnly = ds.select(@(s)strcmpi(s.timeOfDay,<span class="string">'day'</span>));
-{dsDayOnly.observationInfo.timeOfDay}
-</pre>
-
-
-<pre class="codeoutput">ans = 
-  'day'    'day'
-</pre>
-
-
-<h2>Graphically<a name="6"></a></h2>
-
-
-<p>Sometimes with complex dataSets with lots of observationInfo sorting through the data can be difficult. A graphical way to view observationInfo and create a function handle for select. This functionality is currently in Beta so make sure you <a href="/blog/2013/03/06/using-prtpath/">include those directories in your path.</a></p>
-
-
-<pre class="codeinput">prtUiDataSetStandardObservationInfoSelect(ds);
-</pre>
-
-
-<p><img vspace="5" hspace="5" src="/images/morton_blog_20130708_observationInfo_02.png" alt=""></p>
-
-<p>Right clicking (ctrl+click in OSX) in the table allows you to graphically select observations that will be returned by select.</p>
-
-
-<p><img vspace="5" hspace="5" src="/images/morton_blog_20130708_observationInfo_03.png" alt="">
-<img vspace="5" hspace="5" src="/images/morton_blog_20130708_observationInfo_04.png" alt=""></p>
-
-<h2>Conclusions<a name="8"></a></h2>
-
-
-<p>This is a simple example of what observation info is and how it can be used. We use it all of the time to manage all of our side information. Because all calls to retainObservation correctly index the observationInfo the side information is available within actions even during cross-validation. Making use of observation info is a quick way to fake a custom type of dataSet that contains other side information. Let us know how you use observationInfo and if you have any ideas to improve it.</p>
-
+<p>-Kenny and Pete</p>
 </div>
   
   
@@ -302,11 +225,9 @@ ans =
   
   <div class="pagination">
     
-      <a class="prev" href="/blog/page/5/">&larr; Older</a>
-    
     <a href="/blog/archives">Blog Archives</a>
     
-    <a class="next" href="/blog/page/3/">Newer &rarr;</a>
+    <a class="next" href="/blog/page/24/">Newer &rarr;</a>
     
   </div>
 </div>

@@ -129,6 +129,10 @@ span.syscmd { color:#B28C00 }
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2013/08/20/introducing-prtclassnnet/">Introducing prtClassNNET</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2013/07/29/supervised-learning/">Supervised Learning: An Introduction for Scientists and Engineers</a>
       </li>
     
@@ -142,10 +146,6 @@ span.syscmd { color:#B28C00 }
     
       <li class="post">
         <a href="/blog/2013/07/08/twoclassparadigm/">twoClassParadigm</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/06/24/spectral-clustering/">Spectral Clustering</a>
       </li>
     
   </ul>
@@ -175,7 +175,7 @@ span.syscmd { color:#B28C00 }
 
   <header>
     
-      <h1 class="entry-title"><a href="/blog/2013/04/16/principal-component-analysis/">Principal Component Analysis - prtPreProcPca</a></h1>
+      <h1 class="entry-title"><a href="/blog/2013/04/22/prtkernel/">prtKernel</a></h1>
     
     
       <p class="meta">
@@ -191,118 +191,115 @@ span.syscmd { color:#B28C00 }
   
 
 
-<time datetime="2013-04-16T19:56:00-04:00" pubdate data-updated="true">Apr 16<span>th</span>, 2013</time>
+<time datetime="2013-04-22T15:37:00-04:00" pubdate data-updated="true">Apr 22<span>nd</span>, 2013</time>
         
       </p>
     
   </header>
 
 
-  <div class="entry-content"><p>Today I&#8217;d like to give a quick tour of how to use PCA in the PRT to easily reduce the dimensionality of your data set in a meaningful, principled way.
-
-</p>
+  <div class="entry-content"><p>One of the commonly overlooked &#8220;actions&#8221; in the PRT is prtKernel. They are used internally in several places (RVM, SVM) but they can also be used by themselves. Let&#8217;s talk about em.</p>
 
 
-<!--/introduction-->
 
 
 <h2>Contents</h2>
 
 
-<div><ul><li><a href="#1">Introduction &amp; Theory</a></li><li><a href="#2">In the PRT</a></li><li><a href="#7">How Many Components?</a></li><li><a href="#8">Normalization</a></li><li><a href="#10">Conclusion</a></li></ul></div>
+<div><ul><li><a href="#1">Just Another Action</a></li><li><a href="#3">Let&#8217;s see what some other kernel transformations look like.</a></li><li><a href="#5">Kernel Sets</a></li><li><a href="#7">Inside the RVM</a></li><li><a href="#9">Outside of the RVM</a></li><li><a href="#10">Conclusions</a></li></ul></div>
 
 
-<h2>Introduction &amp; Theory<a name="1"></a></h2>
+<h2>Just Another Action<a name="1"></a></h2>
 
 
-<p>Principal component analysis (PCA) is a widely used technique in the statistics and signal processing literature.  Even if you haven&#8217;t heard of PCA, if you know some linear algebra, you may have heard of the singular value decomposition (SVD), or, if you come from the signal processing literature, you&#8217;ve probably heard of the  Karhunen&#8211;Loeve transformation (KLT).  Both of these are identical in form to PCA.  Turns out a lot of different groups have re-created the same algorithm in a lot of different fields!</p>
+<p>Kernels have very precise meanings in certain contexts (Mercer kernels for example) so it is important that we really define what we mean by prtKernel. A prtKernel is a standard prtAction. That means that it supports the train operation, that takes a dataset and outputs a prtKernel with modified parameters, and the run operation, that takes a dataset and outputs modified dataset. What makes prtKernel different than other prtActions is that they typically transform a dataset into a different dimensionality. The new features are usually the distance to a collection of training examples and most kernels differ in their selection of the distance function. The most widely used kernel is the <a href="http://en.wikipedia.org/wiki/Radial_basis_function">radial basis function</a>.</p>
 
 
+<p>Let&#8217;s look at using prtKernelRbf.</p>
 
 
-<p>We won&#8217;t have time to delve into the nitty gritty about PCA here.  For our purposes it&#8217;s enough to say that given a (zero-mean) data set X of nObservations x nFeatures, we often want to find a linear transformation of X, S = X*Z, for a matrix Z of size nPca x nFeatures where:</p>
+<pre class="codeinput">ds = prtDataGenBimodal;
+kernel = prtKernelRbf(<span class="string">'sigma'</span>,2); <span class="comment">% Set the kernel Parameter</span>
+trainedKernel = kernel.train(ds); <span class="comment">% Train the kernel using the input data</span>
+kernelTransformedData = trainedKernel.run(ds);
 
-
-<pre>1) nPca &lt; nFeatures
-2) The resulting data, S, contains "most of the information from" X.</pre>
-
-
-<p>As you can imagine, the phrase &#8220;most of the information&#8221; is vague, and subject to interpretation&#8230; Mathematically, PCA considers &#8220;most of the information in X&#8221; to be equivalent to &#8220;explains most of the variance in X.  It turns out that this statement of the problem has some very nice mathematical solutions - e.g., the columns of S can be viewed as the dominant eigenvectors in the covariance of X!</p>
-
-
-<p>You can find our more about PCA on the fabulous wikipedia article: https://en.wikipedia.org/wiki/Principal_component_analysis.</p>
-
-
-<h2>In the PRT<a name="2"></a></h2>
-
-
-<p>PCA is implemented in the PRT using prtPreProcPca.  Older versions of prtPreProcPca used to make use of different algorithms for different sized data sets (there are a lot of ways to do PCA quickly depending on matrix dimensions).  Since 2012, we found that the MATLAB function SVDS was beating all of our approaches in terms of speed and accuracy, so have switched over to using SVDS to solve for the principal component vectors.</p>
-
-
-<p>Let&#8217;s take a quick look at some PCA projections.  First, we&#8217;ll need some data:</p>
-
-
-<pre class="codeinput">ds = prtDataGenUnimodal;
+subplot(2,1,1)
+plot(ds);
+subplot(2,1,2)
+imagesc(kernelTransformedData.X);
+colormap(hot)
+title(<span class="string">'Kernel Transformation'</span>);
+ylabel(<span class="string">'observation'</span>);
+xlabel(<span class="string">'feature'</span>)
 </pre>
 
 
-<p>We also need to make a prtPreProcPca object, and we&#8217;ll use 2 components in the PCA projection:</p>
+<p><img vspace="5" hspace="5" src="/images/morton_blog_20130421_01.png" alt=""> <p>You can see in the image space that there is a checkerboard pattern highlighting the multi-modal nature of the data.</p><h2>Let&rsquo;s see what some other kernel transformations look like.<a name="3"></a></h2><pre class="codeinput">kernelRbf = prtKernelRbf(<span class="string">&lsquo;sigma&rsquo;</span>,2);
+trainedKernelRbf = kernelRbf.train(ds);
+kernelTransformedDataRbf = trainedKernelRbf.run(ds);</p>
 
+<p>subplot(2,2,1)
+imagesc(kernelTransformedDataRbf.X);
+title(<span class="string">&lsquo;RBF Kernel Transformation&rsquo;</span>);
+ylabel(<span class="string">&lsquo;observation&rsquo;</span>);
+xlabel(<span class="string">&lsquo;feature&rsquo;</span>)</p>
 
-<pre class="codeinput">pca = prtPreProcPca(<span class="string">'nComponents'</span>,2);
-</pre>
+<p>kernelHyp = prtKernelHyperbolicTangent;
+trainedKernelHyp = kernelHyp.train(ds);
+kernelTransformedDataHyp = trainedKernelHyp.run(ds);</p>
 
+<p>subplot(2,2,2)
+imagesc(kernelTransformedDataHyp.X);
+title(<span class="string">&lsquo;Hyperbolic Tangent Kernel Transformation&rsquo;</span>);
+ylabel(<span class="string">&lsquo;observation&rsquo;</span>);
+xlabel(<span class="string">&lsquo;feature&rsquo;</span>)</p>
 
-<p>prtPreProc* objects can be trained and run just like any other objects:</p>
+<p>kernelPoly = prtKernelPolynomial;
+trainedKernelPoly = kernelPoly.train(ds);
+kernelTransformedDataPoly = trainedKernelPoly.run(ds);</p>
 
+<p>subplot(2,2,3)
+imagesc(kernelTransformedDataPoly.X);
+title(<span class="string">&lsquo;Polynomial Kernel Transformation&rsquo;</span>);
+ylabel(<span class="string">&lsquo;observation&rsquo;</span>);
+xlabel(<span class="string">&lsquo;feature&rsquo;</span>)</p>
 
-<pre class="codeinput">pca = pca.train(ds);
-</pre>
+<p>kernelDirect  = prtKernelDirect;
+trainedKernelDirect = kernelDirect.train(ds);
+kernelTransformedDataDirect = trainedKernelDirect.run(ds);</p>
 
+<p>subplot(2,2,4)
+imagesc(kernelTransformedDataDirect.X);
+title(<span class="string">&lsquo;Direct Kernel Transformation&rsquo;</span>);
+ylabel(<span class="string">&lsquo;observation&rsquo;</span>);
+xlabel(<span class="string">&lsquo;feature&rsquo;</span>)
+</pre><img vspace="5" hspace="5" src="/images/morton_blog_20130421_02.png" alt=""> <p>You can see how the choice of the kernel (and kernel parameters) can really effect the outcoming feature space. It is also interesting to notice that the direct kernel is not actually a kernel at all. It just uses the data as the output featurespace (essentially doing nothing). This is useful for combining the original feature space with kernel transformed data using kernel sets.</p><h2>Kernel Sets<a name="5"></a></h2><p>Kernels can be combined using the &amp; operator to great prtKernelSets. These perform collumn wise concatonation of several kernels. This allows one to create a single kernel transformation out of several prtKernels. In theory one could use / to make a parallel prtAlgorithm to accomplish the same task but there are several reasons to use &amp; that allow them to work within the prtClassRvm and prtClassSvm to remain efficient at run-time.</p><pre class="codeinput">clf; <span class="comment">% Clear those subplots from earlier</span>
+kernel = prtKernelDc &amp; prtKernelRbf(<span class="string">&lsquo;sigma&rsquo;</span>,1) &amp; prtKernelHyperbolicTangent;
+trainedKernel = kernel.train(ds); <span class="comment">% Train the kernel using the input data</span>
+kernelTransformedData = trainedKernel.run(ds);
+imagesc(kernelTransformedData.X);
+title(<span class="string">&lsquo;A Kernel Set Transformation&rsquo;</span>);
+ylabel(<span class="string">&lsquo;observation&rsquo;</span>);
+xlabel(<span class="string">&lsquo;feature&rsquo;</span>)
+</pre><img vspace="5" hspace="5" src="/images/morton_blog_20130421_03.png" alt=""> <p>You can see that the different transformed feature spaces are concatenated together.</p><h2>Inside the RVM<a name="7"></a></h2><p>In prtClassRvm the &ldquo;kernels&rdquo; property can be set to the prtKernel of our choosing. The RVM is essentially a sparse (it tries to have most coefficients be zero) linear classifier that opperates on kernel transformed data. Let&rsquo;s look at some classification results of prtDataGenBimodal using several different choices for the kernel.</p><pre class="codeinput">subplot(2,2,1)
+plot(train(prtClassRvm(<span class="string">&lsquo;kernels&rsquo;</span>,prtKernelRbf(<span class="string">&lsquo;sigma&rsquo;</span>,2)),ds))
+title(<span class="string">&lsquo;RBF Kernel RVM&rsquo;</span>);</p>
 
-<p>Let&#8217;s visualize the results, first we&#8217;ll look at the original data, and the vectors from the PCA analysis:</p>
+<p>subplot(2,2,2)
+plot(train(prtClassRvm(<span class="string">&lsquo;kernels&rsquo;</span>,prtKernelHyperbolicTangent),ds))
+title(<span class="string">&lsquo;Hyperbolic Tangent Kernel RVM&rsquo;</span>);</p>
 
+<p>subplot(2,2,3)
+plot(train(prtClassRvm(<span class="string">&lsquo;kernels&rsquo;</span>,prtKernelPolynomial),ds))
+title(<span class="string">&lsquo;Polynomial Kernel RVM&rsquo;</span>);</p>
 
-<pre class="codeinput">plot(ds);
-hold <span class="string">on</span>;
-h1 = plot([0 pca.pcaVectors(1,1)],[0,pca.pcaVectors(2,1)],<span class="string">'k'</span>);
-h2 = plot([0 pca.pcaVectors(1,2)],[0,pca.pcaVectors(2,2)],<span class="string">'k--'</span>);
-set([h1,h2],<span class="string">'linewidth'</span>,3);
-hold <span class="string">off</span>;
-axis <span class="string">equal</span>;
-title(<span class="string">'Original Data &amp; Two PCA Vectors'</span>);
-</pre>
-
-
-<p><img vspace="5" hspace="5" src="/images/torrione_blog_2013_04_16_01.png" alt=""> <p>From this plot, we can see that the PCA vectors are oriented first along the dimension of largest variance in the data (diagonal wiht a positive slope), and the second PCA is oriented orthogonal to the first PCA.</p><p>We can project our data onto this space using the RUN method:</p><pre class="codeinput">dsPca = pca.run(ds);
-plot(dsPca);
-title(<span class="string">&lsquo;PCA-Projected Data&rsquo;</span>);
-</pre><img vspace="5" hspace="5" src="/images/torrione_blog_2013_04_16_02.png" alt=""> <h2>How Many Components?<a name="7"></a></h2><p>In general, it might be somewhat complicated to determine how many PCA components are necessary to explain most of the variance in a particular data set.  Above we used 2, but for higher dimensional data sets, how many should we use in general?</p><p>We can measure how much variance each PC explains during training by exploring the vector pca.totalPercentVarianceCumulative which is set during training.  This vector contains the percent of the total variance of the data set explained by 1:N PCA components.  For example, totalPercentVarianceCumulative(3) contains the percent variance explained by components 1 through 3.  When this metric plateaus, that&rsquo;s a pretty good sign that we have enough components.</p><p>For example:</p><pre class="codeinput">ds = prtDataGenProstate;
-pca = prtPreProcPca(<span class="string">&lsquo;nComponents&rsquo;</span>,ds.nFeatures);
-pca = pca.train(ds);</p>
-
-<p>stem(pca.totalPercentVarianceCumulative,<span class="string">&lsquo;linewidth&rsquo;</span>,3);
-xlabel(<span class="string">&lsquo;#Components&rsquo;</span>);
-ylabel(<span class="string">&lsquo;Percent Variance Explained&rsquo;</span>);
-title(<span class="string">&lsquo;Prostate Data &ndash; PCA Percent Variance Explained&rsquo;</span>);
-</pre><img vspace="5" hspace="5" src="/images/torrione_blog_2013_04_16_03.png" alt=""> <h2>Normalization<a name="8"></a></h2><p>For PCA to be meaningful, the data used has to have zero-mean columns, and prtPreProcPca takes care of that for you (so you don&rsquo;t have to zero mean the columns yourself).  However, different authors disagree about whether or not the columns provided to PCA should all have the same variance before PCA analysis.  Depending on normalization, you can get very different PCA projections.  To leave the option open, the PRT does <b>not</b> automatically normalize the columns of the input data to have uniform variance.  You can manually enforce this before your PCA processing with prtPreProcZmuv.</p><p>Here&rsquo;s a simplified example, where we do the two processes separately to show the differences.</p><pre class="codeinput">ds = prtDataGenProstate;
-dsNorm = rt(prtPreProcZmuv,ds);
-pca = prtPreProcPca(<span class="string">&lsquo;nComponents&rsquo;</span>,ds.nFeatures);
-pca = pca.train(ds);
-pcaNorm = pca.train(dsNorm);</p>
-
-<p>subplot(2,1,1);
-stem(pca.totalPercentVarianceCumulative,<span class="string">&lsquo;linewidth&rsquo;</span>,3);
-xlabel(<span class="string">&lsquo;#Components&rsquo;</span>);
-ylabel(<span class="string">&lsquo;Percent Variance Explained&rsquo;</span>);
-title(<span class="string">&lsquo;Prostate Data &ndash; PCA Percent Variance Explained&rsquo;</span>);</p>
-
-<p>subplot(2,1,2);
-stem(pcaNorm.totalPercentVarianceCumulative,<span class="string">&lsquo;linewidth&rsquo;</span>,3);
-xlabel(<span class="string">&lsquo;#Components&rsquo;</span>);
-ylabel(<span class="string">&lsquo;Percent Variance Explained&rsquo;</span>);
-title(<span class="string">&lsquo;Prostate Data &ndash; PCA Percent Variance Explained (Normalized Data)&rsquo;</span>);
-</pre><img vspace="5" hspace="5" src="/images/torrione_blog_2013_04_16_04.png" alt=""> <p>As you can see, processing normalized and un-normalized data results in quite different assessments of how many PCA components are required to summarize the data.</p><p>Our recommendation is that if your data comes from different sources, with different sensor ranges or variances (as in the prostate data), it&rsquo;s imperative that you perform standard-deviation normalization prior to PCA processing.</p><p>Otherwise, it&rsquo;s worthwhile to try both with and without ZMUV pre-processing and see what gives better performance.</p><h2>Conclusion<a name="10"></a></h2><p>That&rsquo;s about it for PCA processing.  Of course, you can use PCA as a pre-processor for any algorithm you&rsquo;re developing, to reduce the dimensionality of your data, for example:</p><pre>algo = prtPreProcPca + prtClassLibSvm;</pre><p>Let us know if you have questions or comments about using prtPreProcPca.</p></p>
+<p>subplot(2,2,4)
+plot(train(prtClassRvm(<span class="string">&lsquo;kernels&rsquo;</span>,prtKernelDirect),ds))
+title(<span class="string">&lsquo;Direct Kernel RVM&rsquo;</span>);
+</pre><img vspace="5" hspace="5" src="/images/morton_blog_20130421_04.png" alt=""> <p>As you can see the correct choice for the kernel is very important for robust classifcation. The RBF kenerl is a common choice but even it has the sigma parameter which can grealy impact performance. One interesting variant of the RBF kernel is call prtKernelRbfNeighborhoodScaled. This kernel sets the sigma parameter differently for each data point depending on the local neighborhood of the training point.</p><pre class="codeinput">clf; <span class="comment">% Clear those subplots from earlier</span>
+plot(train(prtClassRvm(<span class="string">&lsquo;kernels&rsquo;</span>,prtKernelRbfNeighborhoodScaled),ds))
+title(<span class="string">&lsquo;Locally Scaled RBF Kernel RVM&rsquo;</span>);
+</pre><img vspace="5" hspace="5" src="/images/morton_blog_20130421_05.png" alt=""> <h2>Outside of the RVM<a name="9"></a></h2><p>In the forum the other day someone asked if we could do non-linear regression with multi-dimensional output. Sadly, the answer is &ldquo;not directly&rdquo; but using kernels you can. By transforming the data to kernel space and then using a linear regression technique you can perform non-linear regression. I wont copy the content over here but check out the answer from the forum. <a href="http://www.newfolderconsulting.com/node/412"><a href="http://www.newfolderconsulting.com/node/412">http://www.newfolderconsulting.com/node/412</a></a></p><h2>Conclusions<a name="10"></a></h2><p>This was a pretty quick overview of things you can do with kernels in the PRT. We don&rsquo;t have every kernel but we have quite a few. If there is something you think we should add let us know.</p></p>
 </div>
   
   

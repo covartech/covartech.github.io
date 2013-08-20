@@ -4,7 +4,7 @@
   <title><![CDATA[PRT Blog]]></title>
   <link href="http://newfolder.github.io/atom.xml" rel="self"/>
   <link href="http://newfolder.github.io/"/>
-  <updated>2013-07-29T09:54:51-04:00</updated>
+  <updated>2013-08-20T13:11:31-04:00</updated>
   <id>http://newfolder.github.io/</id>
   <author>
     <name><![CDATA[Kenneth Morton and Peter Torrione]]></name>
@@ -12,6 +12,93 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Introducing prtClassNNET]]></title>
+    <link href="http://newfolder.github.io/blog/2013/08/20/introducing-prtclassnnet/"/>
+    <updated>2013-08-20T12:18:00-04:00</updated>
+    <id>http://newfolder.github.io/blog/2013/08/20/introducing-prtclassnnet</id>
+    <content type="html"><![CDATA[<p>People are often asking us why we don&#8217;t have a neural-network (NNET) implemented in the PRT.  Formerly, we never focused on making a home-grown NNET object, since the MathWorks already has a (<a href="http://www.mathworks.com/help/nnet/">neural network toolbox</a>), and often we&#8217;ve found that NNET results aren&#8217;t significantly better than other classifiers, and they can be difficult to train. That said, neural network classifiers can provide good results, some recent advances in deep-learning have brought NNET classifiers back into vogue, and they&#8217;re often fun to play with.  As a result, we&#8217;ve finally rolled our own NNET classifier in the PRT that doesn&#8217;t require any additional toolboxes. One thing to note: If you have the MATLAB NNET toolbox, you can incorporate it in the PRT using prtClassMatlabNnet.</p>
+
+
+
+
+<!--/introduction-->
+
+
+<h2>Contents</h2>
+
+
+<div><ul><li><a href="#1">Current Restrictions:</a></li><li><a href="#2">Using prtClassNnet - Basic parameters</a></li><li><a href="#3">Using prtClassNnet - Advanced Parameters</a></li><li><a href="#4">Visualizing</a></li><li><a href="#5">Example Processing</a></li><li><a href="#6">Concluding</a></li></ul></div>
+
+
+
+
+<h2>Current Restrictions:<a name="1"></a></h2>
+
+
+<p>Our classifier only currently allows standard batch-propagation learning. It should be relatively easy to include new training approaches, but we haven&#8217;t done so yet. The current prtClassNnet only allows for three-layer (one hidden-layer) networks.  Depending on who you ask, this is either very important, or not important at all. In either case, we hope to expand the capabilities here eventually. The current formulation only works for binary classification problems. Extensions to enable multi-class classification are also in progress.</p>
+
+
+
+
+<h2>Using prtClassNnet - Basic parameters<a name="2"></a></h2>
+
+
+<p>prtClassNnet acts pretty much the same as any other classifier.  As you might expect, we can set the number of neurons in the hidden layer, and set the min ans max number of training epochs, and the tolerance to check for convergence:</p>
+
+
+
+
+<pre class="codeinput">nnet = prtClassNnet;
+nnet.nHiddenUnits = 10;
+nnet.minIters = 10000;
+nnet.relativeErrorChangeThreshold = 1.0000e-04; <span class="comment">% check for convergence if nIters &gt; minIters</span>
+nnet.maxIters = 100000;                         <span class="comment">% kick out after this many, no matter what</span>
+</pre>
+
+
+
+
+<h2>Using prtClassNnet - Advanced Parameters<a name="3"></a></h2>
+
+
+<p>The activation functions are an important part of neural network design. The prtClassNnet object allows you to manually specify the activation function, but you need to set both the &#8220;forward function&#8221; and the first derivative of the forward function.  These can be specified using function handles in the fields fwdFn and fwdFnDeriv. The &#8220;classic&#8221; formulation of a neural network uses a sigmoid activation function, so the parameters can be set like so:</p>
+
+
+
+
+<pre class="codeinput">sigmoidFn = @(x) 1./(1 + exp(-x));
+nnet.fwdFn = sigmoidFn;
+nnet.fwdFnDeriv = @(x) sigmoidFn(x).*(1-sigmoidFn(x));
+</pre>
+
+
+
+
+<h2>Visualizing<a name="4"></a></h2>
+
+
+<p>prtClassNnet enables automatic visualization of the algorithm progress as learning proceeds.  You can set how often (or whether) this visualization occurs by setting nnet.plotOnIter to a scalar; the scalar represents how often to update the plots.  Use 0 to use no visualization.</p>
+
+
+<h2>Example Processing<a name="5"></a></h2>
+
+
+<p>So, what does the resulting process look like?  Let&#8217;s give it a whirl with a stadnard X-OR data set:</p>
+
+
+<pre class="codeinput">dsTrain = prtDataGenXor;
+dsTest = prtDataGenXor;
+nnet = prtClassNnet(<span class="string">'nHiddenUnits'</span>,10,<span class="string">'plotOnIter'</span>,1000,<span class="string">'relativeErrorChangeThreshold'</span>,1e-4);
+nnet = nnet.train(dsTrain);
+yOut = nnet.run(dsTest);
+</pre>
+
+
+<p><img vspace="5" hspace="5" src="http://newfolder.github.io/images/torrione_blog_2013_08_20_01.png" alt=""> <h2>Concluding<a name="6"></a></h2><p>We hope that using prtClassNnet enables you to do some new, neat things. If you like it, please help us re-write the code to overcome our current restrictions!</p><p>Happy coding.</p></p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Supervised Learning: An Introduction for Scientists and Engineers]]></title>
@@ -2075,123 +2162,6 @@ title(<span class="string">&lsquo;Points Classified as Grass (Healthy, and Stres
 
 <p><p>
 You may also need rotateticklabel.m, which is available from <a href="http://www.mathworks.com/matlabcentral/fileexchange/8722-rotate-tick-label">MATLAB Central</a></p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Combining Actions]]></title>
-    <link href="http://newfolder.github.io/blog/2013/02/11/combining-actions/"/>
-    <updated>2013-02-11T13:46:00-05:00</updated>
-    <id>http://newfolder.github.io/blog/2013/02/11/combining-actions</id>
-    <content type="html"><![CDATA[<p>Hi!  Today I&#8217;d like to talk about how you can use the PRT to combine actions together to form algorithms.  This is an important and powerful tool in the PRT, and understanding it can solve a lot of headaches for you.</p>
-
-
-<!--/introduction-->
-
-
-<h2>Contents</h2>
-
-
-<div><ul><li><a href="#1">An Example</a></li><li><a href="#5">The Problem</a></li><li><a href="#9">Combining Actions into Algorithms</a></li><li><a href="#13">Using Algorithms</a></li></ul></div>
-
-
-<h2>An Example<a name="1"></a></h2>
-
-
-<p>Let&#8217;s start with a concrete example.  Say we want to classify some very high dimensional data.  We&#8217;ll start with the following:</p>
-
-
-<pre class="codeinput">nFeatures = 200;
-ds = prtDataGenUnimodal;
-xNoise = randn(ds.nObservations,nFeatures);
-ds.X = cat(2,ds.X,xNoise); <span class="comment">%add nFeatures meaningless features</span>
-</pre>
-
-
-<p>If we try and classify this with a GLRT, for example, we&#8217;re going to run into trouble, since there are more features than there are observations, so we can&#8217;t generate a full-rank covariance structure.  For example, using the prtAction prtClassGlrt, we might write this:</p>
-
-
-<pre class="codeinput">glrt = prtClassGlrt;
-glrt = glrt.train(ds);
-<span class="keyword">try</span>
-   yOut = glrt.run(ds);  <span class="comment">%This causes errors</span>
-<span class="keyword">catch</span> ME
-    disp(<span class="string">'Error encountered:'</span>)
-    disp(ME);
-<span class="keyword">end</span>
-</pre>
-
-
-<pre class="codeoutput">Warning: Covariance matrix is not positive definite. This may cause errors.
-Consider modifying "covarianceStructure". 
-Warning: Covariance matrix is not positive definite. This may cause errors.
-Consider modifying "covarianceStructure". 
-Error encountered:
-  MException
-  Properties:
-    identifier: 'prtRvUtilMvnLogPdf:BadCovariance'
-       message: 'SIGMA must be symmetric and positive definite.'
-         cause: {0x1 cell}
-         stack: [9x1 struct]
-
-</pre>
-
-
-<p>We can always use dimension-reduction techniques to reduce the number of features in our data set, and then evaluate performance.  For example:</p>
-
-
-<pre class="codeinput">pca = prtPreProcPca(<span class="string">'nComponents'</span>,2);
-pca = pca.train(ds);
-dsPca = pca.run(ds);
-plot(dsPca);
-</pre>
-
-
-<p><img vspace="5" hspace="5" src="http://newfolder.github.io/images/torrione_blog_combiningActions_01.png" alt=""> <p>Now we can evaluate our GLRT on the dsPca:</p><pre class="codeinput">glrt = prtClassGlrt;
-yOutKfolds = glrt.kfolds(dsPca,10);
-[pf,pd] = prtScoreRoc(yOutKfolds);
-h = plot(pf,pd);
-set(h,<span class="string">&lsquo;linewidth&rsquo;</span>,3);
-title(<span class="string">&lsquo;Example GLRT ROC Curve (Running on PCA Features)&rsquo;</span>);
-</pre><img vspace="5" hspace="5" src="http://newfolder.github.io/images/torrione_blog_combiningActions_02.png" alt=""> <h2>The Problem<a name="5"></a></h2><p>There&rsquo;s a problem in the above, though.  Even though we cross-validated the GLRT using 3 random folds, we didn&rsquo;t do the same thing with the PCA. This is technically not fair, since the PCA part of the algorithm was trained using all the data.</p><p>Maybe we can get around this like so:</p><pre class="codeinput">pca = prtPreProcPca(<span class="string">&lsquo;nComponents&rsquo;</span>,2);
-dsPca = pca.kfolds(ds,10);
-</pre><p>But now, when we do:</p><pre class="codeinput">glrt = prtClassGlrt;
-yOutKfolds = glrt.kfolds(dsPca,10);
-[pf,pd] = prtScoreRoc(yOutKfolds);
-h = plot(pf,pd);
-set(h,<span class="string">&lsquo;linewidth&rsquo;</span>,3);
-title(<span class="string">&lsquo;This is no good&hellip;&rsquo;</span>);
-</pre><img vspace="5" hspace="5" src="http://newfolder.github.io/images/torrione_blog_combiningActions_03.png" alt=""> <p>We have a problem!  At every fold, we learn a unique set of PCA loadings. Since PCA loadings have arbitrary sign (+/&ndash;), the outputs across all these folds will overlap!</p><pre class="codeinput">plot(dsPca)
-</pre><img vspace="5" hspace="5" src="http://newfolder.github.io/images/torrione_blog_combiningActions_04.png" alt=""> <p>The underlying problem is that there&rsquo;s no guarantee that the folds used for PCA and GLRT evaluation were the same.  We can get around <b>that</b> if we specified the folds, and wrote our own cross-validate specifically for this new process we&rsquo;ve made, but suddenly this is getting complicated.</p><p>And what if we had an even more complicated process, including other pre-processing streams, feature selection, classifiers and decision-makers?  Suddenly our code is going to be a mess!</p><h2>Combining Actions into Algorithms<a name="9"></a></h2><p>At the heart of the problem outlined above is that the PCA and GLRT parts of our process weren&rsquo;t considered as two parts of the same process &ndash; they were two separate variables, and the PRT and MATLAB didn&rsquo;t know that they should work together.</p><p>Since this problem is so common, the PRT provides an easy way to combine each individual part of a process (prtActions) into one big process (a prtAlgorithm).  This is easily done using the &ldquo;+&rdquo; operator:</p><pre class="codeinput">pcaGlrt = prtPreProcPca(<span class="string">&lsquo;nComponents&rsquo;</span>,2) + prtClassGlrt;
-</pre><p>If you&rsquo;re not used to object oriented programming, the above might look a little weird.  But it&rsquo;s straightforward &ndash; we&rsquo;ve defined &ldquo;plus&rdquo; (&ldquo;+&rdquo;) for prtActions (e.g., prtPreProcPca) to mean &ldquo;Combine these into one object, where that object will perform each action in sequence from left to right&rdquo;.  Technically this returns a special kind of prtAction, called a prtAlgorithm.  That&rsquo;s just the date type we use to store a bunch of actions.  You can see that here:</p><pre class="codeinput">disp(pcaGlrt)
-</pre><pre class="codeoutput">  prtAlgorithm</p>
-
-<p>  Properties:</p>
-
-<pre><code>                name: 'PRT Algorithm'
-    nameAbbreviation: 'ALGO'
-        isSupervised: 1
-isCrossValidateValid: 1
-          actionCell: {2x1 cell}
-  connectivityMatrix: [4x4 logical]
-      verboseStorage: 1
-     showProgressBar: 1
-           isTrained: 0
-      dataSetSummary: []
-             dataSet: []
-            userData: [1x1 struct]
-</code></pre>
-
-<p></pre><p>You can visualize the structure of the algorithm using PLOT:</p><pre class="codeinput">plot(pcaGlrt)
-</pre><img vspace="5" hspace="5" src="http://newfolder.github.io/images/torrione_blog_combiningActions_05.png" alt=""> <p>You can combine any number of prtActions into an algorithm like this, so, although its silly, this is technically a valid command:</p><pre class="codeinput">sillyAlgo = prtPreProcZmuv + prtPreProcHistEq + prtPreProcPca + prtClassGlrt;
-plot(sillyAlgo)
-</pre><img vspace="5" hspace="5" src="http://newfolder.github.io/images/torrione_blog_combiningActions_06.png" alt=""> <h2>Using Algorithms<a name="13"></a></h2><p>So we&rsquo;ve made a prtAlgorithm.  Now what?  Well, anything you can do to a prtAction, you can do with a prtAlgorithm.  What does that mean?  Methods like plot, kfolds, and crossValidate all work exactly the same as they do with regular prtActions.  And they make your life much simpler than what we had to do above:</p><pre class="codeinput">pcaGlrt = prtPreProcPca(<span class="string">&lsquo;nComponents&rsquo;</span>,2) + prtClassGlrt;
-yOutKfolds = pcaGlrt.kfolds(ds,10);
-[pf,pd] = prtScoreRoc(yOutKfolds);
-h = plot(pf,pd);
-set(h,<span class="string">&lsquo;linewidth&rsquo;</span>,3);
-title(<span class="string">&lsquo;ROC Curve for a prtAlgorithm (PCA + GLRT)&rsquo;</span>);
-</pre><img vspace="5" hspace="5" src="http://newfolder.github.io/images/torrione_blog_combiningActions_07.png" alt=""> <p>The results in the ROC curve above were generated using 10-folds cross-validation on the combination of PCA and GLRT.  At each fold, 9/10ths of the data were used to train the PCA and GLRT, and 1/10th was used for evaluation.</p><p>prtAlgorithms are a very powerful tool for pattern recognition, and we hope this blog post helps clear up how to make and use them!</p><p>Let us know if you have any questions or comments.</p></p>
 ]]></content>
   </entry>
   

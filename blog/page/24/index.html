@@ -129,6 +129,10 @@ span.syscmd { color:#B28C00 }
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2013/08/20/introducing-prtclassnnet/">Introducing prtClassNNET</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2013/07/29/supervised-learning/">Supervised Learning: An Introduction for Scientists and Engineers</a>
       </li>
     
@@ -142,10 +146,6 @@ span.syscmd { color:#B28C00 }
     
       <li class="post">
         <a href="/blog/2013/07/08/twoclassparadigm/">twoClassParadigm</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/06/24/spectral-clustering/">Spectral Clustering</a>
       </li>
     
   </ul>
@@ -175,7 +175,7 @@ span.syscmd { color:#B28C00 }
 
   <header>
     
-      <h1 class="entry-title"><a href="/blog/2013/01/21/hi/">Hi</a></h1>
+      <h1 class="entry-title"><a href="/blog/2013/01/21/introduction-to-the-prt/">An Introduction to the PRT With MNIST</a></h1>
     
     
       <p class="meta">
@@ -191,28 +191,151 @@ span.syscmd { color:#B28C00 }
   
 
 
-<time datetime="2013-01-21T16:02:00-05:00" pubdate data-updated="true">Jan 21<span>st</span>, 2013</time>
+<time datetime="2013-01-21T18:58:00-05:00" pubdate data-updated="true">Jan 21<span>st</span>, 2013</time>
         
       </p>
     
   </header>
 
 
-  <div class="entry-content"><p>Hi,</p>
+  <div class="entry-content"><p>The MNIST Database (<a href="http://yann.lecun.com/exdb/mnist/">http://yann.lecun.com/exdb/mnist/</a>) is a very well-known machine learning dataset consisting of a few thousand instances of handwritten digits from 0-9.  MNIST is actually a subset of a larger NIST database, but the authors (see the linked page above) were kind enough to do some basic pre-processing of MNIST for us.  MNIST was for a long time very widely used in the ML literature as an example of an easy to use real data set to evaluate new ideas.</p>
 
-<p>Thanks for checking out the PRT. The PRT is intended to help people who do machine learning handle the most common classification tasks within MATLAB.  This includes things like cross-validation, data visualization, classifier development and feature selection. The PRT includes object types for data set storage, pre-processing, classification, clustering, distance calculations, outlier removal, kernel learning, data generation, scoring and classifier evaluation, feature selection, random variable definitions, and visualization. We think it serves as a great platform for both machine learning research and applied algorithm development (that&rsquo;s why we built it!).</p>
 
-<p>The PRT is free and released under the MIT license which means that it is free for academic and commercial use. The PRT is hosted on <a href="https://github.com/newfolder/PRT">GitHub</a> so feel free to fork or clone the repository or just download the latest <a href="https://github.com/newfolder/PRT/zipball/master">zip</a>.</p>
 
-<p>Check out the <a href="/prtdoc/prtDocInstallation.html">installation instructions</a> to get you up and running. Once installed, open up MATLAB&reg;, and follow through with our <a href="/prtdoc/prtDocGettingStarted.html">Getting Started</a> guide, which will walk you through some examples of using the PRT in practice and show you what the PRT can do.</p>
 
-<p>Even though there are a lot of M-files in the PRT, we’ve built the PRT to be easy to use and to make it easy to find what you need from within MATLAB.  For example, to find a list of all classifiers in the PRT, simply type “prtClass” and then <tab> at the MATLAB command prompt.  Other object types behave the same way, e.g., prtPreProc <tab>. If you have any feed back or questions don&rsquo;t hesitate to ask on on <a href="https://github.com/newfolder/PRT">GitHub</a> or through email at <a href="mailto:prt@newfolderconsulting.com"><a href="&#109;&#97;&#105;&#x6c;&#116;&#x6f;&#58;&#x70;&#x72;&#116;&#64;&#110;&#101;&#119;&#102;&#x6f;&#x6c;&#x64;&#101;&#x72;&#99;&#111;&#110;&#x73;&#x75;&#x6c;&#x74;&#105;&#110;&#x67;&#46;&#x63;&#111;&#109;">&#112;&#114;&#x74;&#64;&#x6e;&#x65;&#119;&#102;&#x6f;&#108;&#100;&#x65;&#x72;&#99;&#111;&#110;&#x73;&#x75;&#108;&#116;&#105;&#x6e;&#x67;&#46;&#x63;&#x6f;&#x6d;</a></a>.</p>
+<!--/introduction-->
 
-<p>We are going to start blogging every once in a while about the PRT and things it can do. We hope that it starts a conversation about the types of things people are doing with the PRT and what things people might want the PRT to do in the future.</p>
 
-<p>Talk to you soon.  Happy coding!</p>
+<h2>Contents</h2>
 
-<p>-Kenny and Pete</p>
+
+<div><ul><li><a href="#1">Obtaining, Loading, and Visualizing MNIST Data</a></li><li><a href="#5">Classification: PLSDA</a></li><li><a href="#8">Classification: SVM</a></li><li><a href="#12">Exploring the Results</a></li></ul></div>
+
+
+<h2>Obtaining, Loading, and Visualizing MNIST Data<a name="1"></a></h2>
+
+
+<p>Tools to read in the MNIST database into the PRT are available in the newest PRT version.  To conserve bandwidth, the actual MNIST data isn&#8217;t included in the PRT (it would kill our subversion servers).  Instead you can download the MNIST database from the website linked above.  Once you&#8217;ve downloaded it, extract the data into:</p>
+
+
+<pre class="codeinput">fullfile(prtRoot,<span class="string">'dataGen'</span>,<span class="string">'dataStorage'</span>,<span class="string">'MNIST'</span>) <span class="comment">%MATLAB command will tell you the directory</span>
+</pre>
+
+
+<pre class="codeoutput">
+ans =
+
+C:\Users\Pete\Documents\MATLAB\toolboxes\nfPrt\dataGen\dataStorage\MNIST
+
+</pre>
+
+
+<p>For example, on my system:</p>
+
+
+<pre class="codeinput">ls(fullfile(prtRoot,<span class="string">'dataGen'</span>,<span class="string">'dataStorage'</span>,<span class="string">'MNIST'</span>))
+</pre>
+
+
+<pre class="codeoutput">
+.                        t10k-labels.idx1-ubyte   
+..                       train-images.idx3-ubyte  
+t10k-images.idx3-ubyte   train-labels.idx1-ubyte  
+
+</pre>
+
+
+<p>Once the MNIST files are in the right place, execute the PRT command:</p>
+
+
+<pre class="codeinput">dsTrain = prtDataGenMnist;
+</pre>
+
+
+<p>to extract the data.  ( Note, prtDataGenMnist makes use of a M-file function called readMNIST by Siddharth Hegde.  It&#8217;s available from: <a href="http://www.mathworks.com/matlabcentral/fileexchange/27675-read-digits-and-labels-from-mnist-database">http://www.mathworks.com/matlabcentral/fileexchange/27675-read-digits-and-labels-from-mnist-database</a> ).</p>
+
+
+<p>Once loaded, we can use a number of different tools to visualize the data.  First, let&#8217;s visualize the data as images.  We know that the images are size 28x28, but since the prtDataSetClass object expects each observation to correspond to a 1xN vector, we store all the 28x28 images as 1x784 vectors.</p>
+
+
+<pre class="codeinput">imageSize = [28 28];
+
+<span class="keyword">for</span> i = 1:9;
+    subplot(3,3,i);
+    x = dsTrain.getX(i); <span class="comment">%1x784</span>
+    y = dsTrain.getY(i);
+    imagesc(reshape(x,imageSize));
+    colormap <span class="string">gray</span>;
+    title(sprintf(<span class="string">'MNIST; Digit = %d'</span>,y));
+<span class="keyword">end</span>
+</pre>
+
+
+<p><img vspace="5" hspace="5" src="/images/testBlog_01.png" alt=""> <h2>Classification: PLSDA<a name="5"></a></h2><p>What kinds of classification approaches can we apply to this data set? We need to satisfy a few requirements: 1) M-Ary classification, 2) Relatively fast, 3) Relatively insensitive to a large number of dimensions (784 dimensional vectors). One particularly fast, linear approach to classification that&#8217;s relatively insensitive to the number of feature dimensions is partial-least squares discriminant analysis, implemented in the PRT as prtClassPLSDA.  With only a few lines of code we can implement and evaluate a PLSDA classifier on the MNIST data, for example:</p><pre class="codeinput">algo = prtClassPlsda(<span class="string">&lsquo;nComponents&rsquo;</span>,20) + prtDecisionMap; <span class="comment">%we include the Max-A-Posteriori classifier</span>
+yOut = algo.kfolds(dsTrain,3); <span class="comment">%3 folds x-val</span>
+pc = prtScorePercentCorrect(yOut);
+subplot(1,1,1);
+prtScoreConfusionMatrix(yOut);
+title(sprintf(<span class="string">&lsquo;3-Fold X-Val PLSDA on 10,000 MNIST Database Train Samples; %.0f%% Correct&rsquo;</span>,pc*100));
+</pre><img vspace="5" hspace="5" src="/images/testBlog_02.png" alt=""> <p>This basic example results in the above figure, where we see we&#8217;ve achieved about 84% correct classification, and we can analyze confusions between digits.  For example, the digits 4 and 9 are often confused, which seems intuitive since they look relatively similar.</p><p>We can also evaluate the PLSDA classifier trained on 10,000 training points and evaluated on the MNIST testing data.  To do so we first load the testing data, then train our classifier and evaluate it:</p></p>
+
+<pre class="codeinput">dsTest = prtDataGenMnistTest;
+algo = algo.train(dsTrain);
+yOut = algo.run(dsTest);
+pc = prtScorePercentCorrect(yOut);
+subplot(1,1,1);
+prtScoreConfusionMatrix(yOut);
+title(sprintf(<span class="string">'PLSDA on 10,000 MNIST Database Test Samples; %.0f%% Correct'</span>,pc*100));
+</pre>
+
+
+<p><img vspace="5" hspace="5" src="/images/testBlog_03.png" alt=""> <p>Performance on the test set is relatively similar to performance in cross-validation as can be seen above.</p><p>Overall, our performance is hovering around a 15% error rate.  That&#8217;s roughly comparable to the 12% error reported in LeCun et al., 1988, and here we&#8217;re not using a lot of the techniques in the Le Cun paper (and this is with barely 5 lines of code!).</p><h2>Classification: SVM<a name="8"></a></h2><p>As the results on <a href="http://yann.lecun.com/exdb/mnist/"><a href="http://yann.lecun.com/exdb/mnist/">http://yann.lecun.com/exdb/mnist/</a></a> illustrate, other approaches to digit classification have done much better than our simple PLSDA classifier.  We can use the PRT to apply more complicated classifiers to the same data also, and hopefully decrease our error rate.</p><p>For example, consider a simple application of an SVM classifier to the digit recognition problem.  Since the SVM is not an M-ary classification technique, we need to wrap our SVM in a One-Vs-All classifier to perform M-ary classification (Warning: the following code took about 30 minutes to run on my laptop):</p><pre class="codeinput">marySvm = prtPreProcZmuv + prtClassBinaryToMaryOneVsAll(<span class="string">&lsquo;baseClassifier&rsquo;</span>,prtClassLibSvm) + prtDecisionMap;
+yOut = marySvm.kfolds(dsTrain,3);
+pc = prtScorePercentCorrect(yOut);
+subplot(1,1,1);
+prtScoreConfusionMatrix(yOut);
+title(sprintf(<span class="string">&lsquo;3-Fold X-Val SVM on 10,000 MNIST Database Train Samples; %.0f%% Correct&rsquo;</span>,pc*100));
+</pre><pre class="codeoutput">Warning: Non-finite or zero standard deviation encountered.  Replacing invalid
+standard deviations with 1
+Warning: Non-finite or zero standard deviation encountered.  Replacing invalid
+standard deviations with 1
+Warning: Non-finite or zero standard deviation encountered.  Replacing invalid
+standard deviations with 1
+</pre><img vspace="5" hspace="5" src="/images/testBlog_04.png" alt=""> <p>As can be seen above, the SVM achieves an error rate of 5% on this data set!  That&#8217;s a significant improvement over the PLSDA classification we showed before.  Similarly to with PLSDA, we can also evaluate the algorithm on completely separate testing data:</p></p>
+
+<pre class="codeinput">marySvm = marySvm.train(dsTrain);
+yOut = marySvm.run(dsTest);
+pc = prtScorePercentCorrect(yOut);
+subplot(1,1,1);
+prtScoreConfusionMatrix(yOut);
+title(sprintf(<span class="string">'PLSDA on 10,000 MNIST Database Test Samples; %.0f%% Correct'</span>,pc*100));
+</pre>
+
+
+<pre class="codeoutput">Warning: Non-finite or zero standard deviation encountered.  Replacing invalid
+standard deviations with 1 
+</pre>
+
+
+<p><img vspace="5" hspace="5" src="/images/testBlog_05.png" alt=""> <p>And we see that performance is comparable to the cross-validated results. (Note that more advanced applications of SVM classifiers can do even better than the results reported here &#8211; Le Cun et al., 1998 reported 1.4% error rates with an SVM and some additional processing).</p><h2>Exploring the Results<a name="12"></a></h2><p>If we wanted to improve classification, we could optimize over the SVM parameters, kernel, pre-processing etc.  But before we did that, it might be instructive to investigate what digits the SVM classifier is mislabeling, and see if some of them seem like reasonable mistakes to make.  The following code will pick 9 instances where the SVM output label was different from the actual data label, and plot them in a subplot.</p></p>
+
+<pre class="codeinput">incorrect = find(yOut.getX ~= yOut.getY);
+yOutTestMisLabeled = yOut.retainObservations(incorrect);
+dsTestMisLabeled = dsTest.retainObservations(incorrect);
+<span class="keyword">for</span> i = 1:9; <span class="comment">%dsTestMisLabeled.nObservations;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;randWrong = ceil(rand*dsTestMisLabeled.nObservations); <span class="comment">%pick a random wrong element</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;subplot(3,3,i);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;x = dsTestMisLabeled.getX(randWrong);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;img = reshape(x,imageSize);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;imagesc(img);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;colormap <span class="string">gray</span>;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+title(sprintf(<span class="string">'Actual: %d; SVM Label: %d'</span>,yOutTestMisLabeled.getY(randWrong),yOutTestMisLabeled.getX(randWrong)));
+<span class="keyword">end</span>
+</pre>
+
+
+<p><img vspace="5" hspace="5" src="/images/testBlog_06.png" alt=""> <p>Visual inspection of these mistakes illustrate some of the causes of confusions in the SVM.  For example, highly slanted digits are often mis-labeled.  Mitigating some of these mistakes may require significantly more than simply optimizing SVM parameters!</p><p>Interested readers can refer to a large body of literature that has previously investigated this data set (<a href="http://yann.lecun.com/exdb/mnist/"><a href="http://yann.lecun.com/exdb/mnist/">http://yann.lecun.com/exdb/mnist/</a></a>) for tips, tricks, and ideas for further improving performance on this data set.  One particularly exciting recent advance is based on Hinton&#8217;s deep learning networks, which enables very efficient learning on the MNIST database <a href="www.cs.toronto.edu/~hinton/science.pdf">www.cs.toronto.edu/~hinton/science.pdf</a>).</p><p>We hope this example shows how quickly you can get from data to results with the PRT.  Please let us know if you have comments or questions!</p></p>
 </div>
   
   
@@ -224,6 +347,8 @@ span.syscmd { color:#B28C00 }
     </article>
   
   <div class="pagination">
+    
+      <a class="prev" href="/blog/page/25/">&larr; Older</a>
     
     <a href="/blog/archives">Blog Archives</a>
     
