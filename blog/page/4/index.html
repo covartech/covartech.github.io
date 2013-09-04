@@ -129,6 +129,10 @@ span.syscmd { color:#B28C00 }
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2013/09/04/verbosestorage-and-a-little-prtalgorithm-plotting/">verboseStorage and a little prtAlgorithm plotting</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2013/08/20/introducing-prtclassnnet/">Introducing prtClassNNET</a>
       </li>
     
@@ -142,10 +146,6 @@ span.syscmd { color:#B28C00 }
     
       <li class="post">
         <a href="/blog/2013/07/15/observation-info/">Observation Info</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/07/08/twoclassparadigm/">twoClassParadigm</a>
       </li>
     
   </ul>
@@ -175,7 +175,7 @@ span.syscmd { color:#B28C00 }
 
   <header>
     
-      <h1 class="entry-title"><a href="/blog/2013/07/15/observation-info/">Observation Info</a></h1>
+      <h1 class="entry-title"><a href="/blog/2013/07/24/using-svms/">Using SVMs for Scientists and Engineers</a></h1>
     
     
       <p class="meta">
@@ -191,105 +191,184 @@ span.syscmd { color:#B28C00 }
   
 
 
-<time datetime="2013-07-15T14:56:00-04:00" pubdate data-updated="true">Jul 15<span>th</span>, 2013</time>
+<time datetime="2013-07-24T13:40:00-04:00" pubdate data-updated="true">Jul 24<span>th</span>, 2013</time>
         
       </p>
     
   </header>
 
 
-  <div class="entry-content"><p>One of the hidden gems of the PRT is the observationInfo property. Let&#8217;s talk about a few ways you can use it to simplify your workflow.</p>
+  <div class="entry-content"><p>In the mid-90&#8217;s, support-vector machines became extremely popular machine learning algorithms due to a number of very nice properties, and because they can also acheive state-of-the-art performance on a number of data sets. Although the statistical underpinnings of why SVMs work rely on somewhat <a href="https://en.wikipedia.org/wiki/Vapnik%E2%80%93Chervonenkis_theory">abstract statistical theory</a>, modern statistical packages (like libSVM, and the PRT) make training and using SVM&#8217;s almost trivial for the average engineer That said, getting good performance out of an SVM is often not as easy as simply running pre-existing code on your data, and for some data-sets, SVM classification may not be appropriate.</p>
+
+
+
+
+<p>This blog entry will serve two purposes - 1) to provide an introduction to practical issues you (as an engineer or scientist) may encounter when using an SVM on your data, and 2) to be the first in a series of similar &#8220;for Engineers &amp; Scientists&#8221; posts dedicated to helping engineers understand the tradeoffs and assumptions, and practical details of using various machine learning approaches on their data.</p>
 
 
 <!--/introduction-->
 
 
+
+
 <h2>Contents</h2>
 
 
-<div><ul><li><a href="#1">What is observationInfo?</a></li><li><a href="#4">Retain Observations</a></li><li><a href="#5">Select</a></li><li><a href="#6">Graphically</a></li><li><a href="#8">Conclusions</a></li></ul></div>
+<div><ul><li><a href="#1">Quick Notes</a></li><li><a href="#2">SVM Formulation</a></li><li><a href="#3">Appropriate Data Sets</a></li><li><a href="#4">SVM Parameters &amp; Notes</a></li><li><a href="#5">Parameter: Cost (Scalar)</a></li><li><a href="#6">Parameter: Relative Class Error Weights</a></li><li><a href="#7">Parameter: Kernel Choice &amp; Associated Parameters</a></li><li><a href="#8">SVM Pre-Prccessing</a></li><li><a href="#10">Optimizing Parameters</a></li><li><a href="#11">Some Rules-Of-Thumb</a></li><li><a href="#12">Concluding</a></li></ul></div>
 
 
-<h2>What is observationInfo?<a name="1"></a></h2>
 
 
-<p>Simply put, observationInfo is a structure array stored in a prtDataSetStandard that has a number of entries equal to the number of observations in the dataSet. This structure array has user defined fields that store side information. When observations are removed from a dataset the observationInfo structure is also properly indexed. Here is a quick example.</p>
+<h2>Quick Notes<a name="1"></a></h2>
 
 
-<p>First let&#8217;s make a simple dataset with only 4 observations</p>
+<p>Thoughtout this post, we&#8217;ll be using prtClassLibSvm, which is built directly on top of the fantastic LibSVM library, available here:</p>
 
 
-<pre class="codeinput">X = cat(1,prtRvUtilMvnDraw([0 0],eye(2),2),prtRvUtilMvnDraw([2 2],eye(2),2));
-Y = [0; 0; 1; 1;];
+<p><a href="http://www.csie.ntu.edu.tw/~cjlin/libsvm/">http://www.csie.ntu.edu.tw/~cjlin/libsvm/</a></p>
 
-ds = prtDataSetClass(X,Y);
 
-plot(ds);
+<p>The parameter nomenclature we&#8217;re using matches theirs pretty closely, so feel free to leverage their documentation as well.</p>
+
+
+<h2>SVM Formulation<a name="2"></a></h2>
+
+
+<p>Typical SVM formulations assume that you have a set of n-dimensional real training vectors, {x_i} for i = 1&#8230;N, and corresponding labels {y_i}, y_i \in {-1,1}.  Let x_ik represent the k&#8217;th element of the vector x_i.</p>
+
+
+<p>Also assume that you have a relevant kernel function (https://en.wikipedia.org/wiki/Kernel_methods), P, which takes two input arguments, both n-dimensional real vectors, and outputs a scalar metric - P(x_i,x_j) = z_ij.  The most common choice of P is a radial basis function (<a href="http://en.wikipedia.org/wiki/Radial_basis_function">http://en.wikipedia.org/wiki/Radial_basis_function</a>):   P(x_i,x_j) = exp(- (\sum_{k} (x_ik-x_jk)^2 )/s^2 )</p>
+
+
+<p>SVMs perform prediction of new labels by calculating:</p>
+
+
+<pre>f(x) = \hat{y} = ( \sum_{i} (w_i*P(x_i,x) - b) ) &gt; 0</pre>
+
+
+<p>e.g., the SVM learns a representation for the labels (y) based on the data (x) with a linear combination (w) of a set of functions of the training data (x_i) and the test data (x).</p>
+
+
+<h2>Appropriate Data Sets<a name="3"></a></h2>
+
+
+<p>Binary/M-Ary: Typically, SVMs are appropriate for binary classification problems - multi-class problems require some extensions of SVMs, although in the PRT, SVMs can be used in prtClassBinaryToMaryOneVsAll to emulate multi-class classification.</p>
+
+
+<p>Data: SVM formulations often assume vector-valued training data, however as long as a suitable kernel-function can be constructed, SVMs can be used on arbitrary data (e.g., string-match distances can be usned as a kernel for calculating the distances between character strings).  Note, however, that SVMs do assume that the kernel used is a Mercer kernel, so some functions are not appropriate as SVM kernels - <a href="http://en.wikipedia.org/wiki/Mercer's_theorem">http://en.wikipedia.org/wiki/Mercer&#8217;s_theorem</a>.</p>
+
+
+<p>Computational Considerations: Depending on the kernel, and particular algorithm under consideration, training an SVM can be very time-consuming for very large data sets.  Proper selection of SVM parameters can significantly improve training time.  At run-time, SVMs are typically very fast, with computational complexity that grows approximately linearly with the size of the training data set.</p>
+
+
+<h2>SVM Parameters &amp; Notes<a name="4"></a></h2>
+
+
+<p>As you might imagine, several SVM parameters will have significant effect on overall classification performance.  Good performance requires careful selection of each of these; though some general rules-of-thumb can help provide reasonable performance with a minimum of headaches.</p>
+
+
+<h2>Parameter: Cost (Scalar)<a name="5"></a></h2>
+
+
+<p>Internally, the SVM is going to try and ignore a whole bunch of your training data, by setting their corresponding w_i to zero.  This might sound counter-intuitive, but it&#8217;s very important, because it makes for fast run-time, and also (it turns out) that setting a bunch of w&#8217;s to zero is fundamental to why the SVM performs so well in general (see any number of articles on V-C Theory for more information).</p>
+
+
+<p>Unfortunately, this presents a dillema - how much should the SVM try and make w&#8217;s zero vs. how mhuch should it try and classify your data absolutely perfectly?  More zero-w&#8217;s might improve performance on the training set, but reduce the performance of the SVM on an unseen testing set!</p>
+
+
+<p>The &#8220;Cost&#8221; parameter in the SVM enables you to control this trade off. Higher cost leads to more non-zero w&#8217; vectors, and more correctly classified training points, while lower costs tend to generate w vectors with lots of zeros, and slightly worse performance on training data (though performance on testing data may be better).</p>
+
+
+<p>We usually run a number of experiments for different cost values across a range of, say 0.01 to 100, though if performance is plateauing it might make sense to extend this range.  The following figures show how the SVM decision boundaries change with varying costs in the PRT.</p>
+
+
+<pre class="codeinput">close <span class="string">all</span>;
+ds = prtDataGenUnimodal;
+c = prtClassLibSvm;
+count = 1;
+<span class="keyword">for</span> w = logspace(-2,2,4);
+    c.cost = w;
+    c = c.train(ds);
+    subplot(2,2,count);
+    plot(c);
+    legend <span class="string">off</span>;
+    title(sprintf(<span class="string">'Cost: %.2f'</span>,c.cost));
+    count = count + 1;
+<span class="keyword">end</span>
 </pre>
 
 
-<p><img vspace="5" hspace="5" src="/images/morton_blog_20130708_observationInfo_01.png" alt=""> <p>Now let&rsquo;s create a structure of observationInfo and set it.</p><pre class="codeinput">obsInfo = struct(<span class="string">&lsquo;fileIndex&rsquo;</span>,{1,2,3,4}&lsquo;,<span class="string">'timeOfDay&rsquo;</span>,{<span class="string">&lsquo;day&rsquo;</span>,<span class="string">&lsquo;night&rsquo;</span>,<span class="string">&lsquo;day&rsquo;</span>,<span class="string">&lsquo;night&rsquo;</span>}&lsquo;);</p>
+<p><img vspace="5" hspace="5" src="/images/torrione_blog_2013_07_23_01.png" alt=""> <h2>Parameter: Relative Class Error Weights<a name="6"></a></h2><p>In typical discussions of &ldquo;cost&rdquo;, errors in both classes are treated equally &ndash; e.g., it&rsquo;s equally bad to call a &ldquo;-1&rdquo; a &ldquo;1&rdquo; and vice-versa.  In realistic operations, that may not be the case &ndash; for example, failing to detect a landmine, is significantly worse than calling a coke-can a landmine.</p><p>Luckily, SVMs enable us to specify class-specific error costs, so if class 1 has error cost of 1, and class -1 has an error cost of 100, it&rsquo;s 100x as bad to mistake a &ldquo;-1&rdquo; for a &ldquo;1&rdquo; as the opposite.</p><p>LibSVM implements these class-specific weights using parameters called &ldquo;w-1&rdquo;, &ldquo;w1&rdquo;, etc.  In the PRT, these are implemented as a vector, weights.  The following example shows how the effects of changing the error weight on class 1 affects the overall SVM contours.  Clearly, as the cost on class 1 increases, the SVM spends more effort to correctly classify red elements.</p><pre class="codeinput">close <span class="string">all</span>;
+c = prtClassLibSvm;
+count = 1;
+<span class="keyword">for</span> w = logspace(-1,1,4);
+  c.weight = [1 w];   <span class="comment">%Class0: 1, Class1: w</span>
+  c = c.train(ds);
+  subplot(2,2,count);
+  c.plot();
+  legend <span class="string">off</span>;
+  title(sprintf(<span class="string">&lsquo;Weight: [%.2f,%.2f]&rsquo;</span>,c.weight(1),c.weight(2)));
+  count = count + 1;
+<span class="keyword">end</span>
+</pre><img vspace="5" hspace="5" src="/images/torrione_blog_2013_07_23_02.png" alt=""> <h2>Parameter: Kernel Choice &amp; Associated Parameters<a name="7"></a></h2><p>The proper choice of kernel makes a huge difference in the resulting performance of your classifier.  We tend to stick with RBF and linear kernels (kernelType = 0 or 2 in prtClassLibSvm), but several other options (including hand-made kernels) are also possible.  The linear kernel doesn&rsquo;t have any parameters to set, but the RBF has a parameter that can significantly impact performance.  In most formulations, the parameter is referred to as sigma, but in LibSVM, the parameter is gamma, and it&rsquo;s equivalent to 1/sigma.  For the RBF, you can set it to any positive value.  You can also use the special character &lsquo;k&rsquo;, and specify a coefficient as a string.  &lsquo;k&rsquo; will evaluate to the number of features in the data set &ndash; e.g., &lsquo;5k&rsquo; evaluates to 10 for a 2-dimensional data set.</p><p>In general, we find that for normalized data (see below), the default gamma value of &lsquo;k&rsquo; (the number of dimensions) works well.</p><p>The following example code generates 4 example images for SVM decision boundaries for varying gamma parameters.</p><pre class="codeinput">close <span class="string">all</span>;
+c = prtClassLibSvm;
+count = 1;
+d = prtDataGenUnimodal;
+<span class="keyword">for</span> kk = logspace(-1,.5,4);
+  c.gamma = sprintf(<span class="string">&lsquo;%.2fk&rsquo;</span>,kk);
+  c = c.train(d);
+  subplot(2,2,count);
+  c.plot();
+  title(sprintf(<span class="string">&lsquo;\gamma = %s&rsquo;</span>,c.gamma));
+  legend <span class="string">off</span>;
+  count = count + 1;
+<span class="keyword">end</span>
+</pre><img vspace="5" hspace="5" src="/images/torrione_blog_2013_07_23_03.png" alt=""> <h2>SVM Pre-Prccessing<a name="8"></a></h2><p>Note that for many kernel choices (e.g., RBF, and many others, see <a href="http://en.wikipedia.org/wiki/Kernel_methods#Popular_kernels"><a href="http://en.wikipedia.org/wiki/Kernel_methods#Popular_kernels">http://en.wikipedia.org/wiki/Kernel_methods#Popular_kernels</a></a>), the kernel output (P(x_i,x_j) depends strongly and non-linearly on the magnitudes of the data vectors.  E.g., exp(-1000) is not equal to 1000*exp(-1).  In fact, if you refer to the RBF equation above, you&rsquo;ll notice that if two elements of your vector have a difference approaching 1000, P(x1,x2) will be dominated by a term like exp(-1000), which by any reasonable metric (and certainly in floating point precision) is exactly 0.  This is a bad thing &trade;.</p><p>In general, non-linear kernel functions should only be applied to data that is guaranteed to be in a reasonable range (e.g., -10 to 10), or data that has been pre-processed to remove outliers or control for data magnitude.  The PRT pamkes several such techniques available &ndash; compare and contrast the performance in the following example:</p></p>
 
-<p>ds.observationInfo = obsInfo;
-</pre></p>
+<pre class="codeinput">close <span class="string">all</span>;
+ds = prtDataGenBimodal;
+ds.X = 100*ds.X; <span class="comment">%scale the data</span>
 
-<h2>Retain Observations<a name="4"></a></h2>
+yOutNaive = kfolds(prtClassLibSvm,ds,3);
+yOutNorm = kfolds(prtPreProcZmuv + prtClassLibSvm,ds,3);
 
-
-<p>If we retain (or remove) observations from this dataSet, the observation info is properly indexed.</p>
-
-
-<pre class="codeinput">dsSub = ds.retainObservations([1; 4]);
-dsSub.observationInfo.fileIndex
+[pfNaive,pdNaive] = prtScoreRoc(yOutNaive);
+[pfNorm,pdNorm] = prtScoreRoc(yOutNorm);
+h = plot(pfNaive,pdNaive,pfNorm,pdNorm);
+set(h,<span class="string">'linewidth'</span>,3);
+legend(h,{<span class="string">'Naive'</span>,<span class="string">'Pre-Proc'</span>});
+title(<span class="string">'ROC Curves for Naive and Pre-Processed Application of SVM to Bimodal Data'</span>);
 </pre>
 
 
-<pre class="codeoutput">ans =
-  1
-ans =
-  4
+<p><img vspace="5" hspace="5" src="/images/torrione_blog_2013_07_23_04.png" alt=""> <p>Clearly, performance on un-normalized data is attrocious, but simple re-scaling acheives good results.</p><h2>Optimizing Parameters<a name="10"></a></h2><p>The general procedure in developing an SVM is to optimize both the C and gamma parameters for your particular data set.  You can do this using two for-loops and the PRT:</p></p>
+
+<pre class="codeinput">close <span class="string">all</span>;
+gammaVec = logspace(-2,1,10);
+costVec = logspace(-2,1,10);
+ds = prtDataGenUnimodal;
+
+auc = nan(length(gammaVec),length(costVec));
+kfoldsInds = ds.getKFoldKeys(3);
+<span class="keyword">for</span> gammaInd = 1:length(gammaVec);
+    <span class="keyword">for</span> costInd = 1:length(costVec);
+    c = prtClassLibSvm;
+    c.cost = costVec(costInd);
+    c.gamma = gammaVec(gammaInd);
+    yOut = crossValidate(c,ds,kfoldsInds);
+    auc(gammaInd,costInd) = prtScoreAuc(yOut);
+
+    imagesc(auc,[.95 1]);
+    colorbar
+    drawnow;
+  <span class="keyword">end</span>
+<span class="keyword">end</span>
+title(<span class="string">'AUC vs. Gamma Index (Vertical) and Cost Index (Horizontal)'</span>);
 </pre>
 
 
-<h2>Select<a name="5"></a></h2>
-
-
-<p>A hidden method of prtDataSetClass allows us to &#8220;select&#8221; observations from a dataSet by evaluating a function on the observationInfo. select() takes a function handle that is evaluated for each entry in the dataSet and returns a logical index. A dataSet containing only the observations for which the function was true is returned.</p>
-
-
-<pre class="codeinput">dsDayOnly = ds.select(@(s)strcmpi(s.timeOfDay,<span class="string">'day'</span>));
-{dsDayOnly.observationInfo.timeOfDay}
-</pre>
-
-
-<pre class="codeoutput">ans = 
-  'day'    'day'
-</pre>
-
-
-<h2>Graphically<a name="6"></a></h2>
-
-
-<p>Sometimes with complex dataSets with lots of observationInfo sorting through the data can be difficult. A graphical way to view observationInfo and create a function handle for select. This functionality is currently in Beta so make sure you <a href="/blog/2013/03/06/using-prtpath/">include those directories in your path.</a></p>
-
-
-<pre class="codeinput">prtUiDataSetStandardObservationInfoSelect(ds);
-</pre>
-
-
-<p><img vspace="5" hspace="5" src="/images/morton_blog_20130708_observationInfo_02.png" alt=""></p>
-
-<p>Right clicking (ctrl+click in OSX) in the table allows you to graphically select observations that will be returned by select.</p>
-
-
-<p><img vspace="5" hspace="5" src="/images/morton_blog_20130708_observationInfo_03.png" alt="">
-<img vspace="5" hspace="5" src="/images/morton_blog_20130708_observationInfo_04.png" alt=""></p>
-
-<h2>Conclusions<a name="8"></a></h2>
-
-
-<p>This is a simple example of what observation info is and how it can be used. We use it all of the time to manage all of our side information. Because all calls to retainObservation correctly index the observationInfo the side information is available within actions even during cross-validation. Making use of observation info is a quick way to fake a custom type of dataSet that contains other side information. Let us know how you use observationInfo and if you have any ideas to improve it.</p>
-
+<p><img vspace="5" hspace="5" src="/images/torrione_blog_2013_07_23_05.png" alt=""> <h2>Some Rules-Of-Thumb<a name="11"></a></h2><p>In general, you may not have time or simply want to optimize over your SVM parameters.  In this case, you can usually get by using ZMUV pre-processing, and the default SVM parameters (RBF kernel, Cost = 1, gamma = &lsquo;k&rsquo;)</p><pre class="codeinput">algo = prtPreProcZmuv + prtClassLibSvm;
+</pre><h2>Concluding<a name="12"></a></h2><p>We hope this entry helps you make sense of how to use an SVM in real-world scenarios, and how to optimize the SVM parameters for your particular data set.  As always, proper cross-validation is fundamental to good generalizability.</p><p>Happy coding.</p></p>
 </div>
   
   

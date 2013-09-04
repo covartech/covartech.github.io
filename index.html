@@ -129,6 +129,10 @@ span.syscmd { color:#B28C00 }
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2013/09/04/verbosestorage-and-a-little-prtalgorithm-plotting/">verboseStorage and a little prtAlgorithm plotting</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2013/08/20/introducing-prtclassnnet/">Introducing prtClassNNET</a>
       </li>
     
@@ -142,10 +146,6 @@ span.syscmd { color:#B28C00 }
     
       <li class="post">
         <a href="/blog/2013/07/15/observation-info/">Observation Info</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/07/08/twoclassparadigm/">twoClassParadigm</a>
       </li>
     
   </ul>
@@ -175,7 +175,7 @@ span.syscmd { color:#B28C00 }
 
   <header>
     
-      <h1 class="entry-title"><a href="/blog/2013/08/20/introducing-prtclassnnet/">Introducing prtClassNNET</a></h1>
+      <h1 class="entry-title"><a href="/blog/2013/09/04/verbosestorage-and-a-little-prtalgorithm-plotting/">verboseStorage and a Little prtAlgorithm Plotting</a></h1>
     
     
       <p class="meta">
@@ -191,92 +191,186 @@ span.syscmd { color:#B28C00 }
   
 
 
-<time datetime="2013-08-20T12:18:00-04:00" pubdate data-updated="true">Aug 20<span>th</span>, 2013</time>
+<time datetime="2013-09-04T10:12:00-04:00" pubdate data-updated="true">Sep 4<span>th</span>, 2013</time>
         
       </p>
     
   </header>
 
 
-  <div class="entry-content"><p>People are often asking us why we don&#8217;t have a neural-network (NNET) implemented in the PRT.  Formerly, we never focused on making a home-grown NNET object, since the MathWorks already has a (<a href="http://www.mathworks.com/help/nnet/">neural network toolbox</a>), and often we&#8217;ve found that NNET results aren&#8217;t significantly better than other classifiers, and they can be difficult to train. That said, neural network classifiers can provide good results, some recent advances in deep-learning have brought NNET classifiers back into vogue, and they&#8217;re often fun to play with.  As a result, we&#8217;ve finally rolled our own NNET classifier in the PRT that doesn&#8217;t require any additional toolboxes. One thing to note: If you have the MATLAB NNET toolbox, you can incorporate it in the PRT using prtClassMatlabNnet.</p>
+  <div class="entry-content"><h2>What is verboseStorage?<a name="1"></a></h2>
 
 
+<p>verboseStorage is a logical flag of prtAction that specifies whether the training dataset should be stored within the action. The default value is true. Let&#8217;s see an example</p>
 
 
-<!--/introduction-->
+<p>First let&#8217;s get a toy dataset and plot it to see what we are talking about.</p>
 
 
-<h2>Contents</h2>
+<pre class="codeinput">ds = prtDataGenUnimodal;
+
+plot(ds);
+</pre>
 
 
-<div><ul><li><a href="#1">Current Restrictions:</a></li><li><a href="#2">Using prtClassNnet - Basic parameters</a></li><li><a href="#3">Using prtClassNnet - Advanced Parameters</a></li><li><a href="#4">Visualizing</a></li><li><a href="#5">Example Processing</a></li><li><a href="#6">Concluding</a></li></ul></div>
+<p><img vspace="5" hspace="5" src="/images/morton_blog_20130904_verboseStorage_01.png" alt=""> <p>Let&rsquo;s train a prtClassMap and plot the resulting decision contours.</p></p>
+
+<pre class="codeinput">c = train(prtClassMap, ds);
+
+plot(c)
+title(<span class="string">'Classifier Decision Contrours with Training Data Set'</span>,<span class="string">'FontSize'</span>,16);
+</pre>
 
 
+<p><img vspace="5" hspace="5" src="/images/morton_blog_20130904_verboseStorage_02.png" alt=""> <p>You can see that even though we only plotted the trained classifier, the dataset appears in the plot. The training dataset is stored in the read-only property dataSet</p></p>
 
-
-<h2>Current Restrictions:<a name="1"></a></h2>
-
-
-<p>Our classifier only currently allows standard batch-propagation learning. It should be relatively easy to include new training approaches, but we haven&#8217;t done so yet. The current prtClassNnet only allows for three-layer (one hidden-layer) networks.  Depending on who you ask, this is either very important, or not important at all. In either case, we hope to expand the capabilities here eventually. The current formulation only works for binary classification problems. Extensions to enable multi-class classification are also in progress.</p>
-
-
-
-
-<h2>Using prtClassNnet - Basic parameters<a name="2"></a></h2>
-
-
-<p>prtClassNnet acts pretty much the same as any other classifier.  As you might expect, we can set the number of neurons in the hidden layer, and set the min ans max number of training epochs, and the tolerance to check for convergence:</p>
-
-
-
-
-<pre class="codeinput">nnet = prtClassNnet;
-nnet.nHiddenUnits = 10;
-nnet.minIters = 10000;
-nnet.relativeErrorChangeThreshold = 1.0000e-04; <span class="comment">% check for convergence if nIters &gt; minIters</span>
-nnet.maxIters = 100000;                         <span class="comment">% kick out after this many, no matter what</span>
+<pre class="codeinput">c.dataSet
 </pre>
 
 
 
 
-<h2>Using prtClassNnet - Advanced Parameters<a name="3"></a></h2>
+<pre class="codeoutput">ans = 
+  prtDataSetClass with properties:
 
-
-<p>The activation functions are an important part of neural network design. The prtClassNnet object allows you to manually specify the activation function, but you need to set both the &#8220;forward function&#8221; and the first derivative of the forward function.  These can be specified using function handles in the fields fwdFn and fwdFnDeriv. The &#8220;classic&#8221; formulation of a neural network uses a sigmoid activation function, so the parameters can be set like so:</p>
-
-
-
-
-<pre class="codeinput">sigmoidFn = @(x) 1./(1 + exp(-x));
-nnet.fwdFn = sigmoidFn;
-nnet.fwdFnDeriv = @(x) sigmoidFn(x).*(1-sigmoidFn(x));
+               nFeatures: 2
+             featureInfo: []
+                    data: [400x2 double]
+                 targets: [400x1 double]
+         observationInfo: []
+           nObservations: 400
+       nTargetDimensions: 1
+               isLabeled: 1
+                    name: 'prtDataGenUnimodal'
+             description: ''
+                userData: [1x1 struct]
+                nClasses: 2
+           uniqueClasses: [2x1 double]
+    nObservationsByClass: [2x1 double]
+              classNames: {2x1 cell}
+                 isUnary: 0
+                isBinary: 1
+                  isMary: 0
+               isZeroOne: 1
+            hasUnlabeled: 0
 </pre>
 
 
 
 
-<h2>Visualizing<a name="4"></a></h2>
+<p>Let&#8217;s try this again, this time setting verboseStorage to false.</p>
 
 
-<p>prtClassNnet enables automatic visualization of the algorithm progress as learning proceeds.  You can set how often (or whether) this visualization occurs by setting nnet.plotOnIter to a scalar; the scalar represents how often to update the plots.  Use 0 to use no visualization.</p>
 
 
-<h2>Example Processing<a name="5"></a></h2>
+<pre class="codeinput">cVerboseStorageFalse = train(prtClassMap(<span class="string">'verboseStorage'</span>,false), ds);
 
-
-<p>So, what does the resulting process look like?  Let&#8217;s give it a whirl with a stadnard X-OR data set:</p>
-
-
-<pre class="codeinput">dsTrain = prtDataGenXor;
-dsTest = prtDataGenXor;
-nnet = prtClassNnet(<span class="string">'nHiddenUnits'</span>,10,<span class="string">'plotOnIter'</span>,1000,<span class="string">'relativeErrorChangeThreshold'</span>,1e-4);
-nnet = nnet.train(dsTrain);
-yOut = nnet.run(dsTest);
+plot(cVerboseStorageFalse)
+title(<span class="string">'Classifier Decision Contrours without Training Data Set'</span>,<span class="string">'FontSize'</span>,16);
 </pre>
 
 
-<p><img vspace="5" hspace="5" src="/images/torrione_blog_2013_08_20_01.png" alt=""> <h2>Concluding<a name="6"></a></h2><p>We hope that using prtClassNnet enables you to do some new, neat things. If you like it, please help us re-write the code to overcome our current restrictions!</p><p>Happy coding.</p></p>
+<p><img vspace="5" hspace="5" src="/images/morton_blog_20130904_verboseStorage_03.png" alt=""> <p>Plotting the classifier contours without a data set is sometimes useful for examples. Now you can see that the classifiers dataSet property is empty.</p><pre class="codeinput">cVerboseStorageFalse.dataSet
+</pre></p>
+
+<pre class="codeoutput">ans =
+     []
+</pre>
+
+
+
+
+<h2>Data Set Summaries<a name="7"></a></h2>
+
+
+<p>A long time ago, earlier versions of the PRT had no verboseStorage property and the dataSet was always saved. You can see how this might create problems when dataSets get large. We originally used the dataSet to determine plot limits and other things for the classifier plot as well. Now we use the dataSetSummary field to create plots. All prtDataSets must have a summarize() method that yields a structure that can be used by other actions when plotting. You can see that for the above examples the value of verbose storage does not change the dataSetSummary. This is how prtClass.plot() knows what image bounds to use for plotting.</p>
+
+
+<pre class="codeinput">c.dataSetSummary
+
+cVerboseStorageFalse.dataSetSummary
+</pre>
+
+
+<pre class="codeoutput">ans = 
+          upperBounds: [4.7304 4.7950]
+          lowerBounds: [-4.0730 -3.5644]
+            nFeatures: 2
+    nTargetDimensions: 1
+        nObservations: 400
+        uniqueClasses: [2x1 double]
+             nClasses: 2
+               isMary: 0
+ans = 
+          upperBounds: [4.7304 4.7950]
+          lowerBounds: [-4.0730 -3.5644]
+            nFeatures: 2
+    nTargetDimensions: 1
+        nObservations: 400
+        uniqueClasses: [2x1 double]
+             nClasses: 2
+               isMary: 0
+</pre>
+
+
+<h2>prtAlgorithm<a name="8"></a></h2>
+
+
+<p>Since verboseStorgae is a property of prtAction it is also a property of prtAlgorithm. When you set the verboseStorage property for an algorithm you are actually setting the verboseStorgae property for all actions within the algorithm. If verboseStorgae is true for a prtAlgorithm you can use prtAlgorithm.plot() to explore what the data coming into any stage of the algorithm (the training data) looks like. Here is a quick example. Note: plotting prtAlgorithms requires graphviz. There may be issues with the current version of graphviz and the PRT. Please file an issue on github.</p>
+
+
+<pre class="codeinput">algo = prtPreProcZmuv + prtClassRvm/prtClassPlsda + prtClassLogisticDiscriminant;
+algo.verboseStorage = true; <span class="comment">% Just for clarity, this is the default</span>
+
+trainedAlgo = train(algo, ds);
+
+plot(trainedAlgo);
+</pre>
+
+
+<p><img vspace="5" hspace="5" src="/images/morton_blog_20130904_verboseStorage_04.png" alt=""> <p>Boxes with bold outlines are clickable. Double clicking those will open another figure and call plot on the action. For example double clicking on the RVM plots the resulting decision contours (and the dataSet after it has been preprocessed using ZMUV (notice the X and Y labels).</p><img vspace="5" hspace="5" src="/images/morton_blog_20130904_verboseStorage_rvm.png" alt=""></p>
+
+<p>Similarly you can plot the PLSDA decision contour (also with the preprocessed ZMUV data).</p>
+
+
+<p><img vspace="5" hspace="5" src="/images/morton_blog_20130904_verboseStorage_plsda.png" alt=""></p>
+
+<p>The fusion of the two classifiers is shown be clicking on the prtClassLogisticDiscriminant.</p>
+
+
+<p><img vspace="5" hspace="5" src="/images/morton_blog_20130904_verboseStorage_Fusion.png" alt=""></p>
+
+<p>The total confidence provided by the output of the algorithm is shown as a function of the input dataSet by clicking on the output block. Notice here that the features are the original input features and the contours show the contours of the entire algorithm.</p>
+
+
+<p><img vspace="5" hspace="5" src="/images/morton_blog_20130904_verboseStorage_Total.png" alt=""></p>
+
+<p>If we repeat the whole process with verboseStorgae false you will see that the resulting plots do not have the dataSet just like before.</p>
+
+
+
+
+<pre class="codeinput">algo = prtPreProcZmuv + prtClassRvm/prtClassPlsda + prtClassLogisticDiscriminant;
+algo.verboseStorage = false; <span class="comment">% This will feed through to all actions</span>
+
+trainedAlgo = train(algo, ds);
+
+plot(trainedAlgo);
+</pre>
+
+
+
+
+<p>As an example here is just the final output contours of the algorithm.</p>
+
+
+<p><img vspace="5" hspace="5" src="/images/morton_blog_20130904_verboseStorage_total_noData.png" alt=""></p>
+
+<h2>Conclusions<a name="14"></a></h2>
+
+
+<p>Well that&#8217;s verboseStorage. If you have a big dataset you probably want to turn it off but if you don&#8217;t it can be useful to fully explore an algorithm. Let us know what you think.</p>
+
 </div>
   
   

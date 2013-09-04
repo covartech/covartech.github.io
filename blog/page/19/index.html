@@ -129,6 +129,10 @@ span.syscmd { color:#B28C00 }
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2013/09/04/verbosestorage-and-a-little-prtalgorithm-plotting/">verboseStorage and a little prtAlgorithm plotting</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2013/08/20/introducing-prtclassnnet/">Introducing prtClassNNET</a>
       </li>
     
@@ -142,10 +146,6 @@ span.syscmd { color:#B28C00 }
     
       <li class="post">
         <a href="/blog/2013/07/15/observation-info/">Observation Info</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/07/08/twoclassparadigm/">twoClassParadigm</a>
       </li>
     
   </ul>
@@ -175,7 +175,7 @@ span.syscmd { color:#B28C00 }
 
   <header>
     
-      <h1 class="entry-title"><a href="/blog/2013/02/27/learning-feature-representations/">Learning Feature Representations</a></h1>
+      <h1 class="entry-title"><a href="/blog/2013/03/06/using-prtpath/">Using prtPath</a></h1>
     
     
       <p class="meta">
@@ -191,19 +191,19 @@ span.syscmd { color:#B28C00 }
   
 
 
-<time datetime="2013-02-27T14:59:00-05:00" pubdate data-updated="true">Feb 27<span>th</span>, 2013</time>
+<time datetime="2013-03-06T13:24:00-05:00" pubdate data-updated="true">Mar 6<span>th</span>, 2013</time>
         
       </p>
     
   </header>
 
 
-  <div class="entry-content"><p>Today I wanted to go through an interesting paper I recently read and show how to implement parts of that paper in the PRT.  The paper is <i>Learning Feature Representations with K-means</i> , by Adam Coates and Andrew Y. Ng (see below for full citation).</p>
+  <div class="entry-content"><p>We recommend as part of installation that you edit (or create) your startup.m file to include a call to prtPath. This is adds the PRT to your MATLAB search path automatically each time you start MATLAB. There are alternatives to path management (such as the pathtool() or addpath() and savepath()) but we recommend using a startup.m file. Hopefully this post will explain one reason we recommend that.</p>
 
 
-<p>The meat of the Coates and Ng paper deals with how to use K-means to extract meaningful dictionaries from image data.  The latter part of the paper talks about how to do real machine learning with max-pooling for classification, but for today, I just wanted to introduce the MSRCORID (Microsoft Research Cambridge Object Recognition Image Database) data in the PRT and also show how to use the PRT to do some K-means dictionary learning.</p>
 
 
+<p>One of the reasons that we like to use prtPath in a startup file is that prtPath does more than just add the PRT and all of it&#8217;s subfolders to your path.</p>
 
 
 <!--/introduction-->
@@ -212,104 +212,54 @@ span.syscmd { color:#B28C00 }
 <h2>Contents</h2>
 
 
-<div><ul><li><a href="#1">The MSRCORID Database</a></li><li><a href="#3">Extracting Patches</a></li><li><a href="#4">Normalization</a></li><li><a href="#5">K-Means</a></li><li><a href="#7">Simple Bag-Of-Words Classification</a></li><li><a href="#10">Bibliography</a></li></ul></div>
+<div><ul><li><a href="#1">prtPath and ] directories</a></li><li><a href="#3">Why &#8220;]&#8221;?</a></li><li><a href="#4">Conclusions</a></li></ul></div>
 
 
-<h2>The MSRCORID Database<a name="1"></a></h2>
+<h2>prtPath and ] directories<a name="1"></a></h2>
 
 
-<p>For fun, I downloaded a new image database to play with for this data. The data is available for download from here: <a href="http://research.microsoft.com/en-us/downloads/b94de342-60dc-45d0-830b-9f6eff91b301/default.aspx">http://research.microsoft.com/en-us/downloads/b94de342-60dc-45d0-830b-9f6eff91b301/default.aspx</a></p>
+<p>prtPath is actually very basic. It calls the function prtRoot and uses the MATLAB function genpath() to get a list of all of the subdirectories in the prtFolder. It then eventually calls addpath() to add that list of directories to the MATLAB path (it does not save the path for future sessions of MATLAB).</p>
 
 
-<p>You can load the data automatically in the PRT, if you update to the newest version and run:</p>
+<p>Before prtPath() calls addpath() though, it selectively removes some directories from the subdirectory list.</p>
 
 
-<pre class="codeinput">ds = prtDataGenMsrcorid;
+<p>First it removes any directory that starts with a &#8220;.&#8221;. This was added to prevent any hidden folders (like those from source control systems) from showing up in the MATLAB path.</p>
+
+
+<p>More importantly though, it removes any folders from the list that start with a &#8220;]&#8221;. This is something special that we put in to add some extra functionality to the PRT.</p>
+
+
+<p>Most of our users want to stick to code that is well tested and is known to behave nicely. But as we go about our jobs and use the PRT we need to add some new functionality. We typically add things like: new classifiers, new datatypes or new pre processing techniques.</p>
+
+
+<p>Some of our users want access to this newest code so it gets added to the PRT in the &#8220;]alpha&#8221; and eventually the &#8220;]beta&#8221; folder. By default prtPath will not include these folders in the path. Instead you have to tell prtPath that you are willing to accept the responsibilities of the bleeding edge. You do this by giving prtPath a list of &#8220;]&#8221; folders that you want to include. (Or rather not exclude).</p>
+
+
+<p>For example:</p>
+
+
+<pre class="codeinput">prtPath(<span class="string">'alpha'</span>, <span class="string">'beta'</span>);
 </pre>
 
 
-<p>By default, that command will give a dataset with only images of chimneys and single flowers.  Look at the help for prtDataGenMsrcorid to see how to load data from these, and a lot more interesting classes.</p>
+<p>will add both the &#8220;]alpha&#8221; and &#8220;]beta&#8221; folders (and their subfolders) to the path.</p>
 
 
-<p>You should note that prtDataGenMsrcorid does not output a prtDataSetClass, it produces a prtDataSetCellArray.  prtDataSetCellArray data objects are relatively new, and not fully documented, but they&#8217;re useful when you want to deal with datasets where each observation can have different sizes - e.g., images.</p>
+<p>Currently in the PRT we have one other &#8220;]&#8221; folder, &#8220;]internal&#8221;. In the internal folder you will find some code on unit testing and documentation building. You probably wont be interested in much that&#8217;s in there so I probably wouldn&#8217;t clutter my path with it.</p>
 
 
-<p>You can access elements using cell-array notation to access the .X field of the prtDataSet, for example:</p>
+<h2>Why &#8220;]&#8221;?<a name="3"></a></h2>
 
 
-<pre class="codeinput">subplot(2,1,1);
-imshow(ds.X{1});
-title(<span class="string">'Flower'</span>);
-
-subplot(2,1,2);
-imshow(ds.X{end});
-title(<span class="string">'Chimney'</span>);
-</pre>
+<p>We were searching for a character that is a valid path (folder) name character on all major operating systems and is at the same time a character that most people wouldn&#8217;t start a directory name with. MATLAB already uses &#8220;@&#8221; for (old style) class definitions and &#8220;+&#8221; for packages. We thought &#8220;]&#8221; fit all of these criteria.</p>
 
 
-<p><img vspace="5" hspace="5" src="/images/torrione_ExampleCoatesNg_Kmeans_Mscorid_01.png" alt=""> <h2>Extracting Patches<a name="3"></a></h2><p>To generate a dictionary requires segmenting the initial images provided to us into sub-regions.  We can acheive this by using the MATLAB function im2col which with will convert every 8x8 sub-image to a 64x1 element vector.</p><pre class="codeinput">patchSize = [8 8];
-col = [];
-<span class="keyword">for</span> imgInd = 1:ds.nObservations;</p>
+<h2>Conclusions<a name="4"></a></h2>
 
-<pre><code>img = ds.X{imgInd};
-img = rgb2gray(img);
-img = imresize(img,.5);
-col = cat(1,col,im2col(img,patchSize,&lt;span class="string"&gt;'distinct'&lt;/span&gt;)');
-</code></pre>
 
-<p><span class="keyword">end</span>
-dsCol = prtDataSetClass(double(col));
-</pre><h2>Normalization<a name="4"></a></h2><p>[Coates, 2012], makes it very clear that proper data normalization on a per-patch basis is fundamental to getting meaningful K-means centroids. The three main steps in the normalization are mean-normalization, energy normalization, and ZCA centering.  These are all implemented in the PRT as prtPreProcZeroMeanRows, prtPreProcStdNormalizeRows, and prtPreProcZca.</p><p>As always, we can buld an algorithm out of these independent components, then train and run the algorithm on the dsCol data we created earlier:</p><pre class="codeinput">preProc = prtPreProcZeroMeanRows + prtPreProcStdNormalizeRows(<span class="string">&lsquo;varianceOffset&rsquo;</span>,10) + prtPreProcZca;
-preProc = preProc.train(dsCol);
-dsNorm = preProc.run(dsCol);
-</pre><h2>K-Means<a name="5"></a></h2><p>[Coates, 2012], makes a compelling case that K-means clustering is capable of learning dictionaries that can be easily used for classification.  The K-means algorithm in Coates paper is particularly intruiging, and its very fast compared to standard K-means using euclidean distances.  We&rsquo;ve implemented the K-means algorithm as described in [Coates, 2012] as prtClusterSphericalKmeans, which is much faster than using the regular K-means.</p><pre class="codeinput">skm = prtClusterSphericalKmeans(<span class="string">&lsquo;nClusters&rsquo;</span>,50);
-skm = skm.train(dsNorm);
-</pre><p>We can visualize the resulting cluster centers from the K-means processing by looking a the skm.clusterCenters, and plotting the first 50.  We&rsquo;ll sort these by how often data vectors were assigned to each cluster, so the top-left has the most elements, and the bottom-right has the least.</p><pre class="codeinput"></p>
+<p>We hope that cleared up a little of why we recommend prtPath over pathtool(), at least for the PRT. In general just call prtPath() by itself but if you want to see what might lie ahead for the PRT checkout the ]alpha and ]beta folders. In some future posts we will talk about some things in these folders that might be of interest to you. Maybe that will entice you to explore the ].</p>
 
-<p>yOutK = skm.run(dsNorm);
-[val,ind] = max(yOutK.X,[],2);
-boolMat = zeros(size(yOutK.X));
-indices = sub2ind(size(boolMat),(1:size(boolMat,1))&lsquo;,ind(:));
-boolMat(indices) = 1;</p>
-
-<p>clusterCounts = sum(boolMat);
-[v,sortInds] = sort(clusterCounts,<span class="string">&lsquo;descend&rsquo;</span>);</p>
-
-<p>c = skm.clusterCenters';
-<span class="keyword">for</span> i = 1:50</p>
-
-<pre><code>subplot(5,10,i);
-imagesc(reshape(c(sortInds(i),:),patchSize));
-title(v(i));
-tickOff;
-</code></pre>
-
-<p><span class="keyword">end</span>
-colormap <span class="string">gray</span>
-</pre><img vspace="5" hspace="5" src="/images/torrione_ExampleCoatesNg_Kmeans_Mscorid_02.png" alt=""> <h2>Simple Bag-Of-Words Classification<a name="7"></a></h2><p>We can use some of the approaches from [Coates, 2012] to do some simple classification, also.  For example, we can use our new K-means clustering algorithm to generate features for each observation.  We can do this for every patch we extract from each image, but we&rsquo;d like to make decisions on an image-by-image basis, so we need to aggregate over the resulting feature vectors somehow.</p><p>A clever way to do this is to use max-pooling and deep-learning as specified in [Coates, 2012], but for now we&rsquo;ll just take the mean of the resulting feature vectors (in a manner similar to bag-of-words classification <a href="http://en.wikipedia.org/wiki/Bag-of-words_model"><a href="http://en.wikipedia.org/wiki/Bag-of-words_model">http://en.wikipedia.org/wiki/Bag-of-words_model</a></a> )</p><pre class="codeinput">featVec = nan(ds.nObservations,skm.nClusters);</p>
-
-<p><span class="keyword">for</span> imgInd = 1:ds.nObservations;</p>
-
-<pre><code>img = ds.X{imgInd};
-img = rgb2gray(img);
-col = im2col(img,patchSize,&lt;span class="string"&gt;'distinct'&lt;/span&gt;);
-col = double(col);
-dsCol = prtDataSetClass(col');
-dsCol = run(preProc,dsCol);
-dsFeat = skm.run(dsCol);
-feats = max(dsFeat.X,.05);
-featVec(imgInd,:) = mean(feats);
-</code></pre>
-
-<p><span class="keyword">end</span>
-</pre><p>Now we can classify our feature vectors using another classification algorithm &ndash; e.g., here we use a SVM, with ZMUV pre-processing, and max-a-posteriori classification.</p><pre class="codeinput">dsFeat = prtDataSetClass(featVec,ds.targets);
-dsFeat.classNames = ds.classNames;</p>
-
-<p>yOut = kfolds(prtPreProcZmuv + prtClassLibSvm + prtDecisionMap,dsFeat,3);</p>
-
-<p>close <span class="string">all</span>;
-prtScoreConfusionMatrix(yOut)
-</pre><img vspace="5" hspace="5" src="/images/torrione_ExampleCoatesNg_Kmeans_Mscorid_03.png" alt=""> <p>Hey!  That&rsquo;s not too bad for a few lines of code.  At some point in the future we&rsquo;ll take on the rest of the [Coates, 2012] paper, but in the meantime, let us know if you implement the max-pooling or other processes outlined therein.</p><p>Happy coding!</p><p>Note: we created prtPreProcZca, prtClusterSphericalKmeans, and prtDataGenMsrcorid for this blog entry; they&rsquo;re all in the PRT, but are recent (as of 2/27/2013) so download a new version to get access to all these.</p><h2>Bibliography<a name="10"></a></h2><p>Adam Coates and Andrew Y. Ng, Learning Feature Representations with K-means, G. Montavon, G. B. Orr, K.-R. Muller (Eds.), Neural Networks: Tricks of the Trade, 2nd edn, Springer LNCS 7700, 2012</p></p>
 </div>
   
   

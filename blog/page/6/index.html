@@ -129,6 +129,10 @@ span.syscmd { color:#B28C00 }
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2013/09/04/verbosestorage-and-a-little-prtalgorithm-plotting/">verboseStorage and a little prtAlgorithm plotting</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2013/08/20/introducing-prtclassnnet/">Introducing prtClassNNET</a>
       </li>
     
@@ -142,10 +146,6 @@ span.syscmd { color:#B28C00 }
     
       <li class="post">
         <a href="/blog/2013/07/15/observation-info/">Observation Info</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/07/08/twoclassparadigm/">twoClassParadigm</a>
       </li>
     
   </ul>
@@ -175,7 +175,7 @@ span.syscmd { color:#B28C00 }
 
   <header>
     
-      <h1 class="entry-title"><a href="/blog/2013/06/24/spectral-clustering/">Spectral Clustering</a></h1>
+      <h1 class="entry-title"><a href="/blog/2013/07/08/twoclassparadigm/">twoClassParadigm</a></h1>
     
     
       <p class="meta">
@@ -191,83 +191,158 @@ span.syscmd { color:#B28C00 }
   
 
 
-<time datetime="2013-06-24T13:33:00-04:00" pubdate data-updated="true">Jun 24<span>th</span>, 2013</time>
+<time datetime="2013-07-08T20:57:00-04:00" pubdate data-updated="true">Jul 8<span>th</span>, 2013</time>
         
       </p>
     
   </header>
 
 
-  <div class="entry-content"><p>Hi everyone,</p>
-
-
-<p>A few weeks ago we talked about clustering with K-Means, and using K-Means distances as a pre-processing step.  K-Means is great when euclidean distance in your input feature-space is meaningful, but what if your data instead lies on a high-dimensional manifold?</p>
-
-
-<p>We recently introduced some new clustering and distance-metric approaches suitable for these cases - spectral clustering.  The theory behind spectral clustering is beyond the scope of this entry, but as usual, the wikipedia page has a good summary - <a href="http://en.wikipedia.org/wiki/Spectral_clustering">http://en.wikipedia.org/wiki/Spectral_clustering</a>.</p>
+  <div class="entry-content"><p>When using an M-ary classifier on a binary classification problem, sometimes you want multiple dimensional output and sometimes you don&#8217;t. In the PRT the default is to supply only a single output but this can be specified by setting the twoClassParadigm property of classifiers.</p>
 
 
 <!--/introduction-->
 
 
-
-
-<p>Although I&#8217;m writing the blog entry, all of the code in this demo was written by one of our graduate students @ Duke University - Dmitry Kalika, who&#8217;s a new convert to the PRT!  Welcome Dima!</p>
-
-
-
-
 <h2>Contents</h2>
 
 
-<div><ul><li><a href="#1">References</a></li><li><a href="#2">prtPreProcSpectralEmbed</a></li><li><a href="#3">prtClusterSpectralKmeans</a></li><li><a href="#4">Wrapping Up</a></li></ul></div>
+<div><ul><li><a href="#1">A Quick Example</a></li><li><a href="#5">twoClassParadigm</a></li><li><a href="#7">Why did you do that?</a></li><li><a href="#10">Conclusion</a></li></ul></div>
 
 
-<h2>References<a name="1"></a></h2>
+<h2>A Quick Example<a name="1"></a></h2>
 
 
-<p>Throughout the following and the code for spectral clustering in the PRT, we make use of the excellent Bengio, 2003 paper - Out-of-Sample Extensions for LLE, Isomap, MDS, Eigenmaps, and Spectral Clustering <a href="http://www.iro.umontreal.ca/~lisa/pointeurs/tr1238.pdf">http://www.iro.umontreal.ca/~lisa/pointeurs/tr1238.pdf</a></p>
-
-
-<p>In particular, we use that extention for performing cluster approximation for out-of-sample embedding estimation.</p>
-
-
-<h2>prtPreProcSpectralEmbed<a name="2"></a></h2>
-
-
-<p>Spectral clustering typically relies upon what&#8217;s referred to as a spectral embedding; this is a low-dimensional representation of a high-dimensional proximity graph.</p>
-
-
-<p>We can use features derived from spectral embeddings like so:</p>
+<p>Consider a binary classification problem with an m-ary classifer (prtClassMap).</p>
 
 
 
 
-<pre class="codeinput">ds = prtDataGenBimodal;
-dsTest = prtDataGenBimodal(10);
-algo = prtPreProcSpectralEmbed;
-algo = algo.train(ds);
-yOut = algo.run(ds);
-plot(yOut);
+<pre class="codeinput">dsTrain = prtDataGenUnimodal;
+dsTest = prtDataGenUnimodal;
+
+classifier = prtClassMap;
+trainedClassifier = train(classifier, dsTrain);
+
+plot(trainedClassifier);
+title(<span class="string">'Binary Classification with MAP'</span>,<span class="string">'FontSize'</span>,16);
+
+output = run(trainedClassifier, dsTest);
+
+output.nFeatures
 </pre>
 
 
-<p><img vspace="5" hspace="5" src="/images/torrione_blog_2013_06_17_01.png" alt=""> <h2>prtClusterSpectralKmeans<a name="3"></a></h2><p>While spectral embedding provides a feature space for additional processing, we can also use prtClusterSpectralKmeans to perform direct clustering in the spectral space.</p><p>For example, the Moon data set (see prtDataGenMoon) creates two crescent moon-shapes that are not well-separated by euclidean distance metrics, but can be easily separated in spectral-cluster space.</p><pre class="codeinput">ds = prtDataGenMoon;
-preProc = prtPreProcZmuv;
-preProc = preProc.train(ds);
-dsNorm = preProc.run(ds);
-kmeans = prtClusterKmeans(<span class="string">&lsquo;nClusters&rsquo;</span>,2);
-kmeansSpect = prtClusterSpectralKmeans(<span class="string">&lsquo;nClusters&rsquo;</span>,2);
-kmeans = kmeans.train(dsNorm);
-kmeansSpect = kmeansSpect.train(dsNorm);
-subplot(1,2,1);
-plot(kmeans);
-title(<span class="string">&lsquo;K-Means Clusters&rsquo;</span>);
-subplot(1,2,2);
-plot(kmeansSpect)
-title(<span class="string">&lsquo;Spect-K-Means Clusters&rsquo;</span>);
+<pre class="codeoutput">
+ans =
+ 1
 </pre>
-<img vspace="5" hspace="5" src="/images/torrione_blog_2013_06_17_02.png" alt=""> <h2>Wrapping Up<a name="4"></a></h2><p>Spectral clustering provides a very useful technique for non-linear and non-euclidean clustering.  Right now our spectral clustering approaches are constrained  to using RBF kernels, though there&rsquo;s nothing that prevents you from using alternate kernels in future versions.</p><p>As always, let us know if you have questions or comments.</p></p>
+
+
+<p><img vspace="5" hspace="5" src="/images/morton_blog_20130708_twoClassParadigm_01.png" alt=""> <p>As you can see the output only has one feature. But consider the same M-ary classifier with a 3-class problem.</p></p>
+
+<pre class="codeinput">dsTrainMary = prtDataGenMary;
+dsTestMary = prtDataGenMary;
+
+trainedClassifierMary = train(classifier, dsTrainMary);
+
+plot(trainedClassifierMary);
+title(<span class="string">'M-ary Classification with MAP'</span>,<span class="string">'FontSize'</span>,16);
+
+outputMary = run(trainedClassifierMary, dsTestMary);
+
+outputMary.nFeatures
+</pre>
+
+
+<pre class="codeoutput">
+ans =
+ 3
+</pre>
+
+
+<p><img vspace="5" hspace="5" src="/images/morton_blog_20130708_twoClassParadigm_02.png" alt=""> <p>Now the output has 3 feautres. The trend continues with more classes, because prtClassMap declares itself as an Mary classififer</p></p>
+
+<pre class="codeinput">classifier.isNativeMary
+</pre>
+
+
+<pre class="codeoutput">
+ans =
+ 1
+</pre>
+
+
+<p>the output is (as it should) have a column corresponding to the confidence of each class. Binary classification is an exception.</p>
+
+
+<h2>twoClassParadigm<a name="5"></a></h2>
+
+
+<p>By default the PRT checks when M-ary classifiers are run on binary data to see if it should output a single confidence or binary confidences. The mode of operation is stored in twoClassParadigm which by default is set to the string M-ary.</p>
+
+
+<pre class="codeinput">classifier.twoClassParadigm
+</pre>
+
+
+<pre class="codeoutput">
+ans =
+binary
+</pre>
+
+
+<p>If we return to the binary classification problem and set twoClassParadigm to mary we can see that we get the two outputs that we expect.</p>
+
+
+
+
+<pre class="codeinput">classifier.twoClassParadigm = <span class="string">'mary'</span>;
+trainedClassifierBinaryActingAsMary = train(classifier, dsTrain);
+
+outputBinaryActingAsMary = run(trainedClassifierBinaryActingAsMary, dsTest);
+
+outputBinaryActingAsMary.nFeatures
+</pre>
+
+
+<pre class="codeoutput">
+ans =
+ 2
+</pre>
+
+
+
+
+<h2>Why did you do that?<a name="7"></a></h2>
+
+
+<p>We debated, but ultimately we decided that it was less confusing this way. It is more rare to want both outputs for a binary classification problem than it is to expect a single. Most users expected this to run out of the box.</p>
+
+
+
+
+<pre class="codeinput">classifier = prtClassMap;
+trainedClassifier = train(classifier, dsTrain);
+output = run(trainedClassifier, dsTest);
+
+prtScoreRoc(output);
+title(<span class="string">'Binary Classification with an M-ary Classifier'</span>,<span class="string">'FontSize'</span>,16);
+</pre>
+
+
+<p><img vspace="5" hspace="5" src="/images/morton_blog_20130708_twoClassParadigm_03.png" alt=""> <p>If you change the classifier to non-m-ary classification (prtClassGlrt for example) you expect the same code to work only by changing the classifier declaration.</p></p>
+
+<pre class="codeinput">classifier = prtClassGlrt;
+trainedClassifier = train(classifier, dsTrain);
+output = run(trainedClassifier, dsTest);
+
+prtScoreRoc(output);
+title(<span class="string">'Binary Classification with a Binary Classifier'</span>,<span class="string">'FontSize'</span>,16);
+</pre>
+
+
+<p><img vspace="5" hspace="5" src="/images/morton_blog_20130708_twoClassParadigm_04.png" alt=""> <p>Without the twoClassParadigm system it wouldn&rsquo;t be as easy to switch classifiers for binary problems as an extra step would be required to manually select which column of the output should be used to calculate the ROC.</p><h2>Conclusion<a name="10"></a></h2><p>Well that&rsquo;s twoClassParadigm. It&rsquo;s a convenient feature of the PRT that not many people know about because they don&rsquo;t have to. In the rare cases when you want the confidence assigned to each class, you now know how to get them.</p></p>
 </div>
   
   

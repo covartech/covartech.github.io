@@ -4,7 +4,7 @@
   <title><![CDATA[PRT Blog]]></title>
   <link href="http://newfolder.github.io/atom.xml" rel="self"/>
   <link href="http://newfolder.github.io/"/>
-  <updated>2013-08-20T13:11:31-04:00</updated>
+  <updated>2013-09-04T10:23:33-04:00</updated>
   <id>http://newfolder.github.io/</id>
   <author>
     <name><![CDATA[Kenneth Morton and Peter Torrione]]></name>
@@ -12,6 +12,187 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[verboseStorage and a little prtAlgorithm plotting]]></title>
+    <link href="http://newfolder.github.io/blog/2013/09/04/verbosestorage-and-a-little-prtalgorithm-plotting/"/>
+    <updated>2013-09-04T10:12:00-04:00</updated>
+    <id>http://newfolder.github.io/blog/2013/09/04/verbosestorage-and-a-little-prtalgorithm-plotting</id>
+    <content type="html"><![CDATA[<h2>What is verboseStorage?<a name="1"></a></h2>
+
+
+<p>verboseStorage is a logical flag of prtAction that specifies whether the training dataset should be stored within the action. The default value is true. Let&#8217;s see an example</p>
+
+
+<p>First let&#8217;s get a toy dataset and plot it to see what we are talking about.</p>
+
+
+<pre class="codeinput">ds = prtDataGenUnimodal;
+
+plot(ds);
+</pre>
+
+
+<p><img vspace="5" hspace="5" src="http://newfolder.github.io/images/morton_blog_20130904_verboseStorage_01.png" alt=""> <p>Let&rsquo;s train a prtClassMap and plot the resulting decision contours.</p></p>
+
+<pre class="codeinput">c = train(prtClassMap, ds);
+
+plot(c)
+title(<span class="string">'Classifier Decision Contrours with Training Data Set'</span>,<span class="string">'FontSize'</span>,16);
+</pre>
+
+
+<p><img vspace="5" hspace="5" src="http://newfolder.github.io/images/morton_blog_20130904_verboseStorage_02.png" alt=""> <p>You can see that even though we only plotted the trained classifier, the dataset appears in the plot. The training dataset is stored in the read-only property dataSet</p></p>
+
+<pre class="codeinput">c.dataSet
+</pre>
+
+
+
+
+<pre class="codeoutput">ans = 
+  prtDataSetClass with properties:
+
+               nFeatures: 2
+             featureInfo: []
+                    data: [400x2 double]
+                 targets: [400x1 double]
+         observationInfo: []
+           nObservations: 400
+       nTargetDimensions: 1
+               isLabeled: 1
+                    name: 'prtDataGenUnimodal'
+             description: ''
+                userData: [1x1 struct]
+                nClasses: 2
+           uniqueClasses: [2x1 double]
+    nObservationsByClass: [2x1 double]
+              classNames: {2x1 cell}
+                 isUnary: 0
+                isBinary: 1
+                  isMary: 0
+               isZeroOne: 1
+            hasUnlabeled: 0
+</pre>
+
+
+
+
+<p>Let&#8217;s try this again, this time setting verboseStorage to false.</p>
+
+
+
+
+<pre class="codeinput">cVerboseStorageFalse = train(prtClassMap(<span class="string">'verboseStorage'</span>,false), ds);
+
+plot(cVerboseStorageFalse)
+title(<span class="string">'Classifier Decision Contrours without Training Data Set'</span>,<span class="string">'FontSize'</span>,16);
+</pre>
+
+
+<p><img vspace="5" hspace="5" src="http://newfolder.github.io/images/morton_blog_20130904_verboseStorage_03.png" alt=""> <p>Plotting the classifier contours without a data set is sometimes useful for examples. Now you can see that the classifiers dataSet property is empty.</p><pre class="codeinput">cVerboseStorageFalse.dataSet
+</pre></p>
+
+<pre class="codeoutput">ans =
+     []
+</pre>
+
+
+
+
+<h2>Data Set Summaries<a name="7"></a></h2>
+
+
+<p>A long time ago, earlier versions of the PRT had no verboseStorage property and the dataSet was always saved. You can see how this might create problems when dataSets get large. We originally used the dataSet to determine plot limits and other things for the classifier plot as well. Now we use the dataSetSummary field to create plots. All prtDataSets must have a summarize() method that yields a structure that can be used by other actions when plotting. You can see that for the above examples the value of verbose storage does not change the dataSetSummary. This is how prtClass.plot() knows what image bounds to use for plotting.</p>
+
+
+<pre class="codeinput">c.dataSetSummary
+
+cVerboseStorageFalse.dataSetSummary
+</pre>
+
+
+<pre class="codeoutput">ans = 
+          upperBounds: [4.7304 4.7950]
+          lowerBounds: [-4.0730 -3.5644]
+            nFeatures: 2
+    nTargetDimensions: 1
+        nObservations: 400
+        uniqueClasses: [2x1 double]
+             nClasses: 2
+               isMary: 0
+ans = 
+          upperBounds: [4.7304 4.7950]
+          lowerBounds: [-4.0730 -3.5644]
+            nFeatures: 2
+    nTargetDimensions: 1
+        nObservations: 400
+        uniqueClasses: [2x1 double]
+             nClasses: 2
+               isMary: 0
+</pre>
+
+
+<h2>prtAlgorithm<a name="8"></a></h2>
+
+
+<p>Since verboseStorgae is a property of prtAction it is also a property of prtAlgorithm. When you set the verboseStorage property for an algorithm you are actually setting the verboseStorgae property for all actions within the algorithm. If verboseStorgae is true for a prtAlgorithm you can use prtAlgorithm.plot() to explore what the data coming into any stage of the algorithm (the training data) looks like. Here is a quick example. Note: plotting prtAlgorithms requires graphviz. There may be issues with the current version of graphviz and the PRT. Please file an issue on github.</p>
+
+
+<pre class="codeinput">algo = prtPreProcZmuv + prtClassRvm/prtClassPlsda + prtClassLogisticDiscriminant;
+algo.verboseStorage = true; <span class="comment">% Just for clarity, this is the default</span>
+
+trainedAlgo = train(algo, ds);
+
+plot(trainedAlgo);
+</pre>
+
+
+<p><img vspace="5" hspace="5" src="http://newfolder.github.io/images/morton_blog_20130904_verboseStorage_04.png" alt=""> <p>Boxes with bold outlines are clickable. Double clicking those will open another figure and call plot on the action. For example double clicking on the RVM plots the resulting decision contours (and the dataSet after it has been preprocessed using ZMUV (notice the X and Y labels).</p><img vspace="5" hspace="5" src="http://newfolder.github.io/images/morton_blog_20130904_verboseStorage_rvm.png" alt=""></p>
+
+<p>Similarly you can plot the PLSDA decision contour (also with the preprocessed ZMUV data).</p>
+
+
+<p><img vspace="5" hspace="5" src="http://newfolder.github.io/images/morton_blog_20130904_verboseStorage_plsda.png" alt=""></p>
+
+<p>The fusion of the two classifiers is shown be clicking on the prtClassLogisticDiscriminant.</p>
+
+
+<p><img vspace="5" hspace="5" src="http://newfolder.github.io/images/morton_blog_20130904_verboseStorage_Fusion.png" alt=""></p>
+
+<p>The total confidence provided by the output of the algorithm is shown as a function of the input dataSet by clicking on the output block. Notice here that the features are the original input features and the contours show the contours of the entire algorithm.</p>
+
+
+<p><img vspace="5" hspace="5" src="http://newfolder.github.io/images/morton_blog_20130904_verboseStorage_Total.png" alt=""></p>
+
+<p>If we repeat the whole process with verboseStorgae false you will see that the resulting plots do not have the dataSet just like before.</p>
+
+
+
+
+<pre class="codeinput">algo = prtPreProcZmuv + prtClassRvm/prtClassPlsda + prtClassLogisticDiscriminant;
+algo.verboseStorage = false; <span class="comment">% This will feed through to all actions</span>
+
+trainedAlgo = train(algo, ds);
+
+plot(trainedAlgo);
+</pre>
+
+
+
+
+<p>As an example here is just the final output contours of the algorithm.</p>
+
+
+<p><img vspace="5" hspace="5" src="http://newfolder.github.io/images/morton_blog_20130904_verboseStorage_total_noData.png" alt=""></p>
+
+<h2>Conclusions<a name="14"></a></h2>
+
+
+<p>Well that&#8217;s verboseStorage. If you have a big dataset you probably want to turn it off but if you don&#8217;t it can be useful to fully explore an algorithm. Let us know what you think.</p>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Introducing prtClassNNET]]></title>
@@ -2029,139 +2210,6 @@ dsFeat.classNames = ds.classNames;</p>
 <p>close <span class="string">all</span>;
 prtScoreConfusionMatrix(yOut)
 </pre><img vspace="5" hspace="5" src="http://newfolder.github.io/images/torrione_ExampleCoatesNg_Kmeans_Mscorid_03.png" alt=""> <p>Hey!  That&rsquo;s not too bad for a few lines of code.  At some point in the future we&rsquo;ll take on the rest of the [Coates, 2012] paper, but in the meantime, let us know if you implement the max-pooling or other processes outlined therein.</p><p>Happy coding!</p><p>Note: we created prtPreProcZca, prtClusterSphericalKmeans, and prtDataGenMsrcorid for this blog entry; they&rsquo;re all in the PRT, but are recent (as of 2/27/2013) so download a new version to get access to all these.</p><h2>Bibliography<a name="10"></a></h2><p>Adam Coates and Andrew Y. Ng, Learning Feature Representations with K-means, G. Montavon, G. B. Orr, K.-R. Muller (Eds.), Neural Networks: Tricks of the Trade, 2nd edn, Springer LNCS 7700, 2012</p></p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[IEEE GRSS Hyperspectral Data]]></title>
-    <link href="http://newfolder.github.io/blog/2013/02/16/ieee-grss-hyperspectral-data/"/>
-    <updated>2013-02-16T20:06:00-05:00</updated>
-    <id>http://newfolder.github.io/blog/2013/02/16/ieee-grss-hyperspectral-data</id>
-    <content type="html"><![CDATA[<p>
-Hi everyone.  Outside of software development, we also do some work in geoscience and remote sensing.  As a result, we were very excited to see an announcement from the IEEE GRSS that they were making some new data sets available - in particular, a hyperspectral data set, and a LIDAR data set (if you&#8217;re not familiar with these technologies, see here: <a href="http://en.wikipedia.org/wiki/Hyperspectral_imaging">http://en.wikipedia.org/wiki/Hyperspectral_imaging</a> and <a href="http://en.wikipedia.org/wiki/LIDAR">http://en.wikipedia.org/wiki/LIDAR</a>).</p>
-
-
-<!--/introduction-->
-
-
-<h2>Contents</h2>
-
-
-<div><ul><li><a href="#1">Getting Started</a></li><li><a href="#3">A Note About UnLabeled Points</a></li><li><a href="#5">Visualization of the Hyperspectral and LIDAR data</a></li><li><a href="#6">Hyperspectral Data</a></li><li><a href="#7">PC Projections</a></li><li><a href="#9">15-Class Classification</a></li><li><a href="#11">Evaluation</a></li><li><a href="#12">Conclusions</a></li></ul></div>
-
-
-<h2>Getting Started<a name="1"></a></h2>
-
-
-<p>We&#8217;ve made some M-files that will load in the data for you (see the .ZIP file at the end of this post), but you&#8217;ll need to go to the GRSS website to download the data from here first: <a href="http://hyperspectral.ee.uh.edu/?page_id=459">http://hyperspectral.ee.uh.edu/?page_id=459</a>).</p>
-
-
-<p>To load the data, first download the .ZIP file at the end of this post, then run the following.  But change the line below to point to the right directory, so for example, I have a file C:\Users\pete\Documents\data\2013IEEE_GRSS_DF_Contest\2013_IEEE_GRSS_DF_Contest_CASI.tif</p>
-
-
-<pre class="codeinput">imgSize = [349 1905];
-grssDir = <span class="string">'C:\Users\pete\Documents\data\2013IEEE_GRSS_DF_Contest\'</span>;
-[dsCasi,dsLidar] = prtExampleReadGrss2013(grssDir);
-</pre>
-
-
-<p>Note, if you don&#8217;t want to use the PRT for anything, but would like to automatically read in the ROI file provided by GRSS, download the .ZIP at the end of this file, and just use:</p>
-
-
-<pre class="codeinput">
-regions = grssRoiRead(roiFile);
-</pre>
-
-
-<p>Each of these data sets has 664845 observations (from the 349x1905 dimensional image) the hyperspectral data has 144 dimensions, and the LIDAR data only has one dimension. The fine folks at GRSS were kind enough to provide labels for about 2832 pixels from the data sets.  These are from 15 different classes: grass_healthy, grass_stressed, grass_synthetic, tree, soil, water, residential, commercial, road, highway, railway, parking_lot1, parking_lot2, tennis_court, running_track.</p>
-
-
-<h2>A Note About UnLabeled Points<a name="3"></a></h2>
-
-
-<p>This data set contains a lot of unlabeled data.  Previously, to use the PRT with unlabeled data required ad-hoc fiddling with targets and classes.  But as of Jan 7, 2013, the PRT now handles unlabeled data inherently.  The PRT uses NaNs to represent unlabeled data points - e.g.,</p>
-
-
-<pre class="codeinput">numNan = length(find(isnan(dsCasi.targets))); <span class="comment">%there are 662013 unlabeled points</span>
-disp(numNan)
-</pre>
-
-
-<pre class="codeoutput">      662013
-
-</pre>
-
-
-<p>You can get a data set using only the labeled data using new mthods included specifically for unlabeled data:</p>
-
-
-<pre class="codeinput">dsUnLabeled = dsCasi.removeLabeled;
-dsLabeled = dsCasi.retainLabeled;
-</pre>
-
-
-<h2>Visualization of the Hyperspectral and LIDAR data<a name="5"></a></h2>
-
-
-<p>We can visualize the data in the form of the spatial image by re-sizing it to be the correct dimensionality.  For example, the next lines reshape the total intensity (SUM) of the hyperspectral data, and reshape the LIDAR data into the right size:</p>
-
-
-<pre class="codeinput">x = dsCasi.X;
-x = reshape(x',[144 imgSize]);
-imgCasi = sqrt(squeeze(sum(x.^2)));
-
-subplot(2,1,1);
-imagesc(imgCasi)
-title(<span class="string">'CASI Data'</span>);
-
-xLidar = dsLidar.X;
-imgLidar = reshape(xLidar,imgSize);
-subplot(2,1,2);
-imagesc(imgLidar)
-title(<span class="string">'LIDAR Data'</span>);
-</pre>
-
-
-<p><img vspace="5" hspace="5" src="http://newfolder.github.io/images/torrione_blog_Grss_01.png" alt=""> <h2>Hyperspectral Data<a name="6"></a></h2><p>The remainder of this blog entry will just show a few examples of how to use the PRT in combination with the CASI hyperspectral data; I want to be clear that we&rsquo;re not doing anything that&rsquo;s particularly well-motivated from a hyperspectral data perspective.  If you&rsquo;re interested, there&rsquo;s a great deal of research in the hyperspectral field &ndash; we can&rsquo;t summarize all the interesting stuff that&rsquo;s going on there, but if you&rsquo;re interested, check out some recent issues of WHISPERS: <a href="http://www.ieee-whispers.com/"><a href="http://www.ieee-whispers.com/">http://www.ieee-whispers.com/</a></a></p><p>In reality, the purpose of the data set from GRSS is to do data fusion, but for today we&rsquo;ll just be concerned with the hyperspectral data &ndash; dsCasi.</p><h2>PC Projections<a name="7"></a></h2><p>As an example, we can explore the data in principal component space. It&rsquo;s easy enought to do &ndash; we can treat the CASI part of the data just like any other prtDataSet.  Let&rsquo;s build an algorithm to do some standard pre-processing.  Each 144 dimensional hyperspectral vector is a row of the data matrix, so we can zero-mean, and normalize the standard deviation of each row with prtPreProcZeroMeanRows and prtPreProcStdNormalizeRows (which is new).</p><pre class="codeinput">preProc = prtPreProcZeroMeanRows + prtPreProcStdNormalizeRows(<span class="string">&lsquo;varianceOffset&rsquo;</span>,10) + prtPreProcPca(<span class="string">&lsquo;nComponents&rsquo;</span>,3);</p>
-
-<p>dsLabeled = dsCasi.retainLabeled;
-preProc = preProc.train(dsLabeled);
-dsPreProc = preProc.run(dsLabeled);
-subplot(1,1,1);
-plot(dsPreProc);
-legend(<span class="string">&lsquo;location&rsquo;</span>,<span class="string">&lsquo;EastOutside&rsquo;</span>)
-title(<span class="string">&lsquo;CASI Hyperspectral PC&rsquo;</span>);
-</pre><img vspace="5" hspace="5" src="http://newfolder.github.io/images/torrione_blog_Grss_02.png" alt=""> <p>Visualizing the data in PC space, we can see a few things.  First, all of the grass and tree samples are quite similar in PC space.  Also, synthetic grass looks nothing like the real grass classes &ndash; from a hyperspectral perspective, synthetic grass is clearly a man-made material, despite the color similarity between it and real grass.</p><h2>15-Class Classification<a name="9"></a></h2><p>Let&rsquo;s take a look at doing some classification.  Recall that GRSS labeled 15 unique classes for us; we can do standard machine learning with that data.  We will use similar pre-processing as above, and then a 15 component PLSDA classifier.  PLSDA is nice in this case, since it natively handles multi-class problems, and its quite fast.  We can probably get better results with a non-linear classifier, but for now we&rsquo;ll stick with PLSDA.</p><pre class="codeinput">dsLabeled = dsCasi.retainLabeled;</p>
-
-<p>algo = prtPreProcZeroMeanRows + prtPreProcStdNormalizeRows(<span class="string">&lsquo;varianceOffset&rsquo;</span>,10) + prtClassPlsda(<span class="string">&lsquo;nComponents&rsquo;</span>,15) + prtDecisionMap;
-yOut = algo.kfolds(dsLabeled,3);</p>
-
-<p>close <span class="string">all</span>;
-prtScoreConfusionMatrix(yOut);
-pc = prtScorePercentCorrect(yOut);
-title(sprintf(<span class="string">&lsquo;15 Class Classification; %.2f%% Correct&rsquo;</span>,pc*100));
-xlabel(<span class="string">&lsquo;&rsquo;</span>);
-rotateticklabel(gca,45);
-</pre><img vspace="5" hspace="5" src="http://newfolder.github.io/images/torrione_blog_Grss_03.png" alt=""> <p>Over 70% correct, with just this simple processing!  That&rsquo;s not too shabby.  Note, however, that the cross-validation approach we&rsquo;ve used here is a little suspect &ndash; a lot of the truth proivded to us was from neighboring pixels.  These pixels might be only about a meter apart, and two hyperspectral vectors from that close proximity, on, say, grass, will be expected to be much more correlated than two pixels from hundreds of meters apart.</p><p>One way to overcome this would be to build cross-validation folds using the spatial locations of the pixels; it would be interesting to see how cross-validation would work under that case.</p><h2>Evaluation<a name="11"></a></h2><p>To evaluate our algorithm we can visualize the performance on the entire larger hyperspectral image.  First, we run the algorithm, then get the estimated labels, and reshape to the right size for visualization.</p><pre class="codeinput">algo = algo.train(dsLabeled);
-yOutFull = algo.run(dsCasi);</p>
-
-<p>close <span class="string">all</span>;
-img = reshape(yOutFull.X,imgSize);
-imagesc(img);
-colorbar
-<span class="comment">% It&rsquo;s a little hard to judge, but this doesn&rsquo;t look completely</span>
-<span class="comment">% unreasonable&hellip;.</span>
-<span class="comment">%</span>
-<span class="comment">% The following shows only the points labeled as one of the two types of</span>
-<span class="comment">% grasses or trees</span>
-imagesc(img == 1 | img == 2 | img == 4);
-title(<span class="string">&lsquo;Points Classified as Grass (Healthy, and Stressed) or Tree&rsquo;</span>);
-</pre><img vspace="5" hspace="5" src="http://newfolder.github.io/images/torrione_blog_Grss_04.png" alt=""> <h2>Conclusions<a name="12"></a></h2><p>If you&rsquo;re interested in hyperspectral data, LIDAR, or data fusion, you should definitely check out the GRSS data set.  We hope the PRT files we&rsquo;re providing will help you get started.</p><p>There&rsquo;s a lot more to do with this data &ndash; we haven&rsquo;t even explored the LIDAR data yet, or how to fuse information from the two.  This data is also a prime candidate for semi-supervised learning (<a href="http://en.wikipedia.org/wiki/Semi-supervised_learning"><a href="http://en.wikipedia.org/wiki/Semi-supervised_learning">http://en.wikipedia.org/wiki/Semi-supervised_learning</a></a>), active learning (<a href="http://en.wikipedia.org/wiki/Active_learning"><a href="http://en.wikipedia.org/wiki/Active_learning">http://en.wikipedia.org/wiki/Active_learning</a></a>), or multi-task learning (<a href="http://en.wikipedia.org/wiki/Multi-task_learning"><a href="http://en.wikipedia.org/wiki/Multi-task_learning">http://en.wikipedia.org/wiki/Multi-task_learning</a></a>).</p><p>Hopefully we&rsquo;ll get a chance to delve more into this data set in the near future.  Let us know if you have any luck with this data!</p></p>
-
-<p><a href="http://newfolder.github.io/images/prtGrssBlog_2013_02_16.zip">Here&rsquo;s a link</a> to the .ZIP file with all the code you&rsquo;ll need.</p>
-
-<p><p>
-You may also need rotateticklabel.m, which is available from <a href="http://www.mathworks.com/matlabcentral/fileexchange/8722-rotate-tick-label">MATLAB Central</a></p>
 ]]></content>
   </entry>
   
