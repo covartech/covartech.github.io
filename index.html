@@ -129,6 +129,10 @@ span.syscmd { color:#B28C00 }
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2013/10/09/dude-wheres-my-help/">Dude Where&#8217;s My Help?</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2013/09/04/verbosestorage-and-a-little-prtalgorithm-plotting/">verboseStorage and a little prtAlgorithm plotting</a>
       </li>
     
@@ -142,10 +146,6 @@ span.syscmd { color:#B28C00 }
     
       <li class="post">
         <a href="/blog/2013/07/24/using-svms/">Using SVMs for Scientists and Engineers</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/07/15/observation-info/">Observation Info</a>
       </li>
     
   </ul>
@@ -175,7 +175,7 @@ span.syscmd { color:#B28C00 }
 
   <header>
     
-      <h1 class="entry-title"><a href="/blog/2013/09/04/verbosestorage-and-a-little-prtalgorithm-plotting/">verboseStorage and a Little prtAlgorithm Plotting</a></h1>
+      <h1 class="entry-title"><a href="/blog/2013/10/09/dude-wheres-my-help/">Dude Where&#8217;s My Help?</a></h1>
     
     
       <p class="meta">
@@ -191,186 +191,40 @@ span.syscmd { color:#B28C00 }
   
 
 
-<time datetime="2013-09-04T10:12:00-04:00" pubdate data-updated="true">Sep 4<span>th</span>, 2013</time>
+<time datetime="2013-10-09T20:46:00-04:00" pubdate data-updated="true">Oct 9<span>th</span>, 2013</time>
         
       </p>
     
   </header>
 
 
-  <div class="entry-content"><h2>What is verboseStorage?<a name="1"></a></h2>
+  <div class="entry-content"><p>Depending on your setup, you may have recently had one of the following happen:</p>
+
+<ol>
+<li>If you pulled the most recent version of the PRT since October 9, 2013, the PRT no longer shows up in the builtin MATLAB help-browser or</li>
+<li>If you updated to MATLAB 2013B, MATLAB freezes during startup.</p><p>Here&rsquo;s the skinny &ndash; there&rsquo;s a bug in the new version of MATLAB (2013B) that, according to TMW:</li>
+</ol>
 
 
-<p>verboseStorage is a logical flag of prtAction that specifies whether the training dataset should be stored within the action. The default value is true. Let&#8217;s see an example</p>
+<blockquote><p>This is a known issue with MATLAB 8.2 (R2013b) in the way that the MATLAB startup handles the info.xml file. There is a deadlock between the Help System initialization and the path changes (raised by the startup.m) at the start of MATLAB.</p></blockquote>
 
+<p>The result of this bug is that MATLAB seems to start up fine, but then just sits there, and never accepts inputs. This is pretty much as bad a bug as can be (besides wrong answers), since it makes MATLAB completely unusable, and you can&rsquo;t even easily determine what is causing it since&hellip; MATLAB is unusable.</p>
 
-<p>First let&#8217;s get a toy dataset and plot it to see what we are talking about.</p>
+<p>There is a patch to fix this bug, but if you don&rsquo;t have the patch already installed it&rsquo;s <strong>very</strong> difficult to figure out what is going wrong and it can be very frustrating.  Alternatively, removing (or moving) the XML files will let MATLAB startup, but the automatic help search, prtDoc, etc. will no longer work.  We thought that moving the XML files would cause the least amount of pain overall, so that&rsquo;s what we did.  Our XML files that used to live in prtRoot now live in fullfile(prtRoot,&lsquo;]xml&rsquo;) which is by default <strong>not</strong> on the prtPath, so should not cause you any issues.</p>
 
+<p>If you still want to use the PRT documentation in the MATLAB help browser, simply install the patch by following the instructions below, then move the .xml files from fullfile(prtRoot,&lsquo;]xml&rsquo;) to prtRoot. That should get everything running!</p>
 
-<pre class="codeinput">ds = prtDataGenUnimodal;
+<p>Alternatively just use prtDoc instead of doc to open up the help in your browser (or the MATLAB web browser, depending on your version of MATLAB). For example:</p>
 
-plot(ds);
+<pre class="codeinput">prtDoc <span class="string">prtClassRvm</span>
 </pre>
 
 
-<p><img vspace="5" hspace="5" src="/images/morton_blog_20130904_verboseStorage_01.png" alt=""> <p>Let&rsquo;s train a prtClassMap and plot the resulting decision contours.</p></p>
+<p>Sorry about any headaches anyone encountered, and a big &ldquo;thank you&rdquo; to Cesar from TMW who helped us get to the bottom of this quickly and professionally. Here are the patch installation instructions from Cesar:</p>
 
-<pre class="codeinput">c = train(prtClassMap, ds);
+<blockquote><p>To work around this issue, unzip the patch into your MATLAB root directory (most likely C:\Program Files\MATLAB\R2013b)</p></blockquote>
 
-plot(c)
-title(<span class="string">'Classifier Decision Contrours with Training Data Set'</span>,<span class="string">'FontSize'</span>,16);
-</pre>
-
-
-<p><img vspace="5" hspace="5" src="/images/morton_blog_20130904_verboseStorage_02.png" alt=""> <p>You can see that even though we only plotted the trained classifier, the dataset appears in the plot. The training dataset is stored in the read-only property dataSet</p></p>
-
-<pre class="codeinput">c.dataSet
-</pre>
-
-
-
-
-<pre class="codeoutput">ans = 
-  prtDataSetClass with properties:
-
-               nFeatures: 2
-             featureInfo: []
-                    data: [400x2 double]
-                 targets: [400x1 double]
-         observationInfo: []
-           nObservations: 400
-       nTargetDimensions: 1
-               isLabeled: 1
-                    name: 'prtDataGenUnimodal'
-             description: ''
-                userData: [1x1 struct]
-                nClasses: 2
-           uniqueClasses: [2x1 double]
-    nObservationsByClass: [2x1 double]
-              classNames: {2x1 cell}
-                 isUnary: 0
-                isBinary: 1
-                  isMary: 0
-               isZeroOne: 1
-            hasUnlabeled: 0
-</pre>
-
-
-
-
-<p>Let&#8217;s try this again, this time setting verboseStorage to false.</p>
-
-
-
-
-<pre class="codeinput">cVerboseStorageFalse = train(prtClassMap(<span class="string">'verboseStorage'</span>,false), ds);
-
-plot(cVerboseStorageFalse)
-title(<span class="string">'Classifier Decision Contrours without Training Data Set'</span>,<span class="string">'FontSize'</span>,16);
-</pre>
-
-
-<p><img vspace="5" hspace="5" src="/images/morton_blog_20130904_verboseStorage_03.png" alt=""> <p>Plotting the classifier contours without a data set is sometimes useful for examples. Now you can see that the classifiers dataSet property is empty.</p><pre class="codeinput">cVerboseStorageFalse.dataSet
-</pre></p>
-
-<pre class="codeoutput">ans =
-     []
-</pre>
-
-
-
-
-<h2>Data Set Summaries<a name="7"></a></h2>
-
-
-<p>A long time ago, earlier versions of the PRT had no verboseStorage property and the dataSet was always saved. You can see how this might create problems when dataSets get large. We originally used the dataSet to determine plot limits and other things for the classifier plot as well. Now we use the dataSetSummary field to create plots. All prtDataSets must have a summarize() method that yields a structure that can be used by other actions when plotting. You can see that for the above examples the value of verbose storage does not change the dataSetSummary. This is how prtClass.plot() knows what image bounds to use for plotting.</p>
-
-
-<pre class="codeinput">c.dataSetSummary
-
-cVerboseStorageFalse.dataSetSummary
-</pre>
-
-
-<pre class="codeoutput">ans = 
-          upperBounds: [4.7304 4.7950]
-          lowerBounds: [-4.0730 -3.5644]
-            nFeatures: 2
-    nTargetDimensions: 1
-        nObservations: 400
-        uniqueClasses: [2x1 double]
-             nClasses: 2
-               isMary: 0
-ans = 
-          upperBounds: [4.7304 4.7950]
-          lowerBounds: [-4.0730 -3.5644]
-            nFeatures: 2
-    nTargetDimensions: 1
-        nObservations: 400
-        uniqueClasses: [2x1 double]
-             nClasses: 2
-               isMary: 0
-</pre>
-
-
-<h2>prtAlgorithm<a name="8"></a></h2>
-
-
-<p>Since verboseStorgae is a property of prtAction it is also a property of prtAlgorithm. When you set the verboseStorage property for an algorithm you are actually setting the verboseStorgae property for all actions within the algorithm. If verboseStorgae is true for a prtAlgorithm you can use prtAlgorithm.plot() to explore what the data coming into any stage of the algorithm (the training data) looks like. Here is a quick example. Note: plotting prtAlgorithms requires graphviz. There may be issues with the current version of graphviz and the PRT. Please file an issue on github.</p>
-
-
-<pre class="codeinput">algo = prtPreProcZmuv + prtClassRvm/prtClassPlsda + prtClassLogisticDiscriminant;
-algo.verboseStorage = true; <span class="comment">% Just for clarity, this is the default</span>
-
-trainedAlgo = train(algo, ds);
-
-plot(trainedAlgo);
-</pre>
-
-
-<p><img vspace="5" hspace="5" src="/images/morton_blog_20130904_verboseStorage_04.png" alt=""> <p>Boxes with bold outlines are clickable. Double clicking those will open another figure and call plot on the action. For example double clicking on the RVM plots the resulting decision contours (and the dataSet after it has been preprocessed using ZMUV (notice the X and Y labels).</p><img vspace="5" hspace="5" src="/images/morton_blog_20130904_verboseStorage_rvm.png" alt=""></p>
-
-<p>Similarly you can plot the PLSDA decision contour (also with the preprocessed ZMUV data).</p>
-
-
-<p><img vspace="5" hspace="5" src="/images/morton_blog_20130904_verboseStorage_plsda.png" alt=""></p>
-
-<p>The fusion of the two classifiers is shown be clicking on the prtClassLogisticDiscriminant.</p>
-
-
-<p><img vspace="5" hspace="5" src="/images/morton_blog_20130904_verboseStorage_Fusion.png" alt=""></p>
-
-<p>The total confidence provided by the output of the algorithm is shown as a function of the input dataSet by clicking on the output block. Notice here that the features are the original input features and the contours show the contours of the entire algorithm.</p>
-
-
-<p><img vspace="5" hspace="5" src="/images/morton_blog_20130904_verboseStorage_Total.png" alt=""></p>
-
-<p>If we repeat the whole process with verboseStorgae false you will see that the resulting plots do not have the dataSet just like before.</p>
-
-
-
-
-<pre class="codeinput">algo = prtPreProcZmuv + prtClassRvm/prtClassPlsda + prtClassLogisticDiscriminant;
-algo.verboseStorage = false; <span class="comment">% This will feed through to all actions</span>
-
-trainedAlgo = train(algo, ds);
-
-plot(trainedAlgo);
-</pre>
-
-
-
-
-<p>As an example here is just the final output contours of the algorithm.</p>
-
-
-<p><img vspace="5" hspace="5" src="/images/morton_blog_20130904_verboseStorage_total_noData.png" alt=""></p>
-
-<h2>Conclusions<a name="14"></a></h2>
-
-
-<p>Well that&#8217;s verboseStorage. If you have a big dataset you probably want to turn it off but if you don&#8217;t it can be useful to fully explore an algorithm. Let us know what you think.</p>
-
+<p><a href="/misc/attachment_968648_13b_2013-09-20.zip">Patch Download</a></p>
 </div>
   
   

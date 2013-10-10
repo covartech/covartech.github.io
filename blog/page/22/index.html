@@ -129,6 +129,10 @@ span.syscmd { color:#B28C00 }
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2013/10/09/dude-wheres-my-help/">Dude Where&#8217;s My Help?</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2013/09/04/verbosestorage-and-a-little-prtalgorithm-plotting/">verboseStorage and a little prtAlgorithm plotting</a>
       </li>
     
@@ -142,10 +146,6 @@ span.syscmd { color:#B28C00 }
     
       <li class="post">
         <a href="/blog/2013/07/24/using-svms/">Using SVMs for Scientists and Engineers</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/07/15/observation-info/">Observation Info</a>
       </li>
     
   </ul>
@@ -175,7 +175,7 @@ span.syscmd { color:#B28C00 }
 
   <header>
     
-      <h1 class="entry-title"><a href="/blog/2013/02/11/combining-actions/">Combining Actions</a></h1>
+      <h1 class="entry-title"><a href="/blog/2013/02/16/ieee-grss-hyperspectral-data/">IEEE GRSS Hyperspectral Data</a></h1>
     
     
       <p class="meta">
@@ -191,14 +191,15 @@ span.syscmd { color:#B28C00 }
   
 
 
-<time datetime="2013-02-11T13:46:00-05:00" pubdate data-updated="true">Feb 11<span>th</span>, 2013</time>
+<time datetime="2013-02-16T20:06:00-05:00" pubdate data-updated="true">Feb 16<span>th</span>, 2013</time>
         
       </p>
     
   </header>
 
 
-  <div class="entry-content"><p>Hi!  Today I&#8217;d like to talk about how you can use the PRT to combine actions together to form algorithms.  This is an important and powerful tool in the PRT, and understanding it can solve a lot of headaches for you.</p>
+  <div class="entry-content"><p>
+Hi everyone.  Outside of software development, we also do some work in geoscience and remote sensing.  As a result, we were very excited to see an announcement from the IEEE GRSS that they were making some new data sets available - in particular, a hyperspectral data set, and a LIDAR data set (if you&#8217;re not familiar with these technologies, see here: <a href="http://en.wikipedia.org/wiki/Hyperspectral_imaging">http://en.wikipedia.org/wiki/Hyperspectral_imaging</a> and <a href="http://en.wikipedia.org/wiki/LIDAR">http://en.wikipedia.org/wiki/LIDAR</a>).</p>
 
 
 <!--/introduction-->
@@ -207,106 +208,121 @@ span.syscmd { color:#B28C00 }
 <h2>Contents</h2>
 
 
-<div><ul><li><a href="#1">An Example</a></li><li><a href="#5">The Problem</a></li><li><a href="#9">Combining Actions into Algorithms</a></li><li><a href="#13">Using Algorithms</a></li></ul></div>
+<div><ul><li><a href="#1">Getting Started</a></li><li><a href="#3">A Note About UnLabeled Points</a></li><li><a href="#5">Visualization of the Hyperspectral and LIDAR data</a></li><li><a href="#6">Hyperspectral Data</a></li><li><a href="#7">PC Projections</a></li><li><a href="#9">15-Class Classification</a></li><li><a href="#11">Evaluation</a></li><li><a href="#12">Conclusions</a></li></ul></div>
 
 
-<h2>An Example<a name="1"></a></h2>
+<h2>Getting Started<a name="1"></a></h2>
 
 
-<p>Let&#8217;s start with a concrete example.  Say we want to classify some very high dimensional data.  We&#8217;ll start with the following:</p>
+<p>We&#8217;ve made some M-files that will load in the data for you (see the .ZIP file at the end of this post), but you&#8217;ll need to go to the GRSS website to download the data from here first: <a href="http://hyperspectral.ee.uh.edu/?page_id=459">http://hyperspectral.ee.uh.edu/?page_id=459</a>).</p>
 
 
-<pre class="codeinput">nFeatures = 200;
-ds = prtDataGenUnimodal;
-xNoise = randn(ds.nObservations,nFeatures);
-ds.X = cat(2,ds.X,xNoise); <span class="comment">%add nFeatures meaningless features</span>
+<p>To load the data, first download the .ZIP file at the end of this post, then run the following.  But change the line below to point to the right directory, so for example, I have a file C:\Users\pete\Documents\data\2013IEEE_GRSS_DF_Contest\2013_IEEE_GRSS_DF_Contest_CASI.tif</p>
+
+
+<pre class="codeinput">imgSize = [349 1905];
+grssDir = <span class="string">'C:\Users\pete\Documents\data\2013IEEE_GRSS_DF_Contest\'</span>;
+[dsCasi,dsLidar] = prtExampleReadGrss2013(grssDir);
 </pre>
 
 
-<p>If we try and classify this with a GLRT, for example, we&#8217;re going to run into trouble, since there are more features than there are observations, so we can&#8217;t generate a full-rank covariance structure.  For example, using the prtAction prtClassGlrt, we might write this:</p>
+<p>Note, if you don&#8217;t want to use the PRT for anything, but would like to automatically read in the ROI file provided by GRSS, download the .ZIP at the end of this file, and just use:</p>
 
 
-<pre class="codeinput">glrt = prtClassGlrt;
-glrt = glrt.train(ds);
-<span class="keyword">try</span>
-   yOut = glrt.run(ds);  <span class="comment">%This causes errors</span>
-<span class="keyword">catch</span> ME
-    disp(<span class="string">'Error encountered:'</span>)
-    disp(ME);
-<span class="keyword">end</span>
+<pre class="codeinput">
+regions = grssRoiRead(roiFile);
 </pre>
 
 
-<pre class="codeoutput">Warning: Covariance matrix is not positive definite. This may cause errors.
-Consider modifying "covarianceStructure". 
-Warning: Covariance matrix is not positive definite. This may cause errors.
-Consider modifying "covarianceStructure". 
-Error encountered:
-  MException
-  Properties:
-    identifier: 'prtRvUtilMvnLogPdf:BadCovariance'
-       message: 'SIGMA must be symmetric and positive definite.'
-         cause: {0x1 cell}
-         stack: [9x1 struct]
+<p>Each of these data sets has 664845 observations (from the 349x1905 dimensional image) the hyperspectral data has 144 dimensions, and the LIDAR data only has one dimension. The fine folks at GRSS were kind enough to provide labels for about 2832 pixels from the data sets.  These are from 15 different classes: grass_healthy, grass_stressed, grass_synthetic, tree, soil, water, residential, commercial, road, highway, railway, parking_lot1, parking_lot2, tennis_court, running_track.</p>
+
+
+<h2>A Note About UnLabeled Points<a name="3"></a></h2>
+
+
+<p>This data set contains a lot of unlabeled data.  Previously, to use the PRT with unlabeled data required ad-hoc fiddling with targets and classes.  But as of Jan 7, 2013, the PRT now handles unlabeled data inherently.  The PRT uses NaNs to represent unlabeled data points - e.g.,</p>
+
+
+<pre class="codeinput">numNan = length(find(isnan(dsCasi.targets))); <span class="comment">%there are 662013 unlabeled points</span>
+disp(numNan)
+</pre>
+
+
+<pre class="codeoutput">      662013
 
 </pre>
 
 
-<p>We can always use dimension-reduction techniques to reduce the number of features in our data set, and then evaluate performance.  For example:</p>
+<p>You can get a data set using only the labeled data using new mthods included specifically for unlabeled data:</p>
 
 
-<pre class="codeinput">pca = prtPreProcPca(<span class="string">'nComponents'</span>,2);
-pca = pca.train(ds);
-dsPca = pca.run(ds);
-plot(dsPca);
+<pre class="codeinput">dsUnLabeled = dsCasi.removeLabeled;
+dsLabeled = dsCasi.retainLabeled;
 </pre>
 
 
-<p><img vspace="5" hspace="5" src="/images/torrione_blog_combiningActions_01.png" alt=""> <p>Now we can evaluate our GLRT on the dsPca:</p><pre class="codeinput">glrt = prtClassGlrt;
-yOutKfolds = glrt.kfolds(dsPca,10);
-[pf,pd] = prtScoreRoc(yOutKfolds);
-h = plot(pf,pd);
-set(h,<span class="string">&lsquo;linewidth&rsquo;</span>,3);
-title(<span class="string">&lsquo;Example GLRT ROC Curve (Running on PCA Features)&rsquo;</span>);
-</pre><img vspace="5" hspace="5" src="/images/torrione_blog_combiningActions_02.png" alt=""> <h2>The Problem<a name="5"></a></h2><p>There&rsquo;s a problem in the above, though.  Even though we cross-validated the GLRT using 3 random folds, we didn&rsquo;t do the same thing with the PCA. This is technically not fair, since the PCA part of the algorithm was trained using all the data.</p><p>Maybe we can get around this like so:</p><pre class="codeinput">pca = prtPreProcPca(<span class="string">&lsquo;nComponents&rsquo;</span>,2);
-dsPca = pca.kfolds(ds,10);
-</pre><p>But now, when we do:</p><pre class="codeinput">glrt = prtClassGlrt;
-yOutKfolds = glrt.kfolds(dsPca,10);
-[pf,pd] = prtScoreRoc(yOutKfolds);
-h = plot(pf,pd);
-set(h,<span class="string">&lsquo;linewidth&rsquo;</span>,3);
-title(<span class="string">&lsquo;This is no good&hellip;&rsquo;</span>);
-</pre><img vspace="5" hspace="5" src="/images/torrione_blog_combiningActions_03.png" alt=""> <p>We have a problem!  At every fold, we learn a unique set of PCA loadings. Since PCA loadings have arbitrary sign (+/&ndash;), the outputs across all these folds will overlap!</p><pre class="codeinput">plot(dsPca)
-</pre><img vspace="5" hspace="5" src="/images/torrione_blog_combiningActions_04.png" alt=""> <p>The underlying problem is that there&rsquo;s no guarantee that the folds used for PCA and GLRT evaluation were the same.  We can get around <b>that</b> if we specified the folds, and wrote our own cross-validate specifically for this new process we&rsquo;ve made, but suddenly this is getting complicated.</p><p>And what if we had an even more complicated process, including other pre-processing streams, feature selection, classifiers and decision-makers?  Suddenly our code is going to be a mess!</p><h2>Combining Actions into Algorithms<a name="9"></a></h2><p>At the heart of the problem outlined above is that the PCA and GLRT parts of our process weren&rsquo;t considered as two parts of the same process &ndash; they were two separate variables, and the PRT and MATLAB didn&rsquo;t know that they should work together.</p><p>Since this problem is so common, the PRT provides an easy way to combine each individual part of a process (prtActions) into one big process (a prtAlgorithm).  This is easily done using the &ldquo;+&rdquo; operator:</p><pre class="codeinput">pcaGlrt = prtPreProcPca(<span class="string">&lsquo;nComponents&rsquo;</span>,2) + prtClassGlrt;
-</pre><p>If you&rsquo;re not used to object oriented programming, the above might look a little weird.  But it&rsquo;s straightforward &ndash; we&rsquo;ve defined &ldquo;plus&rdquo; (&ldquo;+&rdquo;) for prtActions (e.g., prtPreProcPca) to mean &ldquo;Combine these into one object, where that object will perform each action in sequence from left to right&rdquo;.  Technically this returns a special kind of prtAction, called a prtAlgorithm.  That&rsquo;s just the date type we use to store a bunch of actions.  You can see that here:</p><pre class="codeinput">disp(pcaGlrt)
-</pre><pre class="codeoutput">  prtAlgorithm</p>
+<h2>Visualization of the Hyperspectral and LIDAR data<a name="5"></a></h2>
 
-<p>  Properties:</p>
 
-<pre><code>                name: 'PRT Algorithm'
-    nameAbbreviation: 'ALGO'
-        isSupervised: 1
-isCrossValidateValid: 1
-          actionCell: {2x1 cell}
-  connectivityMatrix: [4x4 logical]
-      verboseStorage: 1
-     showProgressBar: 1
-           isTrained: 0
-      dataSetSummary: []
-             dataSet: []
-            userData: [1x1 struct]
-</code></pre>
+<p>We can visualize the data in the form of the spatial image by re-sizing it to be the correct dimensionality.  For example, the next lines reshape the total intensity (SUM) of the hyperspectral data, and reshape the LIDAR data into the right size:</p>
 
-<p></pre><p>You can visualize the structure of the algorithm using PLOT:</p><pre class="codeinput">plot(pcaGlrt)
-</pre><img vspace="5" hspace="5" src="/images/torrione_blog_combiningActions_05.png" alt=""> <p>You can combine any number of prtActions into an algorithm like this, so, although its silly, this is technically a valid command:</p><pre class="codeinput">sillyAlgo = prtPreProcZmuv + prtPreProcHistEq + prtPreProcPca + prtClassGlrt;
-plot(sillyAlgo)
-</pre><img vspace="5" hspace="5" src="/images/torrione_blog_combiningActions_06.png" alt=""> <h2>Using Algorithms<a name="13"></a></h2><p>So we&rsquo;ve made a prtAlgorithm.  Now what?  Well, anything you can do to a prtAction, you can do with a prtAlgorithm.  What does that mean?  Methods like plot, kfolds, and crossValidate all work exactly the same as they do with regular prtActions.  And they make your life much simpler than what we had to do above:</p><pre class="codeinput">pcaGlrt = prtPreProcPca(<span class="string">&lsquo;nComponents&rsquo;</span>,2) + prtClassGlrt;
-yOutKfolds = pcaGlrt.kfolds(ds,10);
-[pf,pd] = prtScoreRoc(yOutKfolds);
-h = plot(pf,pd);
-set(h,<span class="string">&lsquo;linewidth&rsquo;</span>,3);
-title(<span class="string">&lsquo;ROC Curve for a prtAlgorithm (PCA + GLRT)&rsquo;</span>);
-</pre><img vspace="5" hspace="5" src="/images/torrione_blog_combiningActions_07.png" alt=""> <p>The results in the ROC curve above were generated using 10-folds cross-validation on the combination of PCA and GLRT.  At each fold, 9/10ths of the data were used to train the PCA and GLRT, and 1/10th was used for evaluation.</p><p>prtAlgorithms are a very powerful tool for pattern recognition, and we hope this blog post helps clear up how to make and use them!</p><p>Let us know if you have any questions or comments.</p></p>
+
+<pre class="codeinput">x = dsCasi.X;
+x = reshape(x',[144 imgSize]);
+imgCasi = sqrt(squeeze(sum(x.^2)));
+
+subplot(2,1,1);
+imagesc(imgCasi)
+title(<span class="string">'CASI Data'</span>);
+
+xLidar = dsLidar.X;
+imgLidar = reshape(xLidar,imgSize);
+subplot(2,1,2);
+imagesc(imgLidar)
+title(<span class="string">'LIDAR Data'</span>);
+</pre>
+
+
+<p><img vspace="5" hspace="5" src="/images/torrione_blog_Grss_01.png" alt=""> <h2>Hyperspectral Data<a name="6"></a></h2><p>The remainder of this blog entry will just show a few examples of how to use the PRT in combination with the CASI hyperspectral data; I want to be clear that we&rsquo;re not doing anything that&rsquo;s particularly well-motivated from a hyperspectral data perspective.  If you&rsquo;re interested, there&rsquo;s a great deal of research in the hyperspectral field &ndash; we can&rsquo;t summarize all the interesting stuff that&rsquo;s going on there, but if you&rsquo;re interested, check out some recent issues of WHISPERS: <a href="http://www.ieee-whispers.com/"><a href="http://www.ieee-whispers.com/">http://www.ieee-whispers.com/</a></a></p><p>In reality, the purpose of the data set from GRSS is to do data fusion, but for today we&rsquo;ll just be concerned with the hyperspectral data &ndash; dsCasi.</p><h2>PC Projections<a name="7"></a></h2><p>As an example, we can explore the data in principal component space. It&rsquo;s easy enought to do &ndash; we can treat the CASI part of the data just like any other prtDataSet.  Let&rsquo;s build an algorithm to do some standard pre-processing.  Each 144 dimensional hyperspectral vector is a row of the data matrix, so we can zero-mean, and normalize the standard deviation of each row with prtPreProcZeroMeanRows and prtPreProcStdNormalizeRows (which is new).</p><pre class="codeinput">preProc = prtPreProcZeroMeanRows + prtPreProcStdNormalizeRows(<span class="string">&lsquo;varianceOffset&rsquo;</span>,10) + prtPreProcPca(<span class="string">&lsquo;nComponents&rsquo;</span>,3);</p>
+
+<p>dsLabeled = dsCasi.retainLabeled;
+preProc = preProc.train(dsLabeled);
+dsPreProc = preProc.run(dsLabeled);
+subplot(1,1,1);
+plot(dsPreProc);
+legend(<span class="string">&lsquo;location&rsquo;</span>,<span class="string">&lsquo;EastOutside&rsquo;</span>)
+title(<span class="string">&lsquo;CASI Hyperspectral PC&rsquo;</span>);
+</pre><img vspace="5" hspace="5" src="/images/torrione_blog_Grss_02.png" alt=""> <p>Visualizing the data in PC space, we can see a few things.  First, all of the grass and tree samples are quite similar in PC space.  Also, synthetic grass looks nothing like the real grass classes &ndash; from a hyperspectral perspective, synthetic grass is clearly a man-made material, despite the color similarity between it and real grass.</p><h2>15-Class Classification<a name="9"></a></h2><p>Let&rsquo;s take a look at doing some classification.  Recall that GRSS labeled 15 unique classes for us; we can do standard machine learning with that data.  We will use similar pre-processing as above, and then a 15 component PLSDA classifier.  PLSDA is nice in this case, since it natively handles multi-class problems, and its quite fast.  We can probably get better results with a non-linear classifier, but for now we&rsquo;ll stick with PLSDA.</p><pre class="codeinput">dsLabeled = dsCasi.retainLabeled;</p>
+
+<p>algo = prtPreProcZeroMeanRows + prtPreProcStdNormalizeRows(<span class="string">&lsquo;varianceOffset&rsquo;</span>,10) + prtClassPlsda(<span class="string">&lsquo;nComponents&rsquo;</span>,15) + prtDecisionMap;
+yOut = algo.kfolds(dsLabeled,3);</p>
+
+<p>close <span class="string">all</span>;
+prtScoreConfusionMatrix(yOut);
+pc = prtScorePercentCorrect(yOut);
+title(sprintf(<span class="string">&lsquo;15 Class Classification; %.2f%% Correct&rsquo;</span>,pc*100));
+xlabel(<span class="string">&lsquo;&rsquo;</span>);
+rotateticklabel(gca,45);
+</pre><img vspace="5" hspace="5" src="/images/torrione_blog_Grss_03.png" alt=""> <p>Over 70% correct, with just this simple processing!  That&rsquo;s not too shabby.  Note, however, that the cross-validation approach we&rsquo;ve used here is a little suspect &ndash; a lot of the truth proivded to us was from neighboring pixels.  These pixels might be only about a meter apart, and two hyperspectral vectors from that close proximity, on, say, grass, will be expected to be much more correlated than two pixels from hundreds of meters apart.</p><p>One way to overcome this would be to build cross-validation folds using the spatial locations of the pixels; it would be interesting to see how cross-validation would work under that case.</p><h2>Evaluation<a name="11"></a></h2><p>To evaluate our algorithm we can visualize the performance on the entire larger hyperspectral image.  First, we run the algorithm, then get the estimated labels, and reshape to the right size for visualization.</p><pre class="codeinput">algo = algo.train(dsLabeled);
+yOutFull = algo.run(dsCasi);</p>
+
+<p>close <span class="string">all</span>;
+img = reshape(yOutFull.X,imgSize);
+imagesc(img);
+colorbar
+<span class="comment">% It&rsquo;s a little hard to judge, but this doesn&rsquo;t look completely</span>
+<span class="comment">% unreasonable&hellip;.</span>
+<span class="comment">%</span>
+<span class="comment">% The following shows only the points labeled as one of the two types of</span>
+<span class="comment">% grasses or trees</span>
+imagesc(img == 1 | img == 2 | img == 4);
+title(<span class="string">&lsquo;Points Classified as Grass (Healthy, and Stressed) or Tree&rsquo;</span>);
+</pre><img vspace="5" hspace="5" src="/images/torrione_blog_Grss_04.png" alt=""> <h2>Conclusions<a name="12"></a></h2><p>If you&rsquo;re interested in hyperspectral data, LIDAR, or data fusion, you should definitely check out the GRSS data set.  We hope the PRT files we&rsquo;re providing will help you get started.</p><p>There&rsquo;s a lot more to do with this data &ndash; we haven&rsquo;t even explored the LIDAR data yet, or how to fuse information from the two.  This data is also a prime candidate for semi-supervised learning (<a href="http://en.wikipedia.org/wiki/Semi-supervised_learning"><a href="http://en.wikipedia.org/wiki/Semi-supervised_learning">http://en.wikipedia.org/wiki/Semi-supervised_learning</a></a>), active learning (<a href="http://en.wikipedia.org/wiki/Active_learning"><a href="http://en.wikipedia.org/wiki/Active_learning">http://en.wikipedia.org/wiki/Active_learning</a></a>), or multi-task learning (<a href="http://en.wikipedia.org/wiki/Multi-task_learning"><a href="http://en.wikipedia.org/wiki/Multi-task_learning">http://en.wikipedia.org/wiki/Multi-task_learning</a></a>).</p><p>Hopefully we&rsquo;ll get a chance to delve more into this data set in the near future.  Let us know if you have any luck with this data!</p></p>
+
+<p><a href="/images/prtGrssBlog_2013_02_16.zip">Here&rsquo;s a link</a> to the .ZIP file with all the code you&rsquo;ll need.</p>
+
+<p><p>
+You may also need rotateticklabel.m, which is available from <a href="http://www.mathworks.com/matlabcentral/fileexchange/8722-rotate-tick-label">MATLAB Central</a></p>
 </div>
   
   

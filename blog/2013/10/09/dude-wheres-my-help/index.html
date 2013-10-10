@@ -5,11 +5,11 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>Spectral Clustering - PRT Blog</title>
+  <title>Dude Where's My Help? - PRT Blog</title>
   <meta name="author" content="Kenneth Morton and Peter Torrione">
 
   
-  <meta name="description" content="Spectral Clustering Jun 24th, 2013 Hi everyone, A few weeks ago we talked about clustering with K-Means, and using K-Means distances as a pre- &hellip;">
+  <meta name="description" content="Dude Where's My Help? Oct 9th, 2013 Depending on your setup, you may have recently had one of the following happen: If you pulled the most recent &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -18,7 +18,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://newfolder.github.io/blog/2013/06/24/spectral-clustering">
+  <link rel="canonical" href="http://newfolder.github.io/blog/2013/10/09/dude-wheres-my-help">
   <link href="/favicon.ico" rel="icon">
   
   <link href="/assets/bootstrap/css/spacelab.min.css" rel="stylesheet" type="text/css">
@@ -111,7 +111,7 @@ span.syscmd { color:#B28C00 }
 
   <header>
     
-      <h1 class="entry-title">Spectral Clustering</h1>
+      <h1 class="entry-title">Dude Where's My Help?</h1>
     
     
       <p class="meta">
@@ -127,83 +127,40 @@ span.syscmd { color:#B28C00 }
   
 
 
-<time datetime="2013-06-24T13:33:00-04:00" pubdate data-updated="true">Jun 24<span>th</span>, 2013</time>
+<time datetime="2013-10-09T20:46:00-04:00" pubdate data-updated="true">Oct 9<span>th</span>, 2013</time>
         
       </p>
     
   </header>
 
 
-  <div class="entry-content"><p>Hi everyone,</p>
+  <div class="entry-content"><p>Depending on your setup, you may have recently had one of the following happen:</p>
+
+<ol>
+<li>If you pulled the most recent version of the PRT since October 9, 2013, the PRT no longer shows up in the builtin MATLAB help-browser or</li>
+<li>If you updated to MATLAB 2013B, MATLAB freezes during startup.</p><p>Here&rsquo;s the skinny &ndash; there&rsquo;s a bug in the new version of MATLAB (2013B) that, according to TMW:</li>
+</ol>
 
 
-<p>A few weeks ago we talked about clustering with K-Means, and using K-Means distances as a pre-processing step.  K-Means is great when euclidean distance in your input feature-space is meaningful, but what if your data instead lies on a high-dimensional manifold?</p>
+<blockquote><p>This is a known issue with MATLAB 8.2 (R2013b) in the way that the MATLAB startup handles the info.xml file. There is a deadlock between the Help System initialization and the path changes (raised by the startup.m) at the start of MATLAB.</p></blockquote>
 
+<p>The result of this bug is that MATLAB seems to start up fine, but then just sits there, and never accepts inputs. This is pretty much as bad a bug as can be (besides wrong answers), since it makes MATLAB completely unusable, and you can&rsquo;t even easily determine what is causing it since&hellip; MATLAB is unusable.</p>
 
-<p>We recently introduced some new clustering and distance-metric approaches suitable for these cases - spectral clustering.  The theory behind spectral clustering is beyond the scope of this entry, but as usual, the wikipedia page has a good summary - <a href="http://en.wikipedia.org/wiki/Spectral_clustering">http://en.wikipedia.org/wiki/Spectral_clustering</a>.</p>
+<p>There is a patch to fix this bug, but if you don&rsquo;t have the patch already installed it&rsquo;s <strong>very</strong> difficult to figure out what is going wrong and it can be very frustrating.  Alternatively, removing (or moving) the XML files will let MATLAB startup, but the automatic help search, prtDoc, etc. will no longer work.  We thought that moving the XML files would cause the least amount of pain overall, so that&rsquo;s what we did.  Our XML files that used to live in prtRoot now live in fullfile(prtRoot,&lsquo;]xml&rsquo;) which is by default <strong>not</strong> on the prtPath, so should not cause you any issues.</p>
 
+<p>If you still want to use the PRT documentation in the MATLAB help browser, simply install the patch by following the instructions below, then move the .xml files from fullfile(prtRoot,&lsquo;]xml&rsquo;) to prtRoot. That should get everything running!</p>
 
-<!--/introduction-->
+<p>Alternatively just use prtDoc instead of doc to open up the help in your browser (or the MATLAB web browser, depending on your version of MATLAB). For example:</p>
 
-
-
-
-<p>Although I&#8217;m writing the blog entry, all of the code in this demo was written by one of our graduate students @ Duke University - Dmitry Kalika, who&#8217;s a new convert to the PRT!  Welcome Dima!</p>
-
-
-
-
-<h2>Contents</h2>
-
-
-<div><ul><li><a href="#1">References</a></li><li><a href="#2">prtPreProcSpectralEmbed</a></li><li><a href="#3">prtClusterSpectralKmeans</a></li><li><a href="#4">Wrapping Up</a></li></ul></div>
-
-
-<h2>References<a name="1"></a></h2>
-
-
-<p>Throughout the following and the code for spectral clustering in the PRT, we make use of the excellent Bengio, 2003 paper - Out-of-Sample Extensions for LLE, Isomap, MDS, Eigenmaps, and Spectral Clustering <a href="http://www.iro.umontreal.ca/~lisa/pointeurs/tr1238.pdf">http://www.iro.umontreal.ca/~lisa/pointeurs/tr1238.pdf</a></p>
-
-
-<p>In particular, we use that extention for performing cluster approximation for out-of-sample embedding estimation.</p>
-
-
-<h2>prtPreProcSpectralEmbed<a name="2"></a></h2>
-
-
-<p>Spectral clustering typically relies upon what&#8217;s referred to as a spectral embedding; this is a low-dimensional representation of a high-dimensional proximity graph.</p>
-
-
-<p>We can use features derived from spectral embeddings like so:</p>
-
-
-
-
-<pre class="codeinput">ds = prtDataGenBimodal;
-dsTest = prtDataGenBimodal(10);
-algo = prtPreProcSpectralEmbed;
-algo = algo.train(ds);
-yOut = algo.run(ds);
-plot(yOut);
+<pre class="codeinput">prtDoc <span class="string">prtClassRvm</span>
 </pre>
 
 
-<p><img vspace="5" hspace="5" src="/images/torrione_blog_2013_06_17_01.png" alt=""> <h2>prtClusterSpectralKmeans<a name="3"></a></h2><p>While spectral embedding provides a feature space for additional processing, we can also use prtClusterSpectralKmeans to perform direct clustering in the spectral space.</p><p>For example, the Moon data set (see prtDataGenMoon) creates two crescent moon-shapes that are not well-separated by euclidean distance metrics, but can be easily separated in spectral-cluster space.</p><pre class="codeinput">ds = prtDataGenMoon;
-preProc = prtPreProcZmuv;
-preProc = preProc.train(ds);
-dsNorm = preProc.run(ds);
-kmeans = prtClusterKmeans(<span class="string">&lsquo;nClusters&rsquo;</span>,2);
-kmeansSpect = prtClusterSpectralKmeans(<span class="string">&lsquo;nClusters&rsquo;</span>,2);
-kmeans = kmeans.train(dsNorm);
-kmeansSpect = kmeansSpect.train(dsNorm);
-subplot(1,2,1);
-plot(kmeans);
-title(<span class="string">&lsquo;K-Means Clusters&rsquo;</span>);
-subplot(1,2,2);
-plot(kmeansSpect)
-title(<span class="string">&lsquo;Spect-K-Means Clusters&rsquo;</span>);
-</pre>
-<img vspace="5" hspace="5" src="/images/torrione_blog_2013_06_17_02.png" alt=""> <h2>Wrapping Up<a name="4"></a></h2><p>Spectral clustering provides a very useful technique for non-linear and non-euclidean clustering.  Right now our spectral clustering approaches are constrained  to using RBF kernels, though there&rsquo;s nothing that prevents you from using alternate kernels in future versions.</p><p>As always, let us know if you have questions or comments.</p></p>
+<p>Sorry about any headaches anyone encountered, and a big &ldquo;thank you&rdquo; to Cesar from TMW who helped us get to the bottom of this quickly and professionally. Here are the patch installation instructions from Cesar:</p>
+
+<blockquote><p>To work around this issue, unzip the patch into your MATLAB root directory (most likely C:\Program Files\MATLAB\R2013b)</p></blockquote>
+
+<p><a href="/misc/attachment_968648_13b_2013-09-20.zip">Patch Download</a></p>
 </div>
 
 
@@ -229,7 +186,7 @@ title(<span class="string">&lsquo;Spect-K-Means Clusters&rsquo;</span>);
   
 
 
-<time datetime="2013-06-24T13:33:00-04:00" pubdate data-updated="true">Jun 24<span>th</span>, 2013</time>
+<time datetime="2013-10-09T20:46:00-04:00" pubdate data-updated="true">Oct 9<span>th</span>, 2013</time>
         
 
 
@@ -245,10 +202,8 @@ title(<span class="string">&lsquo;Spect-K-Means Clusters&rsquo;</span>);
       
       <p class="meta">
         
-          <a class="basic-alignment pull-left" href="/blog/2013/06/13/prtclustermeanshift/" title="Previous Post: prtClusterMeanShift">&laquo; prtClusterMeanShift</a>
+          <a class="basic-alignment pull-left" href="/blog/2013/09/04/verbosestorage-and-a-little-prtalgorithm-plotting/" title="Previous Post: verboseStorage and a little prtAlgorithm plotting">&laquo; verboseStorage and a little prtAlgorithm plotting</a>
         
-        
-          <a class="basic-alignment pull-right" href="/blog/2013/07/08/twoclassparadigm/" title="Next Post: twoClassParadigm">twoClassParadigm &raquo;</a>
         
       </p>
     </footer>
@@ -321,8 +276,8 @@ title(<span class="string">&lsquo;Spect-K-Means Clusters&rsquo;</span>);
       
         
         // var disqus_developer = 1;
-        var disqus_identifier = 'http://newfolder.github.io/blog/2013/06/24/spectral-clustering/';
-        var disqus_url = 'http://newfolder.github.io/blog/2013/06/24/spectral-clustering/';
+        var disqus_identifier = 'http://newfolder.github.io/blog/2013/10/09/dude-wheres-my-help/';
+        var disqus_url = 'http://newfolder.github.io/blog/2013/10/09/dude-wheres-my-help/';
         var disqus_script = 'embed.js';
       
     (function () {

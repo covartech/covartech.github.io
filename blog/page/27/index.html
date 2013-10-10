@@ -18,7 +18,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://newfolder.github.io/blog/page/18">
+  <link rel="canonical" href="http://newfolder.github.io/blog/page/27">
   <link href="/favicon.ico" rel="icon">
   
   <link href="/assets/bootstrap/css/spacelab.min.css" rel="stylesheet" type="text/css">
@@ -175,7 +175,7 @@ span.syscmd { color:#B28C00 }
 
   <header>
     
-      <h1 class="entry-title"><a href="/blog/2013/03/19/feature-selection/">Feature Selection - prtFeatSelSfs</a></h1>
+      <h1 class="entry-title"><a href="/blog/2013/01/21/hi/">Hi</a></h1>
     
     
       <p class="meta">
@@ -191,105 +191,28 @@ span.syscmd { color:#B28C00 }
   
 
 
-<time datetime="2013-03-19T21:58:00-04:00" pubdate data-updated="true">Mar 19<span>th</span>, 2013</time>
+<time datetime="2013-01-21T16:02:00-05:00" pubdate data-updated="true">Jan 21<span>st</span>, 2013</time>
         
       </p>
     
   </header>
 
 
-  <div class="entry-content"><p>Today I&#8217;d like to take a look at using a particular approach to feature selection in the PRT, and how that can be used to perform dimension reduction.  The approach we&#8217;ll use is called &#8220;sequential forward search&#8221;, and is implemented in prtFeatSelSfs.</p>
+  <div class="entry-content"><p>Hi,</p>
 
+<p>Thanks for checking out the PRT. The PRT is intended to help people who do machine learning handle the most common classification tasks within MATLAB.  This includes things like cross-validation, data visualization, classifier development and feature selection. The PRT includes object types for data set storage, pre-processing, classification, clustering, distance calculations, outlier removal, kernel learning, data generation, scoring and classifier evaluation, feature selection, random variable definitions, and visualization. We think it serves as a great platform for both machine learning research and applied algorithm development (that&rsquo;s why we built it!).</p>
 
-<!--/introduction-->
+<p>The PRT is free and released under the MIT license which means that it is free for academic and commercial use. The PRT is hosted on <a href="https://github.com/newfolder/PRT">GitHub</a> so feel free to fork or clone the repository or just download the latest <a href="https://github.com/newfolder/PRT/zipball/master">zip</a>.</p>
 
+<p>Check out the <a href="/prtdoc/prtDocInstallation.html">installation instructions</a> to get you up and running. Once installed, open up MATLAB&reg;, and follow through with our <a href="/prtdoc/prtDocGettingStarted.html">Getting Started</a> guide, which will walk you through some examples of using the PRT in practice and show you what the PRT can do.</p>
 
-<h2>Contents</h2>
+<p>Even though there are a lot of M-files in the PRT, we’ve built the PRT to be easy to use and to make it easy to find what you need from within MATLAB.  For example, to find a list of all classifiers in the PRT, simply type “prtClass” and then <tab> at the MATLAB command prompt.  Other object types behave the same way, e.g., prtPreProc <tab>. If you have any feed back or questions don&rsquo;t hesitate to ask on on <a href="https://github.com/newfolder/PRT">GitHub</a> or through email at <a href="mailto:prt@newfolderconsulting.com"><a href="&#109;&#97;&#105;&#x6c;&#116;&#111;&#x3a;&#x70;&#114;&#x74;&#x40;&#110;&#x65;&#119;&#x66;&#111;&#x6c;&#100;&#x65;&#x72;&#x63;&#x6f;&#110;&#115;&#117;&#x6c;&#116;&#105;&#110;&#103;&#46;&#x63;&#111;&#109;">&#112;&#114;&#116;&#x40;&#x6e;&#x65;&#119;&#102;&#x6f;&#x6c;&#x64;&#101;&#x72;&#99;&#111;&#x6e;&#x73;&#117;&#108;&#116;&#105;&#x6e;&#x67;&#46;&#x63;&#x6f;&#109;</a></a>.</p>
 
+<p>We are going to start blogging every once in a while about the PRT and things it can do. We hope that it starts a conversation about the types of things people are doing with the PRT and what things people might want the PRT to do in the future.</p>
 
-<div><ul><li><a href="#1">Some Data</a></li><li><a href="#3">Feature Selection</a></li><li><a href="#4">Defining &#8220;Informative&#8221;</a></li><li><a href="#7">Conclusions</a></li></ul></div>
+<p>Talk to you soon.  Happy coding!</p>
 
-
-<h2>Some Data<a name="1"></a></h2>
-
-
-<p>The PRT comes with a utility function to generate data that has about 10 features, and for which only 5 of the features are actually informative. The function is prtDataGenFeatureSelection, I&#8217;ll let the help entry explain how it works:</p>
-
-
-<pre class="codeinput">help <span class="string">prtDataGenFeatureSelection</span>
-</pre>
-
-
-<pre class="codeoutput"> prtDataGenFeatureSelection   Generates some unimodal example data for the prt.
-   DataSet = prtDataGenFeatureSelection
-   The data is distributed:
-        H0: N([0 0 0 0 0 0 0 0 0 0],eye(10))
-        H1: N([0 2 0 1 0 2 0 1 0 2],eye(10))
- 
-  Syntax: [X, Y] = prtDataGenFeatureSelection(N)
- 
-  Inputs: 
-        N ~ number of samples per class (200)
- 
-  Outputs:
-    X - 2Nx2 Unimodal data
-    Y - 2Nx1 Class labels
- 
-  Example:
-    DataSet = prtDataGenFeatureSelection;
-    explore(DataSet)
- 
-  Other m-files required: none
-  Subfunctions: none
-  MAT-files required: none
- 
-  See also: prtDataGenUnimodal
-
-</pre>
-
-
-<p>As you can see from the help, only dimensions 2, 4, 6, 8, and 10 are actually informative in this data set.  And we can use feature selection to help us pick out what features are actually useful.</p>
-
-
-<h2>Feature Selection<a name="3"></a></h2>
-
-
-<p>Feature selection objects are prefaced in the prt with prtFeatSel*, and they act just like any other prtAction objects.  During training a feature selection action will typically perform some iterative search over the feature space, and determine which features are most informative.  At run-time, the same object will return a prtDataSet containing onlt the features the algorithm considered &#8220;informative&#8221;.</p>
-
-
-<p>For example:</p>
-
-
-<pre class="codeinput">ds = prtDataGenFeatureSelection;
-featSel = prtFeatSelSfs;
-featSel = featSel.train(ds);
-dsFeatSel = featSel.run(ds);
-
-plot(dsFeatSel);
-title(<span class="string">'Three Most Informative Features'</span>);
-</pre>
-
-
-<p><img vspace="5" hspace="5" src="/images/torrione_ExampleFeatureSelection_01.png" alt=""> <h2>Defining &ldquo;Informative&rdquo;<a name="4"></a></h2><p>How does the feature selection algorithm determine what features are informative?  For many (but not necessarily all) feature selection objects, the interesting field is &ldquo;evaluationMetric&rdquo;.</p><p>Let&rsquo;s take a look:</p><pre class="codeinput">featSel.evaluationMetric
-</pre><pre class="codeoutput">
-ans =</p>
-
-<pre><code>@(DS)prtEvalAuc(prtClassFld,DS)
-</code></pre>
-
-<p></pre><p>Obviously, evaluationMetric is a function handle &ndash; in particular it represents a call to a prtEval<em> method.  prtEval</em> methods typically take 2 or 3 input arguments &ndash; a classifier to train and run, a data set to train and run on, and (optionally) a number of folds (or fold specification) to use for cross-validation.</p><p>Feature selection objects iteratively search through the features available &ndash; in this case, all 10 of them, and apply the prtEval* method to the sub-sets of data formed by retaining a sub-set of the available features.  The exact order in which the features are retained and removed depends on the feature selection approach &ndash; in SFS, the algorithm first iteratively searches through the features &ndash; 1,2,3&hellip;,10.  Then it remembers which single feature provided the best performance &ndash; say it was feature 2.  Next, the SFS algorithm iteratively searches through all 9 combinations of other features with feature 2:    { {1,2},{3,2},{4,2},&hellip;,{10,2}} And remembers which of <b>those</b> performed best.  This process is iterated, and features continually added to the set being evaluated until nFeatures are selected.</p><p>The resulting performance is then stored in &ldquo;performance&rdquo;, and the features selected are stored in &ldquo;selectedFeatures&rdquo;.  Let&rsquo;s force the SFS approach to look for 10 features (so it will eventually select all of them).</p><pre class="codeinput">ds = prtDataGenFeatureSelection;
-featSel = prtFeatSelSfs;
-featSel.nFeatures = ds.nFeatures;
-featSel.evaluationMetric = @(DS)prtEvalAuc(prtClassFld,DS,3);
-featSel = featSel.train(ds);</p>
-
-<p>h = plot(1:ds.nFeatures,featSel.performance);
-set(h,<span class="string">&lsquo;linewidth&rsquo;</span>,3);
-set(gca,<span class="string">&lsquo;xtick&rsquo;</span>,1:ds.nFeatures);
-set(gca,<span class="string">&lsquo;xticklabel&rsquo;</span>,featSel.selectedFeatures);
-xlabel(<span class="string">&lsquo;Features Selected&rsquo;</span>);
-title(<span class="string">&lsquo;AUC vs. Features Selected&rsquo;</span>);
-</pre><img vspace="5" hspace="5" src="/images/torrione_ExampleFeatureSelection_02.png" alt=""> <p>The features that get selected tend to favor features 2,6, and 10, then features 4 and 8, which makes sense as these are the 3 most informative followed by the two moderately-informative features!</p><h2>Conclusions<a name="7"></a></h2><p>There are a number of prtFeatSel<em> actions available, but not as many as we&rsquo;d like.  We&rsquo;re constantly on the look-out for new ones, and we&rsquo;d like to one day include &ldquo;K-forward, L-Backward&rdquo; searches, but just haven&rsquo;t had the time recently.</p><p>Also, this example only used prtEvalAuc as the performance metric, but there are a number of prtEval</em> functions you can use, or, of course &ndash; feel free to write your own!</p><p>Take a look at prtEvalAuc to see how they work and how to create your own!</p><p>Enjoy!</p></p>
+<p>-Kenny and Pete</p>
 </div>
   
   
@@ -302,11 +225,9 @@ title(<span class="string">&lsquo;AUC vs. Features Selected&rsquo;</span>);
   
   <div class="pagination">
     
-      <a class="prev" href="/blog/page/19/">&larr; Older</a>
-    
     <a href="/blog/archives">Blog Archives</a>
     
-    <a class="next" href="/blog/page/17/">Newer &rarr;</a>
+    <a class="next" href="/blog/page/26/">Newer &rarr;</a>
     
   </div>
 </div>
